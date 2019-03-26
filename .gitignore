@@ -1,0 +1,9 @@
+.*.swp
+.*.swo
+*~
+*.d
+*.o
+*.gz
+*.exe
+*.img
+*.num
