@@ -8,7 +8,9 @@ PGM=${ARCH}/rtps-r52.exe
 MANAGERS=all
 
 # C source names
-CSRCS = main.c
+CSRCS = \
+	server.c \
+	main.c
 COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 
 include $(RTEMS_MAKEFILE_PATH)/Makefile.inc
@@ -19,5 +21,12 @@ OBJS= $(COBJS) $(CXXOBJS) $(ASOBJS)
 
 all:    ${ARCH} $(PGM)
 
-$(PGM): $(OBJS)
+LIBMBOX = ${PWD}/../mailbox/${ARCH}/libhpsc-mbox.a
+LIBHPSC = ${PWD}/../hpsc/${ARCH}/libhpsc.a
+
+LD_LIBS += \
+	$(LIBMBOX) \
+	$(LIBHPSC)
+
+$(PGM): $(LIBMBOX) $(LIBHPSC) $(OBJS)
 	$(make-exe)
