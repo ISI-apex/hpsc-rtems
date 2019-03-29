@@ -1,6 +1,7 @@
 #ifndef HPSC_MBOX_H
 #define HPSC_MBOX_H
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #include <rtems.h>
@@ -30,11 +31,13 @@ struct hpsc_mbox_chan {
     uint32_t owner;
     uint32_t src;
     uint32_t dest;
+    bool active;
 };
 
 struct hpsc_mbox_irq_info {
     struct hpsc_mbox *mbox;
     rtems_vector_number n;
+    unsigned idx;
 };
 
 struct hpsc_mbox {
@@ -50,7 +53,9 @@ rtems_status_code hpsc_mbox_probe(
     const char *info,
     volatile void *base,
     rtems_vector_number int_a,
-    rtems_vector_number int_b
+    unsigned int_idx_a,
+    rtems_vector_number int_b,
+    unsigned int_idx_b
 );
 
 rtems_status_code hpsc_mbox_remove(
