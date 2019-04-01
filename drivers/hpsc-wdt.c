@@ -150,13 +150,17 @@ static rtems_status_code hpsc_wdt_intr_disable(struct hpsc_wdt *wdt)
     return sc;
 }
 
-static struct hpsc_wdt *hpsc_wdt_create(const char *name,
-                                        volatile uint32_t *base,
-                                        rtems_vector_number intr_vec,
-                                        hpsc_wdt_cb_t cb, void *cb_arg)
+static struct hpsc_wdt *hpsc_wdt_create(
+    const char *name,
+    volatile uint32_t *base,
+    rtems_vector_number intr_vec,
+    hpsc_wdt_cb_t cb,
+    void *cb_arg
+)
 {
+    struct hpsc_wdt *wdt;
     printf("WDT %s: create base %p\n", name, base);
-    struct hpsc_wdt *wdt = malloc(sizeof(struct hpsc_wdt));
+    wdt = malloc(sizeof(struct hpsc_wdt));
     if (!wdt) {
         printf("ERROR: WDT: malloc failed\n");
         return NULL;
@@ -169,11 +173,16 @@ static struct hpsc_wdt *hpsc_wdt_create(const char *name,
     wdt->cb_arg = cb_arg;
     return wdt;
 }
-struct hpsc_wdt *hpsc_wdt_create_monitor(const char *name,
-                                         volatile uint32_t *base,
-                                         rtems_vector_number intr_vec,
-                                         hpsc_wdt_cb_t cb, void *cb_arg,
-                                         uint32_t clk_freq_hz, unsigned max_div)
+
+struct hpsc_wdt *hpsc_wdt_probe_monitor(
+    const char *name,
+    volatile uint32_t *base,
+    rtems_vector_number intr_vec,
+    hpsc_wdt_cb_t cb,
+    void *cb_arg,
+    uint32_t clk_freq_hz,
+    unsigned max_div
+)
 {
     struct hpsc_wdt *wdt = hpsc_wdt_create(name, base, intr_vec, cb, cb_arg);
     if (wdt) {
@@ -185,10 +194,14 @@ struct hpsc_wdt *hpsc_wdt_create_monitor(const char *name,
     }
     return wdt;
 }
-struct hpsc_wdt *hpsc_wdt_create_target(const char *name,
-                                        volatile uint32_t *base,
-                                        rtems_vector_number intr_vec,
-                                        hpsc_wdt_cb_t cb, void *cb_arg)
+
+struct hpsc_wdt *hpsc_wdt_probe_target(
+    const char *name,
+    volatile uint32_t *base,
+    rtems_vector_number intr_vec,
+    hpsc_wdt_cb_t cb,
+    void *cb_arg
+)
 {
     struct hpsc_wdt *wdt = hpsc_wdt_create(name, base, intr_vec, cb, cb_arg);
     if (wdt) {
@@ -198,8 +211,12 @@ struct hpsc_wdt *hpsc_wdt_create_target(const char *name,
     return wdt;
 }
 
-int hpsc_wdt_configure(struct hpsc_wdt *wdt, unsigned freq,
-                  unsigned num_stages, uint64_t *timeouts)
+int hpsc_wdt_configure(
+    struct hpsc_wdt *wdt,
+    unsigned freq,
+    unsigned num_stages,
+    uint64_t *timeouts
+)
 {
     assert(wdt);
     assert(wdt->monitor);
@@ -248,7 +265,7 @@ int hpsc_wdt_configure(struct hpsc_wdt *wdt, unsigned freq,
     return 0;
 }
 
-void hpsc_wdt_destroy(struct hpsc_wdt *wdt)
+void hpsc_wdt_remove(struct hpsc_wdt *wdt)
 {
     assert(wdt);
     printf("WDT %s: destroy\n", wdt->name);

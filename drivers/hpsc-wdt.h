@@ -16,21 +16,32 @@ typedef void (*hpsc_wdt_cb_t)(struct hpsc_wdt *wdt, void *arg);
 // board (but not of the IP block), i.e. what would be defined by the device
 // tree node, hence they are not hardcoded in the driver. To divide the
 // frequency, you would change the argument to hpsc_wdt_configure, not here.
-struct hpsc_wdt *hpsc_wdt_create_monitor(const char *name,
-                                         volatile uint32_t *base,
-                                         rtems_vector_number intr_vec,
-                                         hpsc_wdt_cb_t cb, void *cb_arg,
-                                         uint32_t clk_freq_hz, unsigned max_div);
+struct hpsc_wdt *hpsc_wdt_probe_monitor(
+    const char *name,
+    volatile uint32_t *base,
+    rtems_vector_number intr_vec,
+    hpsc_wdt_cb_t cb,
+    void *cb_arg,
+    uint32_t clk_freq_hz,
+    unsigned max_div
+);
 
-struct hpsc_wdt *hpsc_wdt_create_target(const char *name,
-                                        volatile uint32_t *base,
-                                        rtems_vector_number intr_vec,
-                                        hpsc_wdt_cb_t cb, void *cb_arg);
+struct hpsc_wdt *hpsc_wdt_probe_target(
+    const char *name,
+    volatile uint32_t *base,
+    rtems_vector_number intr_vec,
+    hpsc_wdt_cb_t cb,
+    void *cb_arg
+);
 
-void hpsc_wdt_destroy(struct hpsc_wdt *wdt);
+void hpsc_wdt_remove(struct hpsc_wdt *wdt);
 
-int hpsc_wdt_configure(struct hpsc_wdt *wdt, unsigned freq,
-                       unsigned num_stages, uint64_t *timeouts);
+int hpsc_wdt_configure(
+    struct hpsc_wdt *wdt,
+    unsigned freq,
+    unsigned num_stages,
+    uint64_t *timeouts
+);
 
 uint64_t hpsc_wdt_count(struct hpsc_wdt *wdt, unsigned stage);
 
