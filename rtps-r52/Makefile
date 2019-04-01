@@ -7,6 +7,18 @@ PGM=${ARCH}/rtps-r52.exe
 # optional managers required
 MANAGERS=all
 
+CONFIG_FLAGS = \
+	TEST_RTPS_TRCH_MAILBOX \
+	CONFIG_HPPS_RTPS_MAILBOX \
+
+CONFIG_ARGS = $(foreach m,$(CONFIG_FLAGS),-D$(m)=$($(m)))
+
+# Enable disable tests here:
+TEST_RTPS_TRCH_MAILBOX  	= 1
+
+# Set build configuration here
+CONFIG_HPPS_RTPS_MAILBOX  	= 1
+
 # C source names
 CSRCS = \
 	server.c \
@@ -21,8 +33,11 @@ OBJS= $(COBJS) $(CXXOBJS) $(ASOBJS)
 
 all:    ${ARCH} $(PGM)
 
-LIBMBOX = ${PWD}/../mailbox/${ARCH}/libhpsc-mbox.a
-LIBHPSC = ${PWD}/../hpsc/${ARCH}/libhpsc.a
+CFLAGS += \
+	$(CONFIG_ARGS) \
+
+LIBMBOX = ../mailbox/${ARCH}/libhpsc-mbox.a
+LIBHPSC = ../hpsc/${ARCH}/libhpsc.a
 
 LD_LIBS += \
 	$(LIBMBOX) \

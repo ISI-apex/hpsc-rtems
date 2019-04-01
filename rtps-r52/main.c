@@ -18,6 +18,9 @@
 
 #define MAIN_LOOP_SILENT_ITERS 100
 
+// inferred CONFIG settings
+#define CONFIG_MBOX_DEV_HPPS (CONFIG_HPPS_RTPS_MAILBOX)
+
 void main_loop()
 {
     struct cmd cmd;
@@ -89,12 +92,15 @@ void *POSIX_Init(void *arg)
     rtems_status_code sc;
     printf("\n\nRTPS\n");
 
+#if CONFIG_MBOX_DEV_HPPS
     struct hpsc_mbox mbox_hpps;
     sc = hpsc_mbox_probe(&mbox_hpps, "HPPS-RTPS Mailbox", MBOX_HPPS_RTPS__BASE,
                          RTPS_IRQ__HR_MBOX_0, MBOX_HPPS_RTPS__RTPS_RCV_INT,
                          RTPS_IRQ__HR_MBOX_1, MBOX_HPPS_RTPS__RTPS_ACK_INT);
     assert(sc == RTEMS_SUCCESSFUL);
+#endif
 
+#if CONFIG_HPPS_RTPS_MAILBOX
     struct link *hpps_link = mbox_link_connect("HPPS_MBOX_LINK", &mbox_hpps,
                     MBOX_HPPS_RTPS__HPPS_RTPS, MBOX_HPPS_RTPS__RTPS_HPPS,
                     /* server */ MASTER_ID_RTPS_CPU0,
@@ -102,9 +108,12 @@ void *POSIX_Init(void *arg)
     if (!hpps_link)
         rtems_panic("HPPS link");
     // Never release the link, because we listen on it in main loop
+#endif // CONFIG_HPPS_RTPS_MAILBOX
 
+#if TEST_RTPS_TRCH_MAILBOX
     test_rtps_trch_mailbox();
     printf("TRCH mbox test succeeded\n");
+#endif // TEST_RTPS_TRCH_MAILBOX
 
     cmd_handler_register(server_process);
 
