@@ -31,36 +31,36 @@
 
 static inline void reg_write32(const char *name, volatile uint32_t *addr, uint32_t val)
 {
-    DPRINTF("%32s: %p <- %x\r\n", name, addr, val);
+    DPRINTF("%32s: %p <- %x\n", name, addr, val);
     *addr = val;
 }
 static inline void reg_write64(const char *name, volatile uint64_t *addr, uint64_t val)
 {
-    DPRINTF("%32s: %p <- %08x%08x\r\n", name, addr,
+    DPRINTF("%32s: %p <- %08x%08x\n", name, addr,
            (uint32_t)(val >> 32), (uint32_t)val);
     *addr = val;
 }
 static inline uint32_t reg_read32(const char *name, volatile uint32_t *addr)
 {
     uint32_t val = *addr;
-    DPRINTF("%32s: %p -> %x\r\n", name, addr, val);
+    DPRINTF("%32s: %p -> %x\n", name, addr, val);
     return val;
 }
 static inline uint64_t reg_read64(const char *name, volatile uint64_t *addr)
 {
     uint64_t val = *addr;
-    DPRINTF("%32s: %p -> %08x%08x\r\n", name, addr,
+    DPRINTF("%32s: %p -> %08x%08x\n", name, addr,
            (uint32_t)(val >> 32), (uint32_t)val);
     return val;
 }
 static inline void reg_set32(const char *name, volatile uint32_t *addr, uint32_t val)
 {
-    DPRINTF("%32s: %p |= %x\r\n", name, addr, val);
+    DPRINTF("%32s: %p |= %x\n", name, addr, val);
     *addr |= val;
 }
 static inline void reg_clear32(const char *name, volatile uint32_t *addr, uint32_t val)
 {
-    DPRINTF("%32s: %p &= ~%x\r\n", name, addr, val);
+    DPRINTF("%32s: %p &= ~%x\n", name, addr, val);
     *addr &= ~val;
 }
 

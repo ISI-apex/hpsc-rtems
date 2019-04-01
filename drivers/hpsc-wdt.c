@@ -103,14 +103,14 @@ static void exec_cmd(struct hpsc_wdt *wdt, const struct cmd_code *code)
 
 static void exec_global_cmd(struct hpsc_wdt *wdt, enum cmd cmd)
 {
-    printf("WDT %s: exec cmd: %u\r\n", wdt->name, cmd);
+    printf("WDT %s: exec cmd: %u\n", wdt->name, cmd);
     assert(cmd < NUM_CMDS);
     exec_cmd(wdt, &cmd_codes[cmd]);
 }
 static void exec_stage_cmd(struct hpsc_wdt *wdt, enum stage_cmd scmd,
                            unsigned stage)
 {
-    DPRINTF("WDT %s: stage %u: exec stage cmd: %u\r\n", wdt->name, stage, scmd);
+    DPRINTF("WDT %s: stage %u: exec stage cmd: %u\n", wdt->name, stage, scmd);
     assert(stage < MAX_STAGES);
     assert(scmd < NUM_SCMDS);
     exec_cmd(wdt, &stage_cmd_codes[stage][scmd]);
@@ -119,7 +119,7 @@ static void exec_stage_cmd(struct hpsc_wdt *wdt, enum stage_cmd scmd,
 static struct hpsc_wdt *wdt_create(const char *name, volatile uint32_t *base,
                                    hpsc_wdt_cb_t cb, void *cb_arg)
 {
-    printf("WDT %s: create base %p\r\n", name, base);
+    printf("WDT %s: create base %p\n", name, base);
     struct hpsc_wdt *wdt = malloc(sizeof(struct hpsc_wdt));
     wdt->base = base;
     wdt->name = name;
@@ -154,18 +154,18 @@ int wdt_configure(struct hpsc_wdt *wdt, unsigned freq,
     assert(wdt->monitor);
     assert(!wdt_is_enabled(wdt)); // not strict requirement, but for sanity
     if (num_stages > MAX_STAGES) {
-        printf("ERROR: WDT: more stages than supported: %u >= %u\r\n",
+        printf("ERROR: WDT: more stages than supported: %u >= %u\n",
                num_stages, MAX_STAGES);
         return 1;
     }
     if (!(freq <= wdt->clk_freq_hz && wdt->clk_freq_hz % freq == 0)) {
-        printf("ERROR: WDT: freq is larger than or not a divisor of clk freq: %u > %u\r\n",
+        printf("ERROR: WDT: freq is larger than or not a divisor of clk freq: %u > %u\n",
                freq, wdt->clk_freq_hz);
         return 1;
     }
     for (unsigned stage = 0; stage < num_stages; ++stage) {
         if (timeouts[stage] & (~0ULL << wdt->counter_width)) {
-                printf("ERROR: WDT: timeout for stage %u exceeds counter width (%u bits): %08x%08x\r\n",
+                printf("ERROR: WDT: timeout for stage %u exceeds counter width (%u bits): %08x%08x\n",
                        stage, wdt->counter_width,
                       (uint32_t)(timeouts[stage] >> 32), (uint32_t)(timeouts[stage] & 0xffffffff));
                 return 2;
@@ -178,12 +178,12 @@ int wdt_configure(struct hpsc_wdt *wdt, unsigned freq,
     assert(wdt->clk_freq_hz % freq == 0);
     unsigned div = wdt->clk_freq_hz / freq;
     if (div > wdt->max_div) {
-        printf("ERROR: WDT: divider too large: %u > %u\r\n",
+        printf("ERROR: WDT: divider too large: %u > %u\n",
                div, wdt->max_div);
         return 1;
     }
 
-    printf("WDT %s: set divider to %u\r\n", wdt->name, div);
+    printf("WDT %s: set divider to %u\n", wdt->name, div);
     REGB_WRITE32(wdt->base, REG__CONFIG, div << REG__CONFIG__TICKDIV__SHIFT);
 
     for (unsigned stage = 0; stage < num_stages; ++stage) {
@@ -200,7 +200,7 @@ int wdt_configure(struct hpsc_wdt *wdt, unsigned freq,
 void wdt_destroy(struct hpsc_wdt *wdt)
 {
     assert(wdt);
-    printf("WDT %s: destroy\r\n", wdt->name);
+    printf("WDT %s: destroy\n", wdt->name);
     if (wdt->monitor)
         assert(!wdt_is_enabled(wdt));
     free(wdt);
@@ -211,7 +211,7 @@ uint64_t wdt_count(struct hpsc_wdt *wdt, unsigned stage)
     assert(wdt);
     exec_stage_cmd(wdt, SCMD_CAPTURE, stage); 
     uint64_t count = REGB_READ64(wdt->base, STAGE_REG(REG__COUNT, stage));
-    printf("WDT %s: count -> 0x%08x%08x\r\n", wdt->name,
+    printf("WDT %s: count -> 0x%08x%08x\n", wdt->name,
            (uint32_t)(count >> 32), (uint32_t)(count & 0xffffffff));
     return count;
 }
@@ -221,7 +221,7 @@ uint64_t wdt_timeout(struct hpsc_wdt *wdt, unsigned stage)
     assert(wdt);
     // NOTE: not going to be the right value if it wasn't not loaded via cmd
     uint64_t terminal = REGB_READ64(wdt->base, STAGE_REG(REG__TERMINAL, stage));
-    printf("WDT %s: terminal -> 0x%08x%08x\r\n", wdt->name,
+    printf("WDT %s: terminal -> 0x%08x%08x\n", wdt->name,
            (uint32_t)(terminal >> 32), (uint32_t)(terminal & 0xffffffff));
     return terminal;
 }
@@ -229,14 +229,14 @@ uint64_t wdt_timeout(struct hpsc_wdt *wdt, unsigned stage)
 bool wdt_is_enabled(struct hpsc_wdt *wdt)
 {
     bool enabled = REGB_READ32(wdt->base, REG__CONFIG) & REG__CONFIG__EN;
-    printf("WDT %s: is enabled -> %u\r\n", wdt->name, enabled);
+    printf("WDT %s: is enabled -> %u\n", wdt->name, enabled);
     return enabled;
 }
 
 void wdt_enable(struct hpsc_wdt *wdt)
 {
     assert(wdt);
-    printf("WDT %s: enable\r\n", wdt->name);
+    printf("WDT %s: enable\n", wdt->name);
     REGB_SET32(wdt->base, REG__CONFIG, REG__CONFIG__EN);
 }
 
@@ -244,14 +244,14 @@ void wdt_disable(struct hpsc_wdt *wdt)
 {
     assert(wdt);
     assert(wdt->monitor);
-    printf("WDT %s: disable\r\n", wdt->name);
+    printf("WDT %s: disable\n", wdt->name);
     exec_global_cmd(wdt, CMD_DISABLE);
 }
 
 void wdt_kick(struct hpsc_wdt *wdt)
 {
     assert(wdt);
-    DPRINTF("WDT %s: kick\r\n", wdt->name);
+    DPRINTF("WDT %s: kick\n", wdt->name);
     // In Concept A variant, there is only a clear for stage 0.  In Concept B
     // variant, there's a clear for each stage, but it is suffient to clear the
     // first stage, because that action has to stop the timers for downstream
@@ -262,7 +262,7 @@ void wdt_kick(struct hpsc_wdt *wdt)
 void wdt_isr(struct hpsc_wdt *wdt, unsigned stage)
 {
     assert(wdt);
-    printf("WDT %s: ISR\r\n", wdt->name);
+    printf("WDT %s: ISR\n", wdt->name);
     // TODO: spec unclear: if we are not allowed to clear the int source, then
     // we have to disable the interrupt via the interrupt controller, and
     // re-enable it in wdt_enable.
