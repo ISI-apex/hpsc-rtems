@@ -133,7 +133,6 @@ struct link *mbox_link_connect(const char *name, struct hpsc_mbox *mbox,
     struct mbox_link *mlink;
     struct link *link;
     hpsc_mbox_chan_irq_cb rcv_cb = server ? handle_cmd : handle_reply;
-    int ret;
 
     printk("%s: connect\n", name);
     link = malloc(sizeof(*link));

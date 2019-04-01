@@ -58,7 +58,7 @@ void *POSIX_Init(void *arg)
     printf("\n\nRTPS\n");
 
 #if CONFIG_MBOX_DEV_HPPS
-    struct hpsc_mbox mbox_hpps;
+    struct hpsc_mbox *mbox_hpps = NULL;
     rtems_vector_number vec_a =
         gic_irq_to_rvn(RTPS_IRQ__HR_MBOX_0 + MBOX_HPPS_RTPS__RTPS_RCV_INT,
                        GIC_IRQ_TYPE_SPI);
@@ -72,7 +72,7 @@ void *POSIX_Init(void *arg)
 #endif
 
 #if CONFIG_HPPS_RTPS_MAILBOX
-    struct link *hpps_link = mbox_link_connect("HPPS_MBOX_LINK", &mbox_hpps,
+    struct link *hpps_link = mbox_link_connect("HPPS_MBOX_LINK", mbox_hpps,
                     MBOX_HPPS_RTPS__HPPS_RTPS, MBOX_HPPS_RTPS__RTPS_HPPS,
                     /* server */ MASTER_ID_RTPS_CPU0,
                     /* client */ MASTER_ID_HPPS_CPU0);

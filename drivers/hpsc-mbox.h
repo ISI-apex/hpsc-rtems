@@ -27,7 +27,7 @@ struct hpsc_mbox_chan;
  * Initialize a mailbox IP block
  */
 rtems_status_code hpsc_mbox_probe(
-    struct hpsc_mbox *mbox,
+    struct hpsc_mbox **mbox,
     const char *info,
     volatile void *base,
     rtems_vector_number int_a,

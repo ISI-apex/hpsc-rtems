@@ -368,7 +368,7 @@ static void hpsc_mbox_init(
 }
 
 rtems_status_code hpsc_mbox_probe(
-    struct hpsc_mbox *mbox,
+    struct hpsc_mbox **mbox,
     const char *info,
     volatile void *base,
     rtems_vector_number int_a,
@@ -378,19 +378,24 @@ rtems_status_code hpsc_mbox_probe(
 )
 {
     rtems_status_code sc;
+    *mbox = malloc(sizeof(*mbox));
+    if (!*mbox) {
+        printf("hpsc_mbox_probe: malloc failed\n");
+        return RTEMS_NO_MEMORY;
+    }
 
     // init struct
-    hpsc_mbox_init(mbox, info, base, int_a, int_idx_a, int_b, int_idx_b);
+    hpsc_mbox_init(*mbox, info, base, int_a, int_idx_a, int_b, int_idx_b);
 
     // setup interrupt handlers
     sc = rtems_interrupt_handler_install(int_a, info, RTEMS_INTERRUPT_UNIQUE,
-                                         hpsc_mbox_isr_a, &mbox->int_a);
+                                         hpsc_mbox_isr_a, &(*mbox)->int_a);
     if (sc != RTEMS_SUCCESSFUL) {
         printf("hpsc_mbox_probe: failed to install interrupt handler A\n");
-        return sc;
+        goto free_mbox;
     }
     sc = rtems_interrupt_handler_install(int_b, info, RTEMS_INTERRUPT_UNIQUE,
-                                         hpsc_mbox_isr_b, &mbox->int_b);
+                                         hpsc_mbox_isr_b, &(*mbox)->int_b);
     if (sc != RTEMS_SUCCESSFUL) {
         printf("hpsc_mbox_probe: failed to install interrupt handler B\n");
         goto fail_isr_b;
@@ -398,8 +403,10 @@ rtems_status_code hpsc_mbox_probe(
 
     return sc;
 fail_isr_b:
-    rtems_interrupt_handler_remove(mbox->int_a.n, hpsc_mbox_isr_a,
-                                   &mbox->int_a);
+    rtems_interrupt_handler_remove((*mbox)->int_a.n, hpsc_mbox_isr_a,
+                                   &(*mbox)->int_a);
+free_mbox:
+    free(*mbox);
     return sc;
 }
 
@@ -421,5 +428,6 @@ rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox)
         printf("hpsc_mbox_remove: failed to uninstall interrupt handler B\n");
         sc = sc_tmp;
     }
+    free(mbox);
     return sc;
 }

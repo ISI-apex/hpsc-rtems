@@ -28,19 +28,22 @@ CSRCS = \
 COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 
 ifeq ($(strip $(TEST_RTPS_TRCH_MAILBOX)),1)
-COBJS += tests/mailbox.o
+CSRCS += tests/mailbox.c
 endif
 ifeq ($(strip $(TEST_SHMEM)),1)
-COBJS += tests/shmem.o
+CSRCS += tests/shmem.c
 endif
 
 include $(RTEMS_MAKEFILE_PATH)/Makefile.inc
 include $(RTEMS_CUSTOM)
 include $(PROJECT_ROOT)/make/leaf.cfg
 
-OBJS= $(COBJS) $(CXXOBJS) $(ASOBJS)
+OBJS = $(COBJS) $(CXXOBJS) $(ASOBJS)
 
-all:    ${ARCH} $(PGM)
+${ARCH}/tests:
+	mkdir -p ${ARCH}/tests
+
+all:    ${ARCH} ${ARCH}/tests $(PGM)
 
 CFLAGS += \
 	$(CONFIG_ARGS) \

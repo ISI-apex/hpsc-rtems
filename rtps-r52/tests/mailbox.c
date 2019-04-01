@@ -12,7 +12,7 @@
 int test_rtps_trch_mailbox()
 {
     rtems_status_code sc;
-    struct hpsc_mbox mbox_trch;
+    struct hpsc_mbox *mbox_trch;
     struct link *trch_link;
     rtems_vector_number vec_a =
         gic_irq_to_rvn(RTPS_IRQ__TR_MBOX_0 + MBOX_LSIO__RTPS_RCV_INT,
@@ -27,11 +27,11 @@ int test_rtps_trch_mailbox()
     sc = hpsc_mbox_probe(&mbox_trch, "TRCH-RTPS Mailbox", MBOX_LSIO__BASE,
                          vec_a, MBOX_LSIO__RTPS_RCV_INT,
                          vec_b, MBOX_LSIO__RTPS_ACK_INT);
-    if(sc != RTEMS_SUCCESSFUL)
+    if (sc != RTEMS_SUCCESSFUL)
         return -1;
 
     trch_link = mbox_link_connect("RTPS_TRCH_MBOX_TEST_LINK",
-                    &mbox_trch, MBOX_LSIO__TRCH_RTPS, MBOX_LSIO__RTPS_TRCH, 
+                    mbox_trch, MBOX_LSIO__TRCH_RTPS, MBOX_LSIO__RTPS_TRCH, 
                     /* server */ 0, /* client */ MASTER_ID_RTPS_CPU0);
     if (!trch_link)
         rtems_panic("TRCH link");
@@ -47,8 +47,8 @@ int test_rtps_trch_mailbox()
     if (rc)
         return rc;
 
-    sc = hpsc_mbox_remove(&mbox_trch);
-    if (!trch_link)
+    sc = hpsc_mbox_remove(mbox_trch);
+    if (sc != RTEMS_SUCCESSFUL)
         return -1;
 
     return 0;
