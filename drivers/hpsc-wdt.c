@@ -157,6 +157,10 @@ static struct hpsc_wdt *hpsc_wdt_create(const char *name,
 {
     printf("WDT %s: create base %p\n", name, base);
     struct hpsc_wdt *wdt = malloc(sizeof(struct hpsc_wdt));
+    if (!wdt) {
+        printf("ERROR: WDT: malloc failed\n");
+        return NULL;
+    }
     wdt->base = base;
     wdt->name = name;
     wdt->monitor = false;
@@ -172,11 +176,13 @@ struct hpsc_wdt *hpsc_wdt_create_monitor(const char *name,
                                          uint32_t clk_freq_hz, unsigned max_div)
 {
     struct hpsc_wdt *wdt = hpsc_wdt_create(name, base, intr_vec, cb, cb_arg);
-    wdt->clk_freq_hz = clk_freq_hz;
-    wdt->max_div = max_div;
-    wdt->counter_width = (64 - log2_of_pow2(wdt->max_div) - 1);
-    wdt->monitor = true;
-    hpsc_wdt_intr_enable(wdt);
+    if (wdt) {
+        wdt->clk_freq_hz = clk_freq_hz;
+        wdt->max_div = max_div;
+        wdt->counter_width = (64 - log2_of_pow2(wdt->max_div) - 1);
+        wdt->monitor = true;
+        hpsc_wdt_intr_enable(wdt);
+    }
     return wdt;
 }
 struct hpsc_wdt *hpsc_wdt_create_target(const char *name,
@@ -185,8 +191,10 @@ struct hpsc_wdt *hpsc_wdt_create_target(const char *name,
                                         hpsc_wdt_cb_t cb, void *cb_arg)
 {
     struct hpsc_wdt *wdt = hpsc_wdt_create(name, base, intr_vec, cb, cb_arg);
-    wdt->monitor = false;
-    hpsc_wdt_intr_enable(wdt);
+    if (wdt) {
+        wdt->monitor = false;
+        hpsc_wdt_intr_enable(wdt);
+    }
     return wdt;
 }
 
