@@ -9,12 +9,14 @@ MANAGERS=all
 
 CONFIG_FLAGS = \
 	TEST_RTPS_TRCH_MAILBOX \
+	TEST_SHMEM \
 	CONFIG_HPPS_RTPS_MAILBOX \
 
 CONFIG_ARGS = $(foreach m,$(CONFIG_FLAGS),-D$(m)=$($(m)))
 
 # Enable disable tests here:
 TEST_RTPS_TRCH_MAILBOX  	= 1
+TEST_SHMEM			= 1
 
 # Set build configuration here
 CONFIG_HPPS_RTPS_MAILBOX  	= 1
@@ -27,6 +29,9 @@ COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 
 ifeq ($(strip $(TEST_RTPS_TRCH_MAILBOX)),1)
 COBJS += tests/mailbox.o
+endif
+ifeq ($(strip $(TEST_SHMEM)),1)
+COBJS += tests/shmem.o
 endif
 
 include $(RTEMS_MAKEFILE_PATH)/Makefile.inc

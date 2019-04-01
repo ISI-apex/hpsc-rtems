@@ -3,4 +3,6 @@
 
 int test_rtps_trch_mailbox();
 
+int test_shmem();
+
 #endif // TEST_H

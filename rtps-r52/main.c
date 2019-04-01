@@ -76,6 +76,11 @@ void *POSIX_Init(void *arg)
         rtems_panic("RTPS->TRCH mailbox");
 #endif // TEST_RTPS_TRCH_MAILBOX
 
+#if TEST_SHMEM
+    if (test_shmem())
+        rtems_panic("shmem test");
+#endif // TEST_SHMEM
+
     cmd_handler_register(server_process);
 
     main_loop();
