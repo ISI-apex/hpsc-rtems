@@ -12,4 +12,7 @@
 #define DPRINTF(...) \
         if (DEBUG) printf(__VA_ARGS__)
 
+#define DPRINTK(...) \
+        if (DEBUG) printk(__VA_ARGS__)
+
 #endif // DEBUG_H
