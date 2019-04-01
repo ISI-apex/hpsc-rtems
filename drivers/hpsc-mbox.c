@@ -378,7 +378,7 @@ rtems_status_code hpsc_mbox_probe(
 )
 {
     rtems_status_code sc;
-    *mbox = malloc(sizeof(*mbox));
+    *mbox = malloc(sizeof(struct hpsc_mbox));
     if (!*mbox) {
         printf("hpsc_mbox_probe: malloc failed\n");
         return RTEMS_NO_MEMORY;
