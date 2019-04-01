@@ -46,7 +46,7 @@ include $(RTEMS_SHARE)/make/lib.cfg
 DEFINES  +=
 CPPFLAGS +=
 CFLAGS   += \
-	-I../mailbox \
+	-I../drivers \
 
 
 #

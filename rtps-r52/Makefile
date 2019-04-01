@@ -44,14 +44,14 @@ all:    ${ARCH} $(PGM)
 
 CFLAGS += \
 	$(CONFIG_ARGS) \
-	-I. -Itests -I../mailbox -I../hpsc -I../plat \
+	-I. -Itests -I../drivers -I../hpsc -I../plat \
 
-LIBMBOX = ../mailbox/${ARCH}/libhpsc-mbox.a
+LIBDRIVERS = ../drivers/${ARCH}/libhpsc-drivers.a
 LIBHPSC = ../hpsc/${ARCH}/libhpsc.a
 
 LD_LIBS += \
-	$(LIBMBOX) \
+	$(LIBDRIVERS) \
 	$(LIBHPSC)
 
-$(PGM): $(LIBMBOX) $(LIBHPSC) $(OBJS)
+$(PGM): $(LIBDRIVERS) $(LIBHPSC) $(OBJS)
 	$(make-exe)

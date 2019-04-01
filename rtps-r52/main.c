@@ -4,15 +4,18 @@
 
 #include <rtems.h>
 
-#include "../plat/hwinfo.h"
-#include "../plat/mailbox-map.h"
-#include "../plat/mem-map.h"
+// plat
+#include <hwinfo.h>
+#include <mailbox-map.h>
+#include <mem-map.h>
 
-#include "../hpsc/command.h"
-#include "../hpsc/mailbox-link.h"
-#include "../hpsc/server.h"
+// libhpsc
+#include <command.h>
+#include <mailbox-link.h>
+#include <server.h>
 
-#include "../mailbox/hpsc-mbox.h"
+// mailbox driver
+#include <hpsc-mbox.h>
 
 #include "test.h"
 

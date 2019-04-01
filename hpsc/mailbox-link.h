@@ -1,7 +1,8 @@
 #ifndef MAILBOX_LINK_H
 #define MAILBOX_LINK_H
 
-#include "hpsc-mbox.h"
+#include <hpsc-mbox.h>
+
 #include "link.h"
 
 // We use 'owner' to indicate both the ID (arbitrary value) to which the

@@ -2,8 +2,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "../hpsc/command.h"
-#include "../hpsc/server.h"
+// libhpsc
+#include <command.h>
+#include <server.h>
 
 int server_process(struct cmd *cmd, void *reply, size_t reply_sz)
 {

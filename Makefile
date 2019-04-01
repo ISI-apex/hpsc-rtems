@@ -3,6 +3,6 @@ include $(RTEMS_CUSTOM)
 include $(RTEMS_SHARE)/make/directory.cfg
 
 SUBDIRS = \
-	mailbox \
+	drivers \
 	hpsc \
 	rtps-r52
