@@ -9,7 +9,6 @@ LIB=${ARCH}/${LIBNAME}
 C_PIECES= \
 	bit \
 	hpsc-mbox \
-	hpsc-mbox-chan \
 	hpsc-wdt
 C_FILES=$(C_PIECES:%=%.c)
 C_O_FILES=$(C_FILES:%.c=${ARCH}/%.o)

@@ -58,20 +58,21 @@ rtems_status_code hpsc_mbox_probe(
     unsigned int_idx_b
 );
 
-rtems_status_code hpsc_mbox_remove(
-    struct hpsc_mbox *mbox
+rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox);
+
+int hpsc_mbox_chan_claim(
+    struct hpsc_mbox_chan *chan,
+    uint32_t owner,
+    uint32_t src,
+    uint32_t dest,
+    hpsc_mbox_chan_irq_cb cb_a,
+    hpsc_mbox_chan_irq_cb cb_b,
+    void *cb_arg
 );
 
-int hpsc_mbox_chan_claim(struct hpsc_mbox_chan *chan,
-                         uint32_t owner, uint32_t src, uint32_t dest,
-                         hpsc_mbox_chan_irq_cb cb_a, hpsc_mbox_chan_irq_cb cb_b,
-                         void *cb_arg);
 int hpsc_mbox_chan_release(struct hpsc_mbox_chan *chan);
 
 size_t hpsc_mbox_chan_write(struct hpsc_mbox_chan *chan, void *buf, size_t sz);
 size_t hpsc_mbox_chan_read(struct hpsc_mbox_chan *chan, void *buf, size_t sz);
-
-void hpsc_mbox_isr_a(void *arg);
-void hpsc_mbox_isr_b(void *arg);
 
 #endif // HPSC_MBOX_H
