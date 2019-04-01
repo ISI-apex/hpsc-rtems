@@ -72,8 +72,8 @@ void *POSIX_Init(void *arg)
 #endif // CONFIG_HPPS_RTPS_MAILBOX
 
 #if TEST_RTPS_TRCH_MAILBOX
-    test_rtps_trch_mailbox();
-    printf("TRCH mbox test succeeded\n");
+    if (test_rtps_trch_mailbox())
+        rtems_panic("RTPS->TRCH mailbox");
 #endif // TEST_RTPS_TRCH_MAILBOX
 
     cmd_handler_register(server_process);
