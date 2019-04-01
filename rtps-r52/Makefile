@@ -25,6 +25,10 @@ CSRCS = \
 	main.c
 COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 
+ifeq ($(strip $(TEST_RTPS_TRCH_MAILBOX)),1)
+COBJS += tests/mailbox.o
+endif
+
 include $(RTEMS_MAKEFILE_PATH)/Makefile.inc
 include $(RTEMS_CUSTOM)
 include $(PROJECT_ROOT)/make/leaf.cfg
@@ -35,6 +39,7 @@ all:    ${ARCH} $(PGM)
 
 CFLAGS += \
 	$(CONFIG_ARGS) \
+	-I. -Itests -I../mailbox -I../hpsc -I../plat \
 
 LIBMBOX = ../mailbox/${ARCH}/libhpsc-mbox.a
 LIBHPSC = ../hpsc/${ARCH}/libhpsc.a
