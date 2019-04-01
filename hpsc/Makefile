@@ -41,7 +41,9 @@ include $(RTEMS_SHARE)/make/lib.cfg
 
 DEFINES  +=
 CPPFLAGS +=
-CFLAGS   +=
+CFLAGS   += \
+	-I../mailbox \
+
 
 #
 # Add your list of files to delete here.  The config files

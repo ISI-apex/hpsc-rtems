@@ -7,8 +7,8 @@
 #include <rtems.h>
 #include <rtems/bspIo.h>
 
-#include "../mailbox/hpsc-mbox.h"
 #include "command.h"
+#include "hpsc-mbox.h"
 #include "link.h"
 #include "mailbox-link.h"
 
