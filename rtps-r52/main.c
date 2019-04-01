@@ -17,6 +17,7 @@
 // mailbox driver
 #include <hpsc-mbox.h>
 
+#include "gic.h"
 #include "test.h"
 
 #define MAIN_LOOP_SILENT_ITERS 100
@@ -58,9 +59,15 @@ void *POSIX_Init(void *arg)
 
 #if CONFIG_MBOX_DEV_HPPS
     struct hpsc_mbox mbox_hpps;
+    rtems_vector_number vec_a =
+        gic_irq_to_rvn(RTPS_IRQ__HR_MBOX_0 + MBOX_HPPS_RTPS__RTPS_RCV_INT,
+                       GIC_IRQ_TYPE_SPI);
+    rtems_vector_number vec_b =
+        gic_irq_to_rvn(RTPS_IRQ__HR_MBOX_0 + MBOX_HPPS_RTPS__RTPS_ACK_INT,
+                       GIC_IRQ_TYPE_SPI);
     sc = hpsc_mbox_probe(&mbox_hpps, "HPPS-RTPS Mailbox", MBOX_HPPS_RTPS__BASE,
-                         RTPS_IRQ__HR_MBOX_0, MBOX_HPPS_RTPS__RTPS_RCV_INT,
-                         RTPS_IRQ__HR_MBOX_1, MBOX_HPPS_RTPS__RTPS_ACK_INT);
+                         vec_a, MBOX_HPPS_RTPS__RTPS_RCV_INT,
+                         vec_b, MBOX_HPPS_RTPS__RTPS_ACK_INT);
     assert(sc == RTEMS_SUCCESSFUL);
 #endif
 
