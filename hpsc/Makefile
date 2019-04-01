@@ -9,7 +9,8 @@ LIB=${ARCH}/${LIBNAME}
 C_PIECES= \
 	command \
 	mailbox-link \
-	shmem
+	shmem \
+	shmem-link
 C_FILES=$(C_PIECES:%=%.c)
 C_O_FILES=$(C_FILES:%.c=${ARCH}/%.o)
 
@@ -23,6 +24,7 @@ H_FILES= \
 	mailbox-link.h \
 	server.h \
 	shmem.h \
+	shmem-link.h \
 
 # Assembly source names, if any, go here -- minus the .S
 S_PIECES=
