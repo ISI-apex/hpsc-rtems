@@ -39,6 +39,39 @@
 #define HPSC_MBOX_INTS   16
 #define HPSC_MBOX_INSTANCE_REGION (REG_DATA + HPSC_MBOX_DATA_SIZE)
 
+struct hpsc_mbox_chan_irq_info {
+    hpsc_mbox_chan_irq_cb cb;
+    void *arg;
+};
+
+struct hpsc_mbox_chan {
+    // static fields
+    struct hpsc_mbox *mbox;
+    volatile void *base;
+    unsigned instance;
+    // dynamic fields
+    struct hpsc_mbox_chan_irq_info int_a;
+    struct hpsc_mbox_chan_irq_info int_b;
+    uint32_t owner;
+    uint32_t src;
+    uint32_t dest;
+    bool active;
+};
+
+struct hpsc_mbox_irq_info {
+    struct hpsc_mbox *mbox;
+    rtems_vector_number n;
+    unsigned idx;
+};
+
+struct hpsc_mbox {
+    struct hpsc_mbox_chan chans[HPSC_MBOX_CHANNELS];
+    const char *info;
+    volatile void *base;
+    struct hpsc_mbox_irq_info int_a;
+    struct hpsc_mbox_irq_info int_b;
+};
+
 
 static void hpsc_mbox_chan_init(struct hpsc_mbox_chan *chan,
                                 uint32_t owner, uint32_t src, uint32_t dest,
@@ -70,8 +103,9 @@ static void hpsc_mbox_chan_destroy(struct hpsc_mbox_chan *chan)
     chan->active = false;
 }
 
-int hpsc_mbox_chan_claim(
-    struct hpsc_mbox_chan *chan,
+struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
+    struct hpsc_mbox *mbox,
+    unsigned instance,
     uint32_t owner,
     uint32_t src,
     uint32_t dest,
@@ -85,7 +119,11 @@ int hpsc_mbox_chan_claim(
     uint32_t val;
     uint32_t src_hw;
     uint32_t dest_hw;
+    struct hpsc_mbox_chan *chan;
 
+    // NOTE: we don't verify that channels aren't already claimed
+    assert(instance < HPSC_MBOX_CHANNELS);
+    chan = &mbox->chans[instance];
     hpsc_mbox_chan_init(chan, owner, src, dest, cb_a, cb_b, cb_arg);
 
     if (chan->owner) {
@@ -135,10 +173,10 @@ int hpsc_mbox_chan_claim(
     printk("hpsc_mbox_chan_claim: int en: %p <|- %08x\n", addr, val);
     *addr |= val;
 
-    return 0;
+    return chan;
 cleanup:
     hpsc_mbox_chan_destroy(chan);
-    return -1;
+    return NULL;
 }
 
 int hpsc_mbox_chan_release(struct hpsc_mbox_chan *chan)
@@ -347,27 +385,41 @@ rtems_status_code hpsc_mbox_probe(
     // setup interrupt handlers
     sc = rtems_interrupt_handler_install(int_a, info, RTEMS_INTERRUPT_UNIQUE,
                                          hpsc_mbox_isr_a, &mbox->int_a);
-    if (sc != RTEMS_SUCCESSFUL)
-        bsp_fatal(BSP_FATAL_INTERRUPT_INITIALIZATION);
+    if (sc != RTEMS_SUCCESSFUL) {
+        printf("hpsc_mbox_probe: failed to install interrupt handler A\n");
+        return sc;
+    }
     sc = rtems_interrupt_handler_install(int_b, info, RTEMS_INTERRUPT_UNIQUE,
                                          hpsc_mbox_isr_b, &mbox->int_b);
-    if (sc != RTEMS_SUCCESSFUL)
-        bsp_fatal(BSP_FATAL_INTERRUPT_INITIALIZATION);
+    if (sc != RTEMS_SUCCESSFUL) {
+        printf("hpsc_mbox_probe: failed to install interrupt handler B\n");
+        goto fail_isr_b;
+    }
 
+    return sc;
+fail_isr_b:
+    rtems_interrupt_handler_remove(mbox->int_a.n, hpsc_mbox_isr_a,
+                                   &mbox->int_a);
     return sc;
 }
 
 rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox)
 {
-    rtems_status_code sc;
+    rtems_status_code sc = RTEMS_SUCCESSFUL;
+    rtems_status_code sc_tmp;
     printf("hpsc_mbox_remove: %s\n", mbox->info);
-    sc = rtems_interrupt_handler_remove(mbox->int_a.n, hpsc_mbox_isr_a,
-                                        &mbox->int_a);
-    if (sc != RTEMS_SUCCESSFUL)
-        bsp_fatal(BSP_FATAL_INTERRUPT_INITIALIZATION);
-    sc = rtems_interrupt_handler_remove(mbox->int_b.n, hpsc_mbox_isr_b,
-                                        &mbox->int_b);
-    if (sc != RTEMS_SUCCESSFUL)
-        bsp_fatal(BSP_FATAL_INTERRUPT_INITIALIZATION);
+
+    sc_tmp = rtems_interrupt_handler_remove(mbox->int_a.n, hpsc_mbox_isr_a,
+                                            &mbox->int_a);
+    if (sc_tmp != RTEMS_SUCCESSFUL) {
+        printf("hpsc_mbox_remove: failed to uninstall interrupt handler A\n");
+        sc = sc_tmp;
+    }
+    sc_tmp = rtems_interrupt_handler_remove(mbox->int_b.n, hpsc_mbox_isr_b,
+                                            &mbox->int_b);
+    if (sc_tmp != RTEMS_SUCCESSFUL) {
+        printf("hpsc_mbox_remove: failed to uninstall interrupt handler B\n");
+        sc = sc_tmp;
+    }
     return sc;
 }

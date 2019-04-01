@@ -13,41 +13,19 @@
 
 typedef void (*hpsc_mbox_chan_irq_cb)(void *);
 
+/**
+ * A mailbox device (IP block instance)
+ */
 struct hpsc_mbox;
 
-struct hpsc_mbox_chan_irq_info {
-    hpsc_mbox_chan_irq_cb cb;
-    void *arg;
-};
+/**
+ * A channel (up at HPSC_MBOX_CHANNELS instances per device)
+ */
+struct hpsc_mbox_chan;
 
-struct hpsc_mbox_chan {
-    // static fields
-    struct hpsc_mbox *mbox;
-    volatile void *base;
-    unsigned instance;
-    // dynamic fields
-    struct hpsc_mbox_chan_irq_info int_a;
-    struct hpsc_mbox_chan_irq_info int_b;
-    uint32_t owner;
-    uint32_t src;
-    uint32_t dest;
-    bool active;
-};
-
-struct hpsc_mbox_irq_info {
-    struct hpsc_mbox *mbox;
-    rtems_vector_number n;
-    unsigned idx;
-};
-
-struct hpsc_mbox {
-    struct hpsc_mbox_chan chans[HPSC_MBOX_CHANNELS];
-    const char *info;
-    volatile void *base;
-    struct hpsc_mbox_irq_info int_a;
-    struct hpsc_mbox_irq_info int_b;
-};
-
+/**
+ * Initialize a mailbox IP block
+ */
 rtems_status_code hpsc_mbox_probe(
     struct hpsc_mbox *mbox,
     const char *info,
@@ -58,10 +36,17 @@ rtems_status_code hpsc_mbox_probe(
     unsigned int_idx_b
 );
 
+/**
+ * Teardown a mailbox IP block
+ */
 rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox);
 
-int hpsc_mbox_chan_claim(
-    struct hpsc_mbox_chan *chan,
+/**
+ * Claim a mailbox channel
+ */
+struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
+    struct hpsc_mbox *mbox,
+    unsigned instance,
     uint32_t owner,
     uint32_t src,
     uint32_t dest,
@@ -70,9 +55,19 @@ int hpsc_mbox_chan_claim(
     void *cb_arg
 );
 
+/**
+ * Release a mailbox channel
+ */
 int hpsc_mbox_chan_release(struct hpsc_mbox_chan *chan);
 
+/**
+ * Write to a mailbox channel (send a message)
+ */
 size_t hpsc_mbox_chan_write(struct hpsc_mbox_chan *chan, void *buf, size_t sz);
+
+/**
+ * Read from a mailbox channel (receive a message)
+ */
 size_t hpsc_mbox_chan_read(struct hpsc_mbox_chan *chan, void *buf, size_t sz);
 
 #endif // HPSC_MBOX_H

@@ -146,23 +146,20 @@ struct link *mbox_link_connect(const char *name, struct hpsc_mbox *mbox,
         goto free_link;
     }
 
-    // NOTE: we don't verify that channels aren't already claimed
-    ret = hpsc_mbox_chan_claim(&mbox->chans[idx_from],
-                               server, client, server,
-                               rcv_cb, NULL, link);
-    if (ret) {
+    mlink->chan_from = hpsc_mbox_chan_claim(mbox, idx_from,
+                                            server, client, server,
+                                            rcv_cb, NULL, link);
+    if (!mlink->chan_from) {
         printk("ERROR: mbox_link_connect: failed to claim chan_from\n");
         goto free_links;
     }
-    mlink->chan_from = &mbox->chans[idx_from];
-    ret = hpsc_mbox_chan_claim(&mbox->chans[idx_to],
-                               server, server, client,
-                               NULL, handle_ack, link);
-    if (ret) {
+    mlink->chan_to = hpsc_mbox_chan_claim(mbox, idx_to,
+                                          server, server, client,
+                                          NULL, handle_ack, link);
+    if (!mlink->chan_to) {
         printk("ERROR: mbox_link_connect: failed to claim chan_to\n");
         goto free_from;
     }
-    mlink->chan_to = &mbox->chans[idx_to];
 
     mlink->cmd_ctx.tx_acked = false;
     mlink->cmd_ctx.reply = NULL;
