@@ -4,6 +4,7 @@
 #include <rtems.h>
 
 #include "command.h"
+#include "gic.h"
 #include "hwinfo.h"
 #include "mailbox-link.h"
 #include "mailbox-map.h"
@@ -13,13 +14,19 @@ int test_rtps_trch_mailbox()
     rtems_status_code sc;
     struct hpsc_mbox mbox_trch;
     struct link *trch_link;
+    rtems_vector_number vec_a =
+        gic_irq_to_rvn(RTPS_IRQ__TR_MBOX_0 + MBOX_LSIO__RTPS_RCV_INT,
+                       GIC_IRQ_TYPE_SPI);
+    rtems_vector_number vec_b =
+        gic_irq_to_rvn(RTPS_IRQ__TR_MBOX_0 + MBOX_LSIO__RTPS_ACK_INT,
+                       GIC_IRQ_TYPE_SPI);
     uint32_t arg[] = { CMD_PING, 42 };
     uint32_t reply[sizeof(arg) / sizeof(arg[0])] = {0};
     int rc;
 
     sc = hpsc_mbox_probe(&mbox_trch, "TRCH-RTPS Mailbox", MBOX_LSIO__BASE,
-                         36, MBOX_LSIO__RTPS_RCV_INT,
-                         37, MBOX_LSIO__RTPS_ACK_INT);
+                         vec_a, MBOX_LSIO__RTPS_RCV_INT,
+                         vec_b, MBOX_LSIO__RTPS_ACK_INT);
     if(sc != RTEMS_SUCCESSFUL)
         return -1;
 
