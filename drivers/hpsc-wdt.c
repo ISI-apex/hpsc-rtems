@@ -121,7 +121,7 @@ static void exec_stage_cmd(struct hpsc_wdt *wdt, enum stage_cmd scmd,
     exec_cmd(wdt, &stage_cmd_codes[stage][scmd]);
 }
 
-static void wdt_isr(void *arg)
+static void hpsc_wdt_isr(void *arg)
 {
     struct hpsc_wdt *wdt = (struct hpsc_wdt *)arg;
     assert(wdt);
@@ -130,30 +130,30 @@ static void wdt_isr(void *arg)
         wdt->cb(wdt, wdt->cb_arg);
 }
 
-static rtems_status_code wdt_intr_enable(struct hpsc_wdt *wdt)
+static rtems_status_code hpsc_wdt_intr_enable(struct hpsc_wdt *wdt)
 {
-    // setup interrupt handlers
-    rtems_status_code sc = rtems_interrupt_handler_install(wdt->vec, wdt->name,
-                                                           RTEMS_INTERRUPT_UNIQUE,
-                                                           wdt_isr,
-                                                           wdt);
+    rtems_status_code sc;
+    sc = rtems_interrupt_handler_install(wdt->vec, wdt->name, 
+                                         RTEMS_INTERRUPT_UNIQUE,
+                                         hpsc_wdt_isr, wdt);
     if (sc != RTEMS_SUCCESSFUL)
         bsp_fatal(BSP_FATAL_INTERRUPT_INITIALIZATION);
     return sc;
 }
 
-static rtems_status_code wdt_intr_disable(struct hpsc_wdt *wdt)
+static rtems_status_code hpsc_wdt_intr_disable(struct hpsc_wdt *wdt)
 {
-    rtems_status_code sc = rtems_interrupt_handler_remove(wdt->vec, wdt_isr,
-                                                          wdt);
+    rtems_status_code sc;
+    sc = rtems_interrupt_handler_remove(wdt->vec, hpsc_wdt_isr, wdt);
     if (sc != RTEMS_SUCCESSFUL)
         bsp_fatal(BSP_FATAL_INTERRUPT_INITIALIZATION);
     return sc;
 }
 
-static struct hpsc_wdt *wdt_create(const char *name, volatile uint32_t *base,
-                                   rtems_vector_number intr_vec,
-                                   hpsc_wdt_cb_t cb, void *cb_arg)
+static struct hpsc_wdt *hpsc_wdt_create(const char *name,
+                                        volatile uint32_t *base,
+                                        rtems_vector_number intr_vec,
+                                        hpsc_wdt_cb_t cb, void *cb_arg)
 {
     printf("WDT %s: create base %p\n", name, base);
     struct hpsc_wdt *wdt = malloc(sizeof(struct hpsc_wdt));
@@ -165,35 +165,37 @@ static struct hpsc_wdt *wdt_create(const char *name, volatile uint32_t *base,
     wdt->cb_arg = cb_arg;
     return wdt;
 }
-struct hpsc_wdt *wdt_create_monitor(const char *name, volatile uint32_t *base,
-                                    rtems_vector_number intr_vec,
-                                    hpsc_wdt_cb_t cb, void *cb_arg,
-                                    uint32_t clk_freq_hz, unsigned max_div)
+struct hpsc_wdt *hpsc_wdt_create_monitor(const char *name,
+                                         volatile uint32_t *base,
+                                         rtems_vector_number intr_vec,
+                                         hpsc_wdt_cb_t cb, void *cb_arg,
+                                         uint32_t clk_freq_hz, unsigned max_div)
 {
-    struct hpsc_wdt *wdt = wdt_create(name, base, intr_vec, cb, cb_arg);
+    struct hpsc_wdt *wdt = hpsc_wdt_create(name, base, intr_vec, cb, cb_arg);
     wdt->clk_freq_hz = clk_freq_hz;
     wdt->max_div = max_div;
     wdt->counter_width = (64 - log2_of_pow2(wdt->max_div) - 1);
     wdt->monitor = true;
-    wdt_intr_enable(wdt);
+    hpsc_wdt_intr_enable(wdt);
     return wdt;
 }
-struct hpsc_wdt *wdt_create_target(const char *name, volatile uint32_t *base,
-                                   rtems_vector_number intr_vec,
-                                   hpsc_wdt_cb_t cb, void *cb_arg)
+struct hpsc_wdt *hpsc_wdt_create_target(const char *name,
+                                        volatile uint32_t *base,
+                                        rtems_vector_number intr_vec,
+                                        hpsc_wdt_cb_t cb, void *cb_arg)
 {
-    struct hpsc_wdt *wdt = wdt_create(name, base, intr_vec, cb, cb_arg);
+    struct hpsc_wdt *wdt = hpsc_wdt_create(name, base, intr_vec, cb, cb_arg);
     wdt->monitor = false;
-    wdt_intr_enable(wdt);
+    hpsc_wdt_intr_enable(wdt);
     return wdt;
 }
 
-int wdt_configure(struct hpsc_wdt *wdt, unsigned freq,
+int hpsc_wdt_configure(struct hpsc_wdt *wdt, unsigned freq,
                   unsigned num_stages, uint64_t *timeouts)
 {
     assert(wdt);
     assert(wdt->monitor);
-    assert(!wdt_is_enabled(wdt)); // not strict requirement, but for sanity
+    assert(!hpsc_wdt_is_enabled(wdt)); // not strict requirement, but for sanity
     if (num_stages > MAX_STAGES) {
         printf("ERROR: WDT: more stages than supported: %u >= %u\n",
                num_stages, MAX_STAGES);
@@ -238,17 +240,17 @@ int wdt_configure(struct hpsc_wdt *wdt, unsigned freq,
     return 0;
 }
 
-void wdt_destroy(struct hpsc_wdt *wdt)
+void hpsc_wdt_destroy(struct hpsc_wdt *wdt)
 {
     assert(wdt);
     printf("WDT %s: destroy\n", wdt->name);
-    wdt_intr_disable(wdt);
+    hpsc_wdt_intr_disable(wdt);
     if (wdt->monitor)
-        assert(!wdt_is_enabled(wdt));
+        assert(!hpsc_wdt_is_enabled(wdt));
     free(wdt);
 }
 
-uint64_t wdt_count(struct hpsc_wdt *wdt, unsigned stage)
+uint64_t hpsc_wdt_count(struct hpsc_wdt *wdt, unsigned stage)
 {
     assert(wdt);
     exec_stage_cmd(wdt, SCMD_CAPTURE, stage); 
@@ -258,7 +260,7 @@ uint64_t wdt_count(struct hpsc_wdt *wdt, unsigned stage)
     return count;
 }
 
-uint64_t wdt_timeout(struct hpsc_wdt *wdt, unsigned stage)
+uint64_t hpsc_wdt_timeout(struct hpsc_wdt *wdt, unsigned stage)
 {
     assert(wdt);
     // NOTE: not going to be the right value if it wasn't not loaded via cmd
@@ -268,31 +270,31 @@ uint64_t wdt_timeout(struct hpsc_wdt *wdt, unsigned stage)
     return terminal;
 }
 
-void wdt_timeout_clear(struct hpsc_wdt *wdt, unsigned stage)
+void hpsc_wdt_timeout_clear(struct hpsc_wdt *wdt, unsigned stage)
 {
     assert(wdt);
     // TODO: spec unclear: if we are not allowed to clear the int source, then
     // we have to disable the interrupt via the interrupt controller, and
-    // re-enable it in wdt_enable.
+    // re-enable it in hpsc_wdt_enable.
     REGB_CLEAR32(wdt->base, REG__STATUS,
                  1 << ( REG__STATUS__TIMEOUT__SHIFT + stage));
 }
 
-bool wdt_is_enabled(struct hpsc_wdt *wdt)
+bool hpsc_wdt_is_enabled(struct hpsc_wdt *wdt)
 {
     bool enabled = REGB_READ32(wdt->base, REG__CONFIG) & REG__CONFIG__EN;
     printf("WDT %s: is enabled -> %u\n", wdt->name, enabled);
     return enabled;
 }
 
-void wdt_enable(struct hpsc_wdt *wdt)
+void hpsc_wdt_enable(struct hpsc_wdt *wdt)
 {
     assert(wdt);
     printf("WDT %s: enable\n", wdt->name);
     REGB_SET32(wdt->base, REG__CONFIG, REG__CONFIG__EN);
 }
 
-void wdt_disable(struct hpsc_wdt *wdt)
+void hpsc_wdt_disable(struct hpsc_wdt *wdt)
 {
     assert(wdt);
     assert(wdt->monitor);
@@ -300,7 +302,7 @@ void wdt_disable(struct hpsc_wdt *wdt)
     exec_global_cmd(wdt, CMD_DISABLE);
 }
 
-void wdt_kick(struct hpsc_wdt *wdt)
+void hpsc_wdt_kick(struct hpsc_wdt *wdt)
 {
     assert(wdt);
     DPRINTF("WDT %s: kick\n", wdt->name);
