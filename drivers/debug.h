@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#include <rtems/bspIo.h>
+
 // Define DEBUG to 1 in the source file that you want to debug
 // before the #include statement for this header.
 #ifndef DEBUG
