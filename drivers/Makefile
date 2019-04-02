@@ -9,6 +9,7 @@ LIB=${ARCH}/${LIBNAME}
 C_PIECES= \
 	bit \
 	hpsc-mbox \
+	hpsc-rti-timer \
 	hpsc-wdt
 C_FILES=$(C_PIECES:%=%.c)
 C_O_FILES=$(C_FILES:%.c=${ARCH}/%.o)
@@ -21,6 +22,7 @@ H_FILES = \
 	bit.h \
 	debug.h \
 	hpsc-mbox.h \
+	hpsc-rti-timer.h \
 	hpsc-wdt.h \
 	regops.h \
 
