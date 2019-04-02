@@ -37,6 +37,11 @@ ifeq ($(strip $(TEST_SHMEM)),1)
 CSRCS += tests/shmem.c
 endif
 
+H_FILES = \
+	gic.h \
+	test.h \
+	watchdog.h \
+
 include $(RTEMS_MAKEFILE_PATH)/Makefile.inc
 include $(RTEMS_CUSTOM)
 include $(PROJECT_ROOT)/make/leaf.cfg
@@ -59,5 +64,7 @@ LD_LIBS += \
 	$(LIBDRIVERS) \
 	$(LIBHPSC)
 
-$(PGM): $(LIBDRIVERS) $(LIBHPSC) $(OBJS)
+$(OBJS): $(LIBDRIVERS) $(LIBHPSC) ${H_FILES} ../plat/* Makefile
+
+$(PGM): $(OBJS)
 	$(make-exe)

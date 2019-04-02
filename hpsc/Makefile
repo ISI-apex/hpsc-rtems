@@ -18,7 +18,7 @@ CC_PIECES=
 CC_FILES=$(CC_PIECES:%=%.cc)
 CC_O_FILES=$(CC_PIECES:%=${ARCH}/%.o)
 
-H_FILES= \
+H_FILES = \
 	command.h \
 	link.h \
 	mailbox-link.h \
@@ -60,6 +60,10 @@ CLEAN_ADDITIONS +=
 CLOBBER_ADDITIONS +=
 
 all:	${ARCH} $(SRCS) $(LIB)
+
+LIBDRIVERS = ../drivers/${ARCH}/libhpsc-drivers.a
+
+$(OBJS): $(LIBDRIVERS) ${H_FILES} Makefile
 
 $(LIB): ${OBJS}
 	$(make-library)

@@ -17,9 +17,12 @@ CC_PIECES=
 CC_FILES=$(CC_PIECES:%=%.cc)
 CC_O_FILES=$(CC_PIECES:%=${ARCH}/%.o)
 
-H_FILES= \
+H_FILES = \
+	bit.h \
+	debug.h \
 	hpsc-mbox.h \
 	hpsc-wdt.h \
+	regops.h \
 
 # Assembly source names, if any, go here -- minus the .S
 S_PIECES=
@@ -53,6 +56,8 @@ CLEAN_ADDITIONS +=
 CLOBBER_ADDITIONS +=
 
 all:	${ARCH} $(SRCS) $(LIB)
+
+$(OBJS): ${H_FILES} Makefile
 
 $(LIB): ${OBJS}
 	$(make-library)
