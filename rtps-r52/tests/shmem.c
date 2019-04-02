@@ -1,8 +1,11 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "mem-map.h"
-#include "shmem.h"
+// plat
+#include <mem-map.h>
+
+// libhpsc
+#include <shmem.h>
 
 #include "test.h"
 

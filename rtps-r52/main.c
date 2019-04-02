@@ -17,14 +17,12 @@
 // mailbox driver
 #include <hpsc-mbox.h>
 
+#include "devices.h"
 #include "gic.h"
 #include "test.h"
 #include "watchdog.h"
 
 #define MAIN_LOOP_SILENT_ITERS 100
-
-// inferred CONFIG settings
-#define CONFIG_MBOX_DEV_HPPS (CONFIG_HPPS_RTPS_MAILBOX)
 
 void main_loop()
 {
@@ -72,22 +70,41 @@ void main_loop()
 
 void *POSIX_Init(void *arg)
 {
-    rtems_status_code sc;
     printf("\n\nRTPS\n");
 
-#if CONFIG_MBOX_DEV_HPPS
+#if CONFIG_MBOX_LSIO
+    struct hpsc_mbox *mbox_lsio = NULL;
+    rtems_status_code mbox_lsio_sc;
+    rtems_vector_number mbox_lsio_vec_a =
+        gic_irq_to_rvn(RTPS_IRQ__TR_MBOX_0 + MBOX_LSIO__RTPS_RCV_INT,
+                       GIC_IRQ_TYPE_SPI);
+    rtems_vector_number mbox_lsio_vec_b =
+        gic_irq_to_rvn(RTPS_IRQ__TR_MBOX_0 + MBOX_LSIO__RTPS_ACK_INT,
+                       GIC_IRQ_TYPE_SPI);
+    mbox_lsio_sc = hpsc_mbox_probe(&mbox_lsio, "TRCH-RTPS Mailbox",
+                                   MBOX_LSIO__BASE,
+                                   mbox_lsio_vec_a, MBOX_LSIO__RTPS_RCV_INT,
+                                   mbox_lsio_vec_b, MBOX_LSIO__RTPS_ACK_INT);
+    assert(mbox_lsio_sc == RTEMS_SUCCESSFUL);
+    dev_add_mbox(DEV_ID_MBOX_LSIO, mbox_lsio);
+#endif // CONFIG_MBOX_LSIO
+
+#if CONFIG_MBOX_HPPS
     struct hpsc_mbox *mbox_hpps = NULL;
-    rtems_vector_number vec_a =
+    rtems_status_code mbox_hpps_sc;
+    rtems_vector_number mbox_hpps_vec_a =
         gic_irq_to_rvn(RTPS_IRQ__HR_MBOX_0 + MBOX_HPPS_RTPS__RTPS_RCV_INT,
                        GIC_IRQ_TYPE_SPI);
-    rtems_vector_number vec_b =
+    rtems_vector_number mbox_hpps_vec_b =
         gic_irq_to_rvn(RTPS_IRQ__HR_MBOX_0 + MBOX_HPPS_RTPS__RTPS_ACK_INT,
                        GIC_IRQ_TYPE_SPI);
-    sc = hpsc_mbox_probe(&mbox_hpps, "HPPS-RTPS Mailbox", MBOX_HPPS_RTPS__BASE,
-                         vec_a, MBOX_HPPS_RTPS__RTPS_RCV_INT,
-                         vec_b, MBOX_HPPS_RTPS__RTPS_ACK_INT);
-    assert(sc == RTEMS_SUCCESSFUL);
-#endif
+    mbox_hpps_sc = hpsc_mbox_probe(&mbox_hpps, "HPPS-RTPS Mailbox",
+                                   MBOX_HPPS_RTPS__BASE,
+                                   mbox_hpps_vec_a, MBOX_HPPS_RTPS__RTPS_RCV_INT,
+                                   mbox_hpps_vec_b, MBOX_HPPS_RTPS__RTPS_ACK_INT);
+    assert(mbox_hpps_sc == RTEMS_SUCCESSFUL);
+    dev_add_mbox(DEV_ID_MBOX_HPPS, mbox_hpps);
+#endif // CONFIG_MBOX_HPPS
 
 #if CONFIG_HPPS_RTPS_MAILBOX
     struct link *hpps_link = mbox_link_connect("HPPS_MBOX_LINK", mbox_hpps,

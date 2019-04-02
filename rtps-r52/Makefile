@@ -10,34 +10,34 @@ MANAGERS=all
 CONFIG_FLAGS = \
 	TEST_RTPS_TRCH_MAILBOX \
 	TEST_SHMEM \
-	CONFIG_HPPS_RTPS_MAILBOX \
+	CONFIG_MBOX_LSIO \
+	CONFIG_MBOX_HPPS \
 	CONFIG_WDT \
 
 CONFIG_ARGS = $(foreach m,$(CONFIG_FLAGS),-D$(m)=$($(m)))
 
 # Enable disable tests here:
-TEST_RTPS_TRCH_MAILBOX  	= 1
+TEST_RTPS_TRCH_MAILBOX		= 1
 TEST_SHMEM			= 1
 
 # Set build configuration here
-CONFIG_HPPS_RTPS_MAILBOX  	= 1
+CONFIG_MBOX_LSIO		= 1
+CONFIG_MBOX_HPPS		= 1
 CONFIG_WDT 			= 1
 
 # C source names
 CSRCS = \
+	devices.c \
 	server.c \
 	main.c \
 	watchdog.c
+CSRCS += \
+	tests/mailbox.c \
+	tests/shmem.c
 COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 
-ifeq ($(strip $(TEST_RTPS_TRCH_MAILBOX)),1)
-CSRCS += tests/mailbox.c
-endif
-ifeq ($(strip $(TEST_SHMEM)),1)
-CSRCS += tests/shmem.c
-endif
-
 H_FILES = \
+	devices.h \
 	gic.h \
 	test.h \
 	watchdog.h \
