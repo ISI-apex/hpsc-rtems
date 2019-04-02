@@ -4,5 +4,6 @@ include $(RTEMS_SHARE)/make/directory.cfg
 
 SUBDIRS = \
 	drivers \
+	bist \
 	hpsc \
 	rtps-r52
