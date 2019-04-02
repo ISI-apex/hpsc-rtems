@@ -73,14 +73,19 @@ struct hpsc_mbox {
 };
 
 
+static volatile uint32_t *to_chan_base(struct hpsc_mbox *mbox, unsigned instance)
+{
+    return (volatile uint32_t *)((uint8_t *)mbox->base +
+                             instance * HPSC_MBOX_INSTANCE_REGION);
+}
+
 static void hpsc_mbox_chan_init(struct hpsc_mbox_chan *chan,
                                 uint32_t owner, uint32_t src, uint32_t dest,
                                 hpsc_mbox_chan_irq_cb cb_a,
                                 hpsc_mbox_chan_irq_cb cb_b,
                                 void *cb_arg)
 {
-    chan->base = (volatile void *)((uint8_t *)chan->mbox->base +
-                                   chan->instance * HPSC_MBOX_INSTANCE_REGION);
+    chan->base = (volatile void *)to_chan_base(chan->mbox, chan->instance);
     chan->int_a.cb = cb_a;
     chan->int_a.arg = cb_arg;
     chan->int_b.cb = cb_b;
@@ -103,6 +108,61 @@ static void hpsc_mbox_chan_destroy(struct hpsc_mbox_chan *chan)
     chan->active = false;
 }
 
+void hpsc_mbox_chan_config_read(
+    struct hpsc_mbox *mbox,
+    unsigned instance,
+    uint32_t *owner,
+    uint32_t *src,
+    uint32_t *dest
+)
+{
+    volatile uint32_t *addr = to_chan_base(mbox, instance) + REG_CONFIG;
+    uint32_t val = *addr;
+    if (owner)
+        *owner = (val & REG_CONFIG__OWNER__MASK) >> REG_CONFIG__OWNER__SHIFT;
+    if (src)
+        *src =  (val & REG_CONFIG__SRC__MASK) >> REG_CONFIG__SRC__SHIFT;
+    if (dest)
+        *dest = (val & REG_CONFIG__DEST__MASK) >> REG_CONFIG__DEST__SHIFT;
+    printk("hpsc_mbox_chan_config_read: %p -> %08x\n", addr, val);
+}
+
+int hpsc_mbox_chan_config_write(
+    struct hpsc_mbox *mbox,
+    unsigned instance,
+    uint32_t owner,
+    uint32_t src,
+    uint32_t dest
+)
+{
+    volatile uint32_t *addr = to_chan_base(mbox, instance) + REG_CONFIG;
+    uint32_t config = REG_CONFIG__UNSECURE |
+             ((owner << REG_CONFIG__OWNER__SHIFT) & REG_CONFIG__OWNER__MASK) |
+             ((src << REG_CONFIG__SRC__SHIFT)     & REG_CONFIG__SRC__MASK) |
+             ((dest  << REG_CONFIG__DEST__SHIFT)  & REG_CONFIG__DEST__MASK);
+    uint32_t val = config;
+    printk("hpsc_mbox_chan_config_write: %p <|- %08x\n", addr, val);
+    *addr = val;
+    val = *addr;
+    printk("hpsc_mbox_chan_config_write: %p -> %08x\n", addr, val);
+    if (val != config) {
+        printk("hpsc_mbox_chan_config_write: failed to write chan %u for %x: "
+               "already owned by %x\n", instance, owner,
+               (val & REG_CONFIG__OWNER__MASK) >> REG_CONFIG__OWNER__SHIFT);
+        return -1;
+    }
+    return 0;
+}
+
+void hpsc_mbox_chan_reset(struct hpsc_mbox *mbox, unsigned instance)
+{
+    volatile uint32_t *addr = to_chan_base(mbox, instance) + REG_CONFIG;
+    // clearing owner also clears destination (resets the instance)
+    uint32_t val = 0;
+    printk("hpsc_mbox_chan_reset: owner: %p <|- %08x\n", addr, val);
+    *addr = val;
+}
+
 struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
     struct hpsc_mbox *mbox,
     unsigned instance,
@@ -115,8 +175,7 @@ struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
 )
 {
     volatile uint32_t *addr;
-    uint32_t config;
-    uint32_t val;
+    uint32_t val = 0;
     uint32_t src_hw;
     uint32_t dest_hw;
     struct hpsc_mbox_chan *chan;
@@ -127,28 +186,10 @@ struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
     hpsc_mbox_chan_init(chan, owner, src, dest, cb_a, cb_b, cb_arg);
 
     if (chan->owner) {
-        addr = (volatile uint32_t *)((uint8_t *)chan->base + REG_CONFIG);
-        config = REG_CONFIG__UNSECURE |
-                 ((chan->owner << REG_CONFIG__OWNER__SHIFT) & REG_CONFIG__OWNER__MASK) |
-                 ((chan->src << REG_CONFIG__SRC__SHIFT)     & REG_CONFIG__SRC__MASK) |
-                 ((chan->dest  << REG_CONFIG__DEST__SHIFT)  & REG_CONFIG__DEST__MASK);
-        val = config;
-        printk("hpsc_mbox_chan_claim: config: %p <|- %08x\n", addr, val);
-        *addr = val;
-        val = *addr;
-        printk("hpsc_mbox_chan_claim: config: %p -> %08x\n", addr, val);
-        if (val != config) {
-            printk("hpsc_mbox_chan_claim: failed to claim mailbox %u for %x: "
-                   "already owned by %x\n", chan->instance, chan->owner,
-                   (val & REG_CONFIG__OWNER__MASK) >> REG_CONFIG__OWNER__SHIFT);
+        if (hpsc_mbox_chan_config_write(mbox, instance, owner, src, dest))
             goto cleanup;
-        }
     } else { // not owner, just check the value in registers against the requested value
-        addr = (volatile uint32_t *)((uint8_t *)chan->base + REG_CONFIG);
-        val = *addr;
-        printk("hpsc_mbox_chan_claim: config: %p -> %08x\n", addr, val);
-        src_hw =  (val & REG_CONFIG__SRC__MASK) >> REG_CONFIG__SRC__SHIFT;
-        dest_hw = (val & REG_CONFIG__DEST__MASK) >> REG_CONFIG__DEST__SHIFT;
+        hpsc_mbox_chan_config_read(mbox, instance, NULL, &src_hw, &dest_hw);
         if (cb_b && src && src_hw != src) {
             printk("hpsc_mbox_chan_claim: failed to claim mailbox %u: "
                    "src mismatch: %x (expected %x)\n",
@@ -163,7 +204,6 @@ struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
         }
     }
 
-    val = 0;
     if (chan->int_a.cb)
         val |= HPSC_MBOX_INT_A(chan->mbox->int_a.idx);
     if (chan->int_b.cb)
@@ -181,14 +221,9 @@ cleanup:
 
 int hpsc_mbox_chan_release(struct hpsc_mbox_chan *chan)
 {
-    // We are the OWNER, so we can release
-    volatile uint32_t *addr;
-    uint32_t val = 0;
     if (chan->owner) {
-        addr = (volatile uint32_t *)((uint8_t *)chan->base + REG_CONFIG);
-        printk("hpsc_mbox_chan_release: owner: %p <|- %08x\n", addr, val);
-        *addr = val;
-        // clearing owner also clears destination (resets the instance)
+        // We are the OWNER, so we can release
+        hpsc_mbox_chan_reset(chan->mbox, chan->instance);
     }
     hpsc_mbox_chan_destroy(chan);
     return 0;

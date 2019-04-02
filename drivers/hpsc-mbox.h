@@ -42,6 +42,37 @@ rtems_status_code hpsc_mbox_probe(
 rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox);
 
 /**
+ * Read a mailbox channel configuration.
+ */
+void hpsc_mbox_chan_config_read(
+    struct hpsc_mbox *mbox,
+    unsigned instance,
+    uint32_t *owner,
+    uint32_t *src,
+    uint32_t *dest
+);
+
+/**
+ * Write a mailbox channel configuration.
+ * This is performed automatically by hpsc_mbox_chan_claim when owner is set,
+ * and should not usually be used directly.
+ */
+int hpsc_mbox_chan_config_write(
+    struct hpsc_mbox *mbox,
+    unsigned instance,
+    uint32_t owner,
+    uint32_t src,
+    uint32_t dest
+);
+
+/**
+ * Reset (release) a mailbox channel configuration.
+ * This is performed automatically by hpsc_mbox_chan_release when owner is set,
+ * and should not usually be used directly.
+ */
+void hpsc_mbox_chan_reset(struct hpsc_mbox *mbox, unsigned instance);
+
+/**
  * Claim a mailbox channel
  */
 struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
