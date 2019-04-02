@@ -19,6 +19,7 @@
 
 #include "gic.h"
 #include "test.h"
+#include "watchdog.h"
 
 #define MAIN_LOOP_SILENT_ITERS 100
 
@@ -36,6 +37,23 @@ void main_loop()
         verbose = iter++ % MAIN_LOOP_SILENT_ITERS == 0;
         if (verbose)
             printf("RTPS: main loop\n");
+
+#if CONFIG_WDT
+        // Kicking from here is insufficient, because we sleep. There are two
+        // ways to complete:
+        //     (A) have TRCH disable the watchdog in response to the WFI output
+        //     signal from the core,
+        //     (B) have a scheduler (with a tick interval shorter than the
+        //     watchdog timeout interval) and kick from the scheuduler tick, or
+        //     (C) kick on return from WFI/WFI (which could be as a result of
+        //     either first stage timeout IRQ or the system timer tick IRQ).
+        // At this time, we can do either (B) or (C): (B) has the disadvantage
+        // that what is being monitored is the systick ISR, and not the main
+        // loop proper (so if any ISRs starve the main loop, that won't be
+        // detected), and (C) has the disadvantage that if the main loop
+        // performs long actions, those actions need to kick. We go with (C).
+        watchdog_kick();
+#endif // CONFIG_WDT
 
         while (!cmd_dequeue(&cmd)) {
             cmd_handle(&cmd);
@@ -90,6 +108,10 @@ void *POSIX_Init(void *arg)
     if (test_shmem())
         rtems_panic("shmem test");
 #endif // TEST_SHMEM
+
+#if CONFIG_WDT
+    watchdog_init();
+#endif // CONFIG_WDT
 
     cmd_handler_register(server_process);
 
