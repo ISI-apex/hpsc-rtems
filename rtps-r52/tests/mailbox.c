@@ -32,8 +32,7 @@ int test_rtps_trch_mailbox()
     rc = trch_link->request(trch_link,
                             CMD_TIMEOUT_MS_SEND, arg, sizeof(arg),
                             CMD_TIMEOUT_MS_RECV, reply, sizeof(reply));
-    if (rc <= 0)
-        rc = -1;
+    rc = rc <= 0 ? -1 : 0;
 
     return trch_link->disconnect(trch_link) ? -1 : rc;
 }
