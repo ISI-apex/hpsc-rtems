@@ -7,7 +7,7 @@ LIB=${ARCH}/${LIBNAME}
 
 # C and C++ source names, if any, go here -- minus the .c or .cc
 C_PIECES= \
-	hpsc-bist-mbox \
+	hpsc-mbox-test \
 	hpsc-bist-rti-timer
 C_FILES=$(C_PIECES:%=%.c)
 C_O_FILES=$(C_FILES:%.c=${ARCH}/%.o)
@@ -17,7 +17,7 @@ CC_FILES=$(CC_PIECES:%=%.cc)
 CC_O_FILES=$(CC_PIECES:%=${ARCH}/%.o)
 
 H_FILES = \
-	hpsc-bist-mbox.h \
+	hpsc-mbox-test.h \
 	hpsc-bist-rti-timer.h \
 
 # Assembly source names, if any, go here -- minus the .S
