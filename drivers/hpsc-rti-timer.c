@@ -9,8 +9,9 @@
 #include <rtems/bspIo.h>
 #include <bsp/irq-generic.h>
 
-#include "regops.h"
+#include "gic-trigger.h"
 #include "hpsc-rti-timer.h"
+#include "regops.h"
 
 
 #define REG__INTERVAL_LO       0x00
@@ -98,6 +99,8 @@ rtems_status_code hpsc_rti_timer_probe(
         return RTEMS_NO_MEMORY;
     }
     hpsc_rti_timer_init(*tmr, name, base, vec, cb, cb_arg);
+    // must set vector to edge-triggered
+    gic_trigger_set(vec, GIC_EDGE_TRIGGERED);
     sc = rtems_interrupt_handler_install(vec, name, RTEMS_INTERRUPT_UNIQUE,
                                          hpsc_rti_timer_isr, *tmr);
     if (sc != RTEMS_SUCCESSFUL) {
@@ -116,6 +119,8 @@ rtems_status_code hpsc_rti_timer_remove(struct hpsc_rti_timer *tmr)
     assert(tmr);
     printf("RTI TMR %s: destroy\n", tmr->name);
     sc = rtems_interrupt_handler_remove(tmr->vec, hpsc_rti_timer_isr, tmr);
+    // reset vector to level-sensitive
+    gic_trigger_set(tmr->vec, GIC_LEVEL_SENSITIVE);
     free(tmr);
     return sc;
 }
