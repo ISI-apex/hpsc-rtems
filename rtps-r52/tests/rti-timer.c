@@ -1,7 +1,7 @@
 #include <rtems.h>
 
 // bist
-#include <hpsc-bist-rti-timer.h>
+#include <hpsc-rti-timer-test.h>
 
 // plat
 #include <hwinfo.h>
@@ -16,6 +16,6 @@ int test_core_rti_timer()
 
     // Test only one timer, because each timer can be tested only from
     // its associated core, and this BM code is not SMP.
-    return hpsc_bist_rti_timer(RTI_TIMER_RTPS_R52_0__RTPS_BASE, vec,
+    return hpsc_rti_timer_test(RTI_TIMER_RTPS_R52_0__RTPS_BASE, vec,
                                RTI_MAX_COUNT);
 }

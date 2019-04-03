@@ -8,7 +8,7 @@
 // drivers
 #include <hpsc-rti-timer.h>
 
-#include "hpsc-bist-rti-timer.h"
+#include "hpsc-rti-timer-test.h"
 
 #define INTERVAL_NS 1000000000
 
@@ -22,7 +22,7 @@ static void handle_event(struct hpsc_rti_timer *tmr, void *arg)
     printk("RTI TMR test: events -> %u\n", *events);
 }
 
-int hpsc_bist_rti_timer(
+int hpsc_rti_timer_test(
     volatile uint32_t *base,
     rtems_vector_number vec,
     uint64_t reset_interval_ns
@@ -40,7 +40,7 @@ int hpsc_bist_rti_timer(
     sc = hpsc_rti_timer_probe(&tmr, "RTI TMR", base, vec,
                               handle_event, &events);
     if (sc != RTEMS_SUCCESSFUL)
-        return HPSC_BIST_RTI_TIMER_PROBE;
+        return HPSC_RTI_TIMER_TEST_PROBE;
 
     count = hpsc_rti_timer_capture(tmr);
     ts.tv_sec = 0;
@@ -52,13 +52,13 @@ int hpsc_bist_rti_timer(
                "0x%08x%08x <= 0x%08x%08x\n",
                (uint32_t)(count2 >> 32), (uint32_t)count2,
                (uint32_t)(count >> 32), (uint32_t)count);
-        rc = HPSC_BIST_RTI_TIMER_NO_ADVANCE;
+        rc = HPSC_RTI_TIMER_TEST_NO_ADVANCE;
         goto cleanup;
     }
 
     if (events > 0) {
         printf("TEST: FAIL: RTI TMR: unexpected events\n");
-        rc = HPSC_BIST_RTI_TIMER_UNEXPECTED_EVENTS;
+        rc = HPSC_RTI_TIMER_TEST_UNEXPECTED_EVENTS;
         goto cleanup;
     }
 
@@ -68,18 +68,23 @@ int hpsc_bist_rti_timer(
     ts.tv_sec = (INTERVAL_NS / 10) / 1000000000;
     ts.tv_nsec = (INTERVAL_NS / 10) % 1000000000;
     nanosleep(&ts, NULL);
+#if 1 // TODO: remove this once timing is fixed in RTEMS
+    ts.tv_sec = (INTERVAL_NS / 8) / 1000000000;
+    ts.tv_nsec = (INTERVAL_NS / 8) % 1000000000;
+#else
     ts.tv_sec = INTERVAL_NS / 1000000000;
     ts.tv_nsec = INTERVAL_NS % 1000000000;
+#endif
     for (i = 1; i <= NUM_EVENTS; ++i) {
         nanosleep(&ts, NULL);
         if (events != i) {
             printf("TEST: FAIL: RTI TMR: unexpected event count: %u != %u\n",
                    events, i);
-            rc = HPSC_BIST_RTI_TIMER_UNEXPECTED_EVENT_COUNT;
+            rc = HPSC_RTI_TIMER_TEST_UNEXPECTED_EVENT_COUNT;
             goto cleanup;
         }
     }
-    rc = HPSC_BIST_RTI_TIMER_SUCCESS;
+    rc = HPSC_RTI_TIMER_TEST_SUCCESS;
 
 cleanup:
     // Since there's no way to disable the RTI timer, the best we can do to
@@ -87,6 +92,6 @@ cleanup:
     hpsc_rti_timer_configure(tmr, reset_interval_ns);
     sc = hpsc_rti_timer_remove(tmr);
     if (sc != RTEMS_SUCCESSFUL)
-        rc = HPSC_BIST_RTI_TIMER_REMOVE;
+        rc = HPSC_RTI_TIMER_TEST_REMOVE;
     return rc;
 }
