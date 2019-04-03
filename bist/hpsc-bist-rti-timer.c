@@ -35,12 +35,12 @@ int hpsc_bist_rti_timer(
     uint64_t count2;
     unsigned events = 0;
     unsigned i;
-    int rc = 1;
+    int rc;
 
     sc = hpsc_rti_timer_probe(&tmr, "RTI TMR", base, vec,
                               handle_event, &events);
     if (sc != RTEMS_SUCCESSFUL)
-        return 1;
+        return HPSC_BIST_RTI_TIMER_PROBE;
 
     count = hpsc_rti_timer_capture(tmr);
     ts.tv_sec = 0;
@@ -52,11 +52,13 @@ int hpsc_bist_rti_timer(
                "0x%08x%08x <= 0x%08x%08x\n",
                (uint32_t)(count2 >> 32), (uint32_t)count2,
                (uint32_t)(count >> 32), (uint32_t)count);
+        rc = HPSC_BIST_RTI_TIMER_NO_ADVANCE;
         goto cleanup;
     }
 
     if (events > 0) {
         printf("TEST: FAIL: RTI TMR: unexpected events\n");
+        rc = HPSC_BIST_RTI_TIMER_UNEXPECTED_EVENTS;
         goto cleanup;
     }
 
@@ -73,14 +75,18 @@ int hpsc_bist_rti_timer(
         if (events != i) {
             printf("TEST: FAIL: RTI TMR: unexpected event count: %u != %u\n",
                    events, i);
+            rc = HPSC_BIST_RTI_TIMER_UNEXPECTED_EVENT_COUNT;
             goto cleanup;
         }
     }
-    rc = 0;
+    rc = HPSC_BIST_RTI_TIMER_SUCCESS;
 
 cleanup:
     // Since there's no way to disable the RTI timer, the best we can do to
     // reduce the load in the HW emulator, set the interval to max.
     hpsc_rti_timer_configure(tmr, reset_interval_ns);
-    return hpsc_rti_timer_remove(tmr) == RTEMS_SUCCESSFUL ? rc : 1;
+    sc = hpsc_rti_timer_remove(tmr);
+    if (sc != RTEMS_SUCCESSFUL)
+        rc = HPSC_BIST_RTI_TIMER_REMOVE;
+    return rc;
 }
