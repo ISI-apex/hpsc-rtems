@@ -8,6 +8,7 @@ LIB=${ARCH}/${LIBNAME}
 # C and C++ source names, if any, go here -- minus the .c or .cc
 C_PIECES= \
 	bit \
+	gic-trigger \
 	hpsc-mbox \
 	hpsc-rti-timer \
 	hpsc-wdt
@@ -21,6 +22,7 @@ CC_O_FILES=$(CC_PIECES:%=${ARCH}/%.o)
 H_FILES = \
 	bit.h \
 	debug.h \
+	gic-trigger.h \
 	hpsc-mbox.h \
 	hpsc-rti-timer.h \
 	hpsc-wdt.h \
