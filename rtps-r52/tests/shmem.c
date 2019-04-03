@@ -1,9 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-// plat
-#include <mem-map.h>
-
 // libhpsc
 #include <shmem.h>
 
