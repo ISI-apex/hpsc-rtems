@@ -116,6 +116,11 @@ void *POSIX_Init(void *arg)
     // Never release the link, because we listen on it in main loop
 #endif // CONFIG_HPPS_RTPS_MAILBOX
 
+#if TEST_RTI_TIMER
+    if (test_core_rti_timer())
+        rtems_panic("RTI Timer test");
+#endif // TEST_RTI_TIMER
+
 #if TEST_RTPS_TRCH_MAILBOX
     if (test_rtps_trch_mailbox())
         rtems_panic("RTPS->TRCH mailbox");

@@ -8,6 +8,7 @@ PGM=${ARCH}/rtps-r52.exe
 MANAGERS=all
 
 CONFIG_FLAGS = \
+	TEST_RTI_TIMER \
 	TEST_RTPS_TRCH_MAILBOX \
 	TEST_SHMEM \
 	CONFIG_MBOX_LSIO \
@@ -17,6 +18,7 @@ CONFIG_FLAGS = \
 CONFIG_ARGS = $(foreach m,$(CONFIG_FLAGS),-D$(m)=$($(m)))
 
 # Enable disable tests here:
+TEST_RTI_TIMER			= 0 # TODO: currently broken
 TEST_RTPS_TRCH_MAILBOX		= 1
 TEST_SHMEM			= 1
 
@@ -33,6 +35,7 @@ CSRCS = \
 	watchdog.c
 CSRCS += \
 	tests/mailbox.c \
+	tests/rti-timer.c \
 	tests/shmem.c
 COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 
@@ -55,16 +58,18 @@ all:    ${ARCH} ${ARCH}/tests $(PGM)
 
 CFLAGS += \
 	$(CONFIG_ARGS) \
-	-I. -Itests -I../drivers -I../hpsc -I../plat \
+	-I. -Itests -I../drivers -I../bist -I../hpsc -I../plat \
 
 LIBDRIVERS = ../drivers/${ARCH}/libhpsc-drivers.a
+LIBBIST = ../bist/${ARCH}/libhpsc-bist.a
 LIBHPSC = ../hpsc/${ARCH}/libhpsc.a
 
 LD_LIBS += \
+	$(LIBHPSC) \
+	$(LIBBIST) \
 	$(LIBDRIVERS) \
-	$(LIBHPSC)
 
-$(OBJS): $(LIBDRIVERS) $(LIBHPSC) ${H_FILES} ../plat/* Makefile
+$(OBJS): $(LIBDRIVERS) $(LIBBIST) $(LIBHPSC) ${H_FILES} ../plat/* Makefile
 
 $(PGM): $(OBJS)
 	$(make-exe)
