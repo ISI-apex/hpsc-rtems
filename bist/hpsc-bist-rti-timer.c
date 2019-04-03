@@ -11,7 +11,6 @@
 #include "hpsc-bist-rti-timer.h"
 
 #define INTERVAL_NS 1000000000
-#define INTERVAL_MS (INTERVAL_NS / 1000000)
 
 // Number of intervals to expect the ISR for.
 #define NUM_EVENTS 3
@@ -64,11 +63,11 @@ int hpsc_bist_rti_timer(
     hpsc_rti_timer_configure(tmr, INTERVAL_NS);
 
     // offset the checks by an epsilon
-    ts.tv_sec = (INTERVAL_MS / 10) / 1000;
-    ts.tv_nsec = ((INTERVAL_MS / 10) % 1000) * 1000000;
+    ts.tv_sec = (INTERVAL_NS / 10) / 1000000000;
+    ts.tv_nsec = (INTERVAL_NS / 10) % 1000000000;
     nanosleep(&ts, NULL);
-    ts.tv_sec = INTERVAL_MS / 1000;
-    ts.tv_nsec = (INTERVAL_MS % 1000) * 1000000;
+    ts.tv_sec = INTERVAL_NS / 1000000000;
+    ts.tv_nsec = INTERVAL_NS % 1000000000;
     for (i = 1; i <= NUM_EVENTS; ++i) {
         nanosleep(&ts, NULL);
         if (events != i) {
