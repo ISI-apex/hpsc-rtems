@@ -104,6 +104,18 @@ static void init_devices(void)
     assert(mbox_hpps_sc == RTEMS_SUCCESSFUL);
     dev_add_mbox(DEV_ID_MBOX_HPPS, mbox_hpps);
 #endif // CONFIG_MBOX_HPPS
+
+#if CONFIG_WDT
+    // TODO: WDTs for correct core or both cores, depending on configuration
+    struct hpsc_wdt *wdt0 = NULL;
+    rtems_status_code wdt0_sc;
+    rtems_vector_number wdt0_vec =
+        gic_irq_to_rvn(PPI_IRQ__WDT, GIC_IRQ_TYPE_PPI);
+    wdt0_sc = hpsc_wdt_probe_target(&wdt0, "RTPS0", WDT_RTPS_R52_0_RTPS_BASE,
+                                    wdt0_vec, watchdog_timeout_isr, NULL);
+    assert(wdt0_sc == RTEMS_SUCCESSFUL);
+    dev_add_wdt(DEV_ID_CPU_RTPS_R52_0, wdt0);
+#endif // CONFIG_WDT
 }
 
 static void init_tests(void)
@@ -188,8 +200,8 @@ void *POSIX_Init(void *arg)
     init_tasks();
 
 #if CONFIG_WDT
-    // once init'd, the WDT can't be stopped - so we must be ready to kick it
-    watchdog_init();
+    // once enabled, the WDT can't be stopped - so we must be ready to kick it
+    watchdog_enable();
 #endif // CONFIG_WDT
 
     main_loop();
