@@ -42,6 +42,7 @@ COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 H_FILES = \
 	devices.h \
 	gic.h \
+	server.h \
 	test.h \
 	watchdog.h \
 

@@ -22,7 +22,6 @@ H_FILES = \
 	command.h \
 	link.h \
 	mailbox-link.h \
-	server.h \
 	shmem.h \
 	shmem-link.h \
 

@@ -12,13 +12,13 @@
 // libhpsc
 #include <command.h>
 #include <mailbox-link.h>
-#include <server.h>
 
-// mailbox driver
+// drivers
 #include <hpsc-mbox.h>
 
 #include "devices.h"
 #include "gic.h"
+#include "server.h"
 #include "test.h"
 #include "watchdog.h"
 
