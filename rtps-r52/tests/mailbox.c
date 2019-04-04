@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include <rtems.h>
 
@@ -7,22 +8,36 @@
 #include <hwinfo.h>
 #include <mailbox-map.h>
 
+// drivers-selftest
+#include <hpsc-mbox-test.h>
+
 // libhpsc
 #include <command.h>
 #include <mailbox-link.h>
 
 #include "devices.h"
 
-int test_rtps_trch_mailbox()
+int test_mbox_lsio_loopback()
 {
-    struct hpsc_mbox *mbox_trch = dev_get_mbox(DEV_ID_MBOX_LSIO);
+    enum hpsc_mbox_test_rc rc;
+    struct hpsc_mbox *mbox_lsio = dev_get_mbox(DEV_ID_MBOX_LSIO);
+    assert(mbox_lsio);
+    rc = hpsc_mbox_chan_test(mbox_lsio, MBOX_LSIO__RTPS_LOOPBACK,
+                             /* owner */ 0, /* src */ 0, /* dest */ 0);
+    printf("TEST: mbox_lsio_loopback: %s\n", rc ? "failed" : "success");
+    return rc;
+}
+
+int test_mbox_lsio_trch()
+{
+    struct hpsc_mbox *mbox_lsio = dev_get_mbox(DEV_ID_MBOX_LSIO);
     struct link *trch_link;
     uint32_t arg[] = { CMD_PING, 42 };
     uint32_t reply[sizeof(arg) / sizeof(arg[0])] = {0};
     int rc;
 
-    assert(mbox_trch);
-    trch_link = mbox_link_connect("RTPS_TRCH_MBOX_TEST_LINK", mbox_trch,
+    assert(mbox_lsio);
+    trch_link = mbox_link_connect("RTPS_TRCH_MBOX_TEST_LINK", mbox_lsio,
                                   MBOX_LSIO__TRCH_RTPS, MBOX_LSIO__RTPS_TRCH, 
                                   /* server */ 0,
                                   /* client */ MASTER_ID_RTPS_CPU0);

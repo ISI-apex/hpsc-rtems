@@ -9,7 +9,8 @@ MANAGERS=all
 
 CONFIG_FLAGS = \
 	TEST_RTI_TIMER \
-	TEST_RTPS_TRCH_MAILBOX \
+	TEST_MBOX_LSIO_LOOPBACK \
+	TEST_MBOX_LSIO_TRCH \
 	TEST_SHMEM \
 	CONFIG_MBOX_LSIO \
 	CONFIG_MBOX_HPPS \
@@ -17,15 +18,16 @@ CONFIG_FLAGS = \
 
 CONFIG_ARGS = $(foreach m,$(CONFIG_FLAGS),-D$(m)=$($(m)))
 
-# Enable disable tests here:
-TEST_RTI_TIMER			= 0 # TODO: currently broken
-TEST_RTPS_TRCH_MAILBOX		= 1
-TEST_SHMEM			= 1
-
 # Set build configuration here
 CONFIG_MBOX_LSIO		= 1
 CONFIG_MBOX_HPPS		= 1
 CONFIG_WDT 			= 1
+
+# Enable/disable tests here (tests often require related configs):
+TEST_MBOX_LSIO_LOOPBACK		= 1
+TEST_MBOX_LSIO_TRCH		= 1
+TEST_RTI_TIMER			= 0 # TODO: Re-enable when RTEMS frequency fixed
+TEST_SHMEM			= 1
 
 # C source names
 CSRCS = \

@@ -121,10 +121,23 @@ void *POSIX_Init(void *arg)
         rtems_panic("RTI Timer test");
 #endif // TEST_RTI_TIMER
 
-#if TEST_RTPS_TRCH_MAILBOX
-    if (test_rtps_trch_mailbox())
+#if TEST_MBOX_LSIO_LOOPBACK
+#if !CONFIG_MBOX_LSIO
+    #warning Ignoring TEST_MBOX_LSIO_LOOPBACK - requires CONFIG_MBOX_LSIO
+#else
+    if (test_mbox_lsio_loopback())
+        rtems_panic("RTPS loopback mailbox");
+#endif // CONFIG_MBOX_LSIO
+#endif //TEST_MBOX_LSIO_LOOPBACK
+
+#if TEST_MBOX_LSIO_TRCH
+#if !CONFIG_MBOX_LSIO
+    #warning Ignoring TEST_MBOX_LSIO_LOOPBACK - requires CONFIG_MBOX_LSIO
+#else
+    if (test_mbox_lsio_trch())
         rtems_panic("RTPS->TRCH mailbox");
-#endif // TEST_RTPS_TRCH_MAILBOX
+#endif // CONFIG_MBOX_LSIO
+#endif // TEST_MBOX_LSIO_TRCH
 
 #if TEST_SHMEM
     if (test_shmem())
