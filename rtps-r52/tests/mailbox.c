@@ -34,7 +34,7 @@ int test_mbox_lsio_trch()
     struct link *trch_link;
     uint32_t arg[] = { CMD_PING, 42 };
     uint32_t reply[sizeof(arg) / sizeof(arg[0])] = {0};
-    int rc;
+    ssize_t rc;
 
     assert(mbox_lsio);
     trch_link = mbox_link_connect("RTPS_TRCH_MBOX_TEST_LINK", mbox_lsio,
@@ -49,5 +49,5 @@ int test_mbox_lsio_trch()
                             CMD_TIMEOUT_MS_RECV, reply, sizeof(reply));
     rc = rc <= 0 ? -1 : 0;
 
-    return trch_link->disconnect(trch_link) ? -1 : rc;
+    return trch_link->disconnect(trch_link) ? -1 : (int) rc;
 }
