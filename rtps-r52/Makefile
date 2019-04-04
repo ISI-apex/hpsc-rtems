@@ -81,3 +81,8 @@ $(OBJS): $(LIBDRIVERS) $(LIBDRIVERS_TEST) $(LIBHPSC) ${H_FILES} ../plat/* Makefi
 
 $(PGM): $(OBJS)
 	$(make-exe)
+
+PGM_IMG = $(addsuffix .img,$(basename ${PGM}))
+install:  all
+	test -d ${PROJECT_BIN} || $(MKDIR) ${PROJECT_BIN}
+	$(INSTALL_VARIANT) -m 644 ${PGM} ${PGM_IMG} ${PROJECT_BIN}

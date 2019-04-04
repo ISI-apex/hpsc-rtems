@@ -42,6 +42,19 @@ Then finally:
 
     make
 
+Optionally install the libraries, headers, and applications with:
+
+    make install
+
+For each library `libfoo` (not a real library), the static lib is installed
+to `${PROJECT_RELEASE}/lib/libfoo.a` and its headers to
+`${PROJECT_RELEASE}/lib/libfoo/`.
+`PROJECT_RELEASE` is configured by the Makefile at `RTEMS_MAKEFILE_PATH`, and
+may be the same value.
+Out-of-tree libraries and applications may include these headers and link
+against the libraries produced by this project (described above).
+
+Applications are installed to `${PROJECT_BIN}`.
 
 Drivers
 -------
