@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <rtems.h>
+
 struct hpsc_wdt;
 
 typedef void (*hpsc_wdt_cb_t)(struct hpsc_wdt *wdt, void *arg);
