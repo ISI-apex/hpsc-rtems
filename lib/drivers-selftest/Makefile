@@ -2,7 +2,7 @@
 #  RTEMS_MAKEFILE_PATH is typically set in an environment variable
 #
 
-LIBNAME=libhpsc-bist.a        # xxx- your library names goes here
+LIBNAME=libhpsc-drivers-selftest.a        # xxx- your library names goes here
 LIB=${ARCH}/${LIBNAME}
 
 # C and C++ source names, if any, go here -- minus the .c or .cc

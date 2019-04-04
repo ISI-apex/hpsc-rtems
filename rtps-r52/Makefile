@@ -58,18 +58,19 @@ all:    ${ARCH} ${ARCH}/tests $(PGM)
 
 CFLAGS += \
 	$(CONFIG_ARGS) \
-	-I. -Itests -I../drivers -I../bist -I../hpsc -I../plat \
+	-I. -Itests -I../plat \
+	-I../lib/drivers -I../lib/drivers-selftest -I../lib/hpsc
 
-LIBDRIVERS = ../drivers/${ARCH}/libhpsc-drivers.a
-LIBBIST = ../bist/${ARCH}/libhpsc-bist.a
-LIBHPSC = ../hpsc/${ARCH}/libhpsc.a
+LIBDRIVERS = ../lib/drivers/${ARCH}/libhpsc-drivers.a
+LIBDRIVERS_TEST = ../lib/drivers-selftest/${ARCH}/libhpsc-drivers-selftest.a
+LIBHPSC = ../lib/hpsc/${ARCH}/libhpsc.a
 
 LD_LIBS += \
 	$(LIBHPSC) \
-	$(LIBBIST) \
+	$(LIBDRIVERS_TEST) \
 	$(LIBDRIVERS) \
 
-$(OBJS): $(LIBDRIVERS) $(LIBBIST) $(LIBHPSC) ${H_FILES} ../plat/* Makefile
+$(OBJS): $(LIBDRIVERS) $(LIBDRIVERS_TEST) $(LIBHPSC) ${H_FILES} ../plat/* Makefile
 
 $(PGM): $(OBJS)
 	$(make-exe)

@@ -3,5 +3,6 @@ include $(RTEMS_CUSTOM)
 include $(RTEMS_SHARE)/make/directory.cfg
 
 SUBDIRS = \
-	lib \
-	rtps-r52
+	drivers \
+	drivers-selftest \
+	hpsc
