@@ -11,9 +11,9 @@ struct shmem_link {
     struct shmem *shmem_in;
 };
 
-// pretty coarse, limited by systick
-// TODO: is this still correct/necessary in RTEMS?
-#define MIN_SLEEP_MS 500
+// TODO: use signals instead of actually polling
+#define MIN_SLEEP_MS 10
+
 
 static int shmem_link_disconnect(struct link *link)
 {
@@ -29,8 +29,8 @@ static int shmem_link_disconnect(struct link *link)
 static void msleep_and_dec(int *ms_rem)
 {
     struct timespec ts;
-    ts.tv_sec = *ms_rem / 1000;
-    ts.tv_nsec = (*ms_rem % 1000) * 1000000;
+    ts.tv_sec = MIN_SLEEP_MS / 1000;
+    ts.tv_nsec = (MIN_SLEEP_MS % 1000) * 1000000;
     nanosleep(&ts, NULL);
     // if < 0, timeout is infinite
     if (*ms_rem > 0)
