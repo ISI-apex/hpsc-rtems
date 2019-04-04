@@ -52,9 +52,9 @@ static int test_loopback(struct hpsc_mbox_test *ctx)
     size_t sz = hpsc_mbox_chan_write(ctx->chan, TEST_MSG, sizeof(TEST_MSG));
     if (sz < sizeof(TEST_MSG))
         return HPSC_MBOX_TEST_CHAN_WRITE;
-    // TODO: wait a short period - may need to handle being interrupted...
-    ts.tv_sec = 1;
-    ts.tv_nsec = 0;
+    // wait a short period
+    ts.tv_sec = 0;
+    ts.tv_nsec = 10000000; // 10 ms
     nanosleep(&ts, NULL);
     if (!ctx->is_rx)
         return HPSC_MBOX_TEST_CHAN_NO_RECV;
