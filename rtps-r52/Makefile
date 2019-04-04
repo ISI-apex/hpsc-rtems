@@ -14,6 +14,7 @@ CONFIG_FLAGS = \
 	TEST_SHMEM \
 	CONFIG_MBOX_LSIO \
 	CONFIG_MBOX_HPPS \
+	CONFIG_MBOX_LINK_SERVER_HPPS \
 	CONFIG_SHELL \
 	CONFIG_WDT \
 
@@ -22,6 +23,7 @@ CONFIG_ARGS = $(foreach m,$(CONFIG_FLAGS),-D$(m)=$($(m)))
 # Set build configuration here
 CONFIG_MBOX_LSIO		= 1
 CONFIG_MBOX_HPPS		= 1
+CONFIG_MBOX_LINK_SERVER_HPPS	= 1 # listen for requests from HPPS
 CONFIG_SHELL			= 1
 CONFIG_WDT			= 1
 

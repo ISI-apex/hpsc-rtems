@@ -107,16 +107,6 @@ void *POSIX_Init(void *arg)
     dev_add_mbox(DEV_ID_MBOX_HPPS, mbox_hpps);
 #endif // CONFIG_MBOX_HPPS
 
-#if CONFIG_HPPS_RTPS_MAILBOX
-    struct link *hpps_link = mbox_link_connect("HPPS_MBOX_LINK", mbox_hpps,
-                    MBOX_HPPS_RTPS__HPPS_RTPS, MBOX_HPPS_RTPS__RTPS_HPPS,
-                    /* server */ MASTER_ID_RTPS_CPU0,
-                    /* client */ MASTER_ID_HPPS_CPU0);
-    if (!hpps_link)
-        rtems_panic("HPPS link");
-    // Never release the link, because we listen on it in main loop
-#endif // CONFIG_HPPS_RTPS_MAILBOX
-
 #if TEST_RTI_TIMER
     if (test_core_rti_timer())
         rtems_panic("RTI Timer test");
@@ -144,6 +134,20 @@ void *POSIX_Init(void *arg)
     if (test_shmem())
         rtems_panic("shmem test");
 #endif // TEST_SHMEM
+
+#if CONFIG_MBOX_LINK_SERVER_HPPS
+#if !CONFIG_MBOX_HPPS
+    #warning Ignoring CONFIG_MBOX_LINK_SERVER_HPPS - requires CONFIG_MBOX_HPPS
+#else
+    struct link *hpps_link = mbox_link_connect("HPPS_MBOX_LINK", mbox_hpps,
+                    MBOX_HPPS_RTPS__HPPS_RTPS, MBOX_HPPS_RTPS__RTPS_HPPS,
+                    /* server */ MASTER_ID_RTPS_CPU0,
+                    /* client */ MASTER_ID_HPPS_CPU0);
+    if (!hpps_link)
+        rtems_panic("HPPS link");
+    // Never release the link, because we listen on it in main loop
+#endif // CONFIG_MBOX_HPPS
+#endif // CONFIG_MBOX_LINK_SERVER_HPPS
 
 #if CONFIG_WDT
     watchdog_init();
