@@ -87,8 +87,8 @@ static int mbox_link_disconnect(struct link *link) {
     return rc;
 }
 
-static int mbox_link_send(struct link *link, int timeout_ms, void *buf,
-                          size_t sz)
+static size_t mbox_link_send(struct link *link, int timeout_ms, void *buf,
+                             size_t sz)
 {
     struct mbox_link *mlink = link->priv;
     mlink->cmd_ctx.tx_acked = false;
@@ -101,7 +101,7 @@ static bool mbox_link_is_send_acked(struct link *link)
     return mlink->cmd_ctx.tx_acked;
 }
 
-static int mbox_link_poll(struct link *link, int timeout_ms)
+static size_t mbox_link_poll(struct link *link, int timeout_ms)
 {
     struct mbox_link *mlink = link->priv;
     int sleep_ms_rem = timeout_ms;
@@ -118,13 +118,13 @@ static int mbox_link_poll(struct link *link, int timeout_ms)
     return mlink->cmd_ctx.reply_sz_read;
 }
 
-static int mbox_link_request(struct link *link,
-                             int wtimeout_ms, void *wbuf, size_t wsz,
-                             int rtimeout_ms, void *rbuf, size_t rsz)
+static ssize_t mbox_link_request(struct link *link,
+                                 int wtimeout_ms, void *wbuf, size_t wsz,
+                                 int rtimeout_ms, void *rbuf, size_t rsz)
 {
     struct mbox_link *mlink = link->priv;
     int sleep_ms_rem = wtimeout_ms;
-    int rc;
+    ssize_t rc;
 
     printk("%s: request\n", link->name);
     mlink->cmd_ctx.reply_sz_read = 0;

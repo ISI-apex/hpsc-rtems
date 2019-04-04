@@ -37,8 +37,8 @@ static void msleep_and_dec(int *ms_rem)
         *ms_rem -= *ms_rem >= MIN_SLEEP_MS ? MIN_SLEEP_MS : *ms_rem;
 }
 
-static int shmem_link_send(struct link *link, int timeout_ms, void *buf,
-                           size_t sz)
+static size_t shmem_link_send(struct link *link, int timeout_ms, void *buf,
+                              size_t sz)
 {
     struct shmem_link *slink = link->priv;
     int sleep_ms_rem = timeout_ms;
@@ -60,7 +60,7 @@ static bool shmem_link_is_send_acked(struct link *link)
     return shmem_get_status(slink->shmem_out) ? false : true;
 }
 
-static int shmem_link_recv(struct link *link, void *buf, size_t sz)
+static size_t shmem_link_recv(struct link *link, void *buf, size_t sz)
 {
     struct shmem_link *slink = link->priv;
     if (shmem_get_status(slink->shmem_in))
@@ -68,11 +68,11 @@ static int shmem_link_recv(struct link *link, void *buf, size_t sz)
     return 0;
 }
 
-static int shmem_link_poll(struct link *link, int timeout_ms, void *buf,
-                           size_t sz)
+static size_t shmem_link_poll(struct link *link, int timeout_ms, void *buf,
+                              size_t sz)
 {
     int sleep_ms_rem = timeout_ms;
-    int rc;
+    size_t rc;
     do {
         rc = shmem_link_recv(link, buf, sz);
         if (rc > 0)
@@ -84,11 +84,11 @@ static int shmem_link_poll(struct link *link, int timeout_ms, void *buf,
     return rc;
 }
 
-static int shmem_link_request(struct link *link,
-                              int wtimeout_ms, void *wbuf, size_t wsz,
-                              int rtimeout_ms, void *rbuf, size_t rsz)
+static ssize_t shmem_link_request(struct link *link,
+                                  int wtimeout_ms, void *wbuf, size_t wsz,
+                                  int rtimeout_ms, void *rbuf, size_t rsz)
 {
-    int rc;
+    ssize_t rc;
     printf("%s: request\n", link->name);
     rc = shmem_link_send(link, wtimeout_ms, wbuf, wsz);
     if (!rc) {
