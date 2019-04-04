@@ -14,6 +14,7 @@ CONFIG_FLAGS = \
 	TEST_SHMEM \
 	CONFIG_MBOX_LSIO \
 	CONFIG_MBOX_HPPS \
+	CONFIG_SHELL \
 	CONFIG_WDT \
 
 CONFIG_ARGS = $(foreach m,$(CONFIG_FLAGS),-D$(m)=$($(m)))
@@ -21,7 +22,8 @@ CONFIG_ARGS = $(foreach m,$(CONFIG_FLAGS),-D$(m)=$($(m)))
 # Set build configuration here
 CONFIG_MBOX_LSIO		= 1
 CONFIG_MBOX_HPPS		= 1
-CONFIG_WDT 			= 1
+CONFIG_SHELL			= 1
+CONFIG_WDT			= 1
 
 # Enable/disable tests here (tests often require related configs):
 TEST_MBOX_LSIO_LOOPBACK		= 1
@@ -32,6 +34,7 @@ TEST_SHMEM			= 1
 # C source names
 CSRCS = \
 	devices.c \
+	shell.c \
 	server.c \
 	main.c \
 	watchdog.c
@@ -44,6 +47,7 @@ COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 H_FILES = \
 	devices.h \
 	gic.h \
+	shell.h \
 	server.h \
 	test.h \
 	watchdog.h \

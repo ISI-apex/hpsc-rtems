@@ -18,6 +18,7 @@
 
 #include "devices.h"
 #include "gic.h"
+#include "shell.h"
 #include "server.h"
 #include "test.h"
 #include "watchdog.h"
@@ -148,6 +149,11 @@ void *POSIX_Init(void *arg)
     watchdog_init();
 #endif // CONFIG_WDT
 
+#if CONFIG_SHELL
+    if (shell_create() != RTEMS_SUCCESSFUL)
+        rtems_panic("shell");
+#endif // CONFIG_SHELL
+
     cmd_handler_register(server_process);
 
     main_loop();
@@ -159,12 +165,29 @@ void *POSIX_Init(void *arg)
 
 #include <bsp.h>
 
-/* NOTICE: the clock driver is explicitly disabled */
+#define CONFIGURE_SHELL_COMMANDS_INIT
+#define CONFIGURE_SHELL_COMMANDS_ALL
+#include <rtems/shellconfig.h>
+
+/* drivers */
 #define CONFIGURE_APPLICATION_NEEDS_CLOCK_DRIVER
 #define CONFIGURE_APPLICATION_NEEDS_CONSOLE_DRIVER
 
+/* POSIX */
 #define CONFIGURE_POSIX_INIT_THREAD_TABLE
-#define CONFIGURE_MAXIMUM_POSIX_THREADS 1
+#define CONFIGURE_MAXIMUM_POSIX_THREADS          16
+#define CONFIGURE_MAXIMUM_POSIX_KEYS             16
+#define CONFIGURE_MAXIMUM_POSIX_KEY_VALUE_PAIRS  16
+
+/* filesystem */
+#define CONFIGURE_FILESYSTEM_DOSFS
+#define CONFIGURE_LIBIO_MAXIMUM_FILE_DESCRIPTORS   40
+#define CONFIGURE_IMFS_MEMFILE_BYTES_PER_BLOCK    512
+
+#define CONFIGURE_APPLICATION_NEEDS_LIBBLOCK
+#define CONFIGURE_SWAPOUT_TASK_PRIORITY            10
+
+#define CONFIGURE_MAXIMUM_TASKS                    rtems_resource_unlimited (10)
 
 #define CONFIGURE_INIT
 #include <rtems/confdefs.h>
