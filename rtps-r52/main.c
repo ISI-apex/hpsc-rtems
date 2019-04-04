@@ -25,7 +25,7 @@
 
 #define MAIN_LOOP_SILENT_ITERS 100
 
-void main_loop()
+static void main_loop(void)
 {
     struct cmd cmd;
     unsigned iter = 0;
@@ -69,10 +69,8 @@ void main_loop()
     }
 }
 
-void *POSIX_Init(void *arg)
+static void init_devices(void)
 {
-    printf("\n\nRTPS\n");
-
 #if CONFIG_MBOX_LSIO
     struct hpsc_mbox *mbox_lsio = NULL;
     rtems_status_code mbox_lsio_sc;
@@ -106,7 +104,10 @@ void *POSIX_Init(void *arg)
     assert(mbox_hpps_sc == RTEMS_SUCCESSFUL);
     dev_add_mbox(DEV_ID_MBOX_HPPS, mbox_hpps);
 #endif // CONFIG_MBOX_HPPS
+}
 
+static void init_tests(void)
+{
 #if TEST_RTI_TIMER
     if (test_core_rti_timer())
         rtems_panic("RTI Timer test");
@@ -134,11 +135,21 @@ void *POSIX_Init(void *arg)
     if (test_shmem())
         rtems_panic("shmem test");
 #endif // TEST_SHMEM
+}
 
+static void init_client_links(void)
+{
+    // placeholder
+}
+
+static void init_server_links()
+{
 #if CONFIG_MBOX_LINK_SERVER_HPPS
 #if !CONFIG_MBOX_HPPS
     #warning Ignoring CONFIG_MBOX_LINK_SERVER_HPPS - requires CONFIG_MBOX_HPPS
 #else
+    struct hpsc_mbox *mbox_hpps = dev_get_mbox(DEV_ID_MBOX_HPPS);
+    assert(mbox_hpps);
     struct link *hpps_link = mbox_link_connect("HPPS_MBOX_LINK", mbox_hpps,
                     MBOX_HPPS_RTPS__HPPS_RTPS, MBOX_HPPS_RTPS__RTPS_HPPS,
                     /* server */ MASTER_ID_RTPS_CPU0,
@@ -148,17 +159,38 @@ void *POSIX_Init(void *arg)
     // Never release the link, because we listen on it in main loop
 #endif // CONFIG_MBOX_HPPS
 #endif // CONFIG_MBOX_LINK_SERVER_HPPS
+}
 
-#if CONFIG_WDT
-    watchdog_init();
-#endif // CONFIG_WDT
-
+static void init_tasks(void)
+{
 #if CONFIG_SHELL
     if (shell_create() != RTEMS_SUCCESSFUL)
         rtems_panic("shell");
 #endif // CONFIG_SHELL
+}
 
+void *POSIX_Init(void *arg)
+{
+    printf("\n\nRTPS\n");
+
+    // first initialize devices - hopefully this can be managed by a device tree
+    init_devices();
+
+    // run boot tests
+    init_tests();
+
+    // initialize links with other subsystems - this order matters
     cmd_handler_register(server_process);
+    init_client_links();
+    init_server_links();
+
+    // start additional tasks
+    init_tasks();
+
+#if CONFIG_WDT
+    // once init'd, the WDT can't be stopped - so we must be ready to kick it
+    watchdog_init();
+#endif // CONFIG_WDT
 
     main_loop();
 
