@@ -26,6 +26,13 @@ typedef enum {
     DEV_ID_CPU_COUNT
 } dev_id_cpu;
 
+#define dev_id_cpu_for_each(cpu) for (cpu = 0; cpu < DEV_ID_CPU_COUNT; cpu++)
+
+#define dev_id_cpu_for_each_wdt(cpu, wdt) \
+    for (cpu = 0, wdt = dev_get_wdt(cpu); \
+         cpu < DEV_ID_CPU_COUNT; \
+         cpu++, wdt = (cpu < DEV_ID_CPU_COUNT) ? dev_get_wdt(cpu) : NULL)
+
 int dev_add_wdt(dev_id_cpu id, struct hpsc_wdt *dev);
 
 void dev_remove_wdt(dev_id_cpu id);
