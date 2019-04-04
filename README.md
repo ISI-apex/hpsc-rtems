@@ -1,18 +1,24 @@
 HPSC RTEMS Applications
 -----------------------
 
-This project contains RTEMS applications for the HPSC Chiplet.
-Specifically, applications are intended for the TRCH (Cortex-M4) and RTPS (Cortex-R52) subsystems.
+This project contains RTEMS libraries and applications for the HPSC Chiplet.
+Applications are for the TRCH (Cortex-M4) and RTPS (Cortex-R52) subsystems.
 
-Common code includes drivers, library routines, and shared platform configurations.
+Common code includes drivers, library routines, and platform configurations.
 The project layout is:
 
-* `drivers`: produces `libhpsc-drivers.a` containing low-level driver code.
-This code must not have dependencies on anything else in this project.
-Ideally, this code can be merged into upstream RTEMS.
-* `hpsc`: produces `libhpsc.a` containing library routines.
-This code may only depend on `libhpsc-drivers`.
-* `rtps-r52`: produces `rtps-r52.img` containing the reference/test RTEMS application for the R52s in the RTPS subsystem.
+* `lib`: top-level directory for libraries
+  * `drivers`: produces `libhpsc-drivers.a` containing low-level driver code.
+  This code must not have dependencies on anything else in this project.
+  Ideally, this code can be merged into upstream RTEMS.
+  * `drivers-selftest`: produces `libhpsc-drivers-selftest.a`.
+  These library routines accept parameters for testing drivers and hardware.
+  This library may only depend on `libhpsc-drivers`.
+  * `hpsc`: produces `libhpsc.a` containing common library routines.
+  This library may only depend on `libhpsc-drivers`.
+* `plat`: shared platform configurations to be used by applications.
+* `rtps-r52`: produces `rtps-r52.img` containing the reference/test RTEMS
+  application for the R52s in the RTPS subsystem.
 
 
 Building
@@ -43,6 +49,7 @@ Drivers
 Current drivers are:
 
 * `hpsc-mbox`: HPSC Mailbox
+* `hpsc-rti-timer`: HPSC Real-Time Interrupt Timers
 * `hpsc-wdt`: HPSC Watchdog Timers
 
 
@@ -55,7 +62,6 @@ Current library tools are:
 * `link`: A two-way messaging channel that abstracts the exchange mechanism.
   * `mailbox-link`: An implementation of `link` using HPSC Mailboxes.
   * `shmem-link`: An implementation of `link` using shared memory.
-* `server`: An interface to be implemented by applications to handle requests.
 * `shmem`: A shared memory messaging interface, compatible with mailbox-style messages.
 
 
