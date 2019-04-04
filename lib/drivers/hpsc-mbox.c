@@ -86,7 +86,7 @@ static void hpsc_mbox_chan_init(struct hpsc_mbox_chan *chan,
                                 hpsc_mbox_chan_irq_cb cb_b,
                                 void *cb_arg)
 {
-    chan->base = (volatile void *)to_chan_base(chan->mbox, chan->instance);
+    chan->base = to_chan_base(chan->mbox, chan->instance);
     chan->int_a.cb = cb_a;
     chan->int_a.arg = cb_arg;
     chan->int_b.cb = cb_b;
@@ -117,8 +117,13 @@ void hpsc_mbox_chan_config_read(
     uint32_t *dest
 )
 {
-    volatile uint32_t *addr = to_chan_base(mbox, instance) + REG_CONFIG;
-    uint32_t val = *addr;
+    volatile uint32_t *addr;
+    uint32_t val;
+    assert(mbox);
+    assert(instance < HPSC_MBOX_CHANNELS);
+
+    addr = to_chan_base(mbox, instance) + REG_CONFIG;
+    val = *addr;
     if (owner)
         *owner = (val & REG_CONFIG__OWNER__MASK) >> REG_CONFIG__OWNER__SHIFT;
     if (src)
@@ -136,14 +141,19 @@ int hpsc_mbox_chan_config_write(
     uint32_t dest
 )
 {
-    volatile uint32_t *addr = to_chan_base(mbox, instance) + REG_CONFIG;
-    uint32_t config = REG_CONFIG__UNSECURE |
+    volatile uint32_t *addr;
+    uint32_t config;
+    uint32_t val;
+    assert(mbox);
+    assert(instance < HPSC_MBOX_CHANNELS);
+
+    addr = to_chan_base(mbox, instance) + REG_CONFIG;
+    config = REG_CONFIG__UNSECURE |
              ((owner << REG_CONFIG__OWNER__SHIFT) & REG_CONFIG__OWNER__MASK) |
              ((src << REG_CONFIG__SRC__SHIFT)     & REG_CONFIG__SRC__MASK) |
              ((dest  << REG_CONFIG__DEST__SHIFT)  & REG_CONFIG__DEST__MASK);
-    uint32_t val = config;
-    DPRINTK("hpsc_mbox_chan_config_write: %p <|- %08x\n", addr, val);
-    *addr = val;
+    DPRINTK("hpsc_mbox_chan_config_write: %p <|- %08x\n", addr, config);
+    *addr = config;
     val = *addr;
     DPRINTK("hpsc_mbox_chan_config_write: %p -> %08x\n", addr, val);
     if (val != config) {
@@ -157,9 +167,14 @@ int hpsc_mbox_chan_config_write(
 
 void hpsc_mbox_chan_reset(struct hpsc_mbox *mbox, unsigned instance)
 {
-    volatile uint32_t *addr = to_chan_base(mbox, instance) + REG_CONFIG;
+    volatile uint32_t *addr;
+    uint32_t val;
+    assert(mbox);
+    assert(instance < HPSC_MBOX_CHANNELS);
+
+    addr = to_chan_base(mbox, instance) + REG_CONFIG;
     // clearing owner also clears destination (resets the instance)
-    uint32_t val = 0;
+    val = 0;
     DPRINTK("hpsc_mbox_chan_reset: owner: %p <|- %08x\n", addr, val);
     *addr = val;
 }
@@ -180,9 +195,10 @@ struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
     uint32_t src_hw;
     uint32_t dest_hw;
     struct hpsc_mbox_chan *chan;
+    assert(mbox);
+    assert(instance < HPSC_MBOX_CHANNELS);
 
     // NOTE: we don't verify that channels aren't already claimed
-    assert(instance < HPSC_MBOX_CHANNELS);
     chan = &mbox->chans[instance];
     hpsc_mbox_chan_init(chan, owner, src, dest, cb_a, cb_b, cb_arg);
 
@@ -222,6 +238,7 @@ cleanup:
 
 int hpsc_mbox_chan_release(struct hpsc_mbox_chan *chan)
 {
+    assert(chan);
     if (chan->owner) {
         // We are the OWNER, so we can release
         hpsc_mbox_chan_reset(chan->mbox, chan->instance);
@@ -232,13 +249,16 @@ int hpsc_mbox_chan_release(struct hpsc_mbox_chan *chan)
 
 size_t hpsc_mbox_chan_write(struct hpsc_mbox_chan *chan, void *buf, size_t sz)
 {
-    unsigned i;
-    uint32_t *msg = buf;
-    unsigned len = sz / sizeof(uint32_t);
     volatile uint32_t *addr;
+    uint32_t *msg = buf;
     uint32_t val;
-
+    size_t len;
+    size_t i;
+    assert(chan);
+    assert(buf);
     assert(sz <= HPSC_MBOX_DATA_SIZE);
+
+    len = sz / sizeof(uint32_t);
     if (sz % sizeof(uint32_t))
         len++;
 
@@ -263,20 +283,23 @@ size_t hpsc_mbox_chan_write(struct hpsc_mbox_chan *chan, void *buf, size_t sz)
 
 size_t hpsc_mbox_chan_read(struct hpsc_mbox_chan *chan, void *buf, size_t sz)
 {
-    uint32_t *msg = buf;
-    volatile uint32_t *data = (volatile uint32_t *)((uint8_t *)chan->base + REG_DATA);
-    size_t len = sz / sizeof(uint32_t);
     volatile uint32_t *addr;
+    uint32_t *msg = buf;
     uint32_t val;
+    size_t len;
     size_t i;
-    // assert(sz >= HPSC_MBOX_DATA_SIZE); // doesn't always hold currently
+    assert(chan);
+    assert(buf);
+    // assert(sz >= HPSC_MBOX_DATA_SIZE); // not a strict requirement
 
+    addr = (volatile uint32_t *)((uint8_t *)chan->base + REG_DATA);
+    len = sz / sizeof(uint32_t);
     if (sz % sizeof(uint32_t))
         len++;
 
     DPRINTK("hpsc_mbox_chan_read: msg: ");
     for (i = 0; i < len && i < HPSC_MBOX_DATA_REGS; i++) {
-        msg[i] = *data++;
+        msg[i] = *addr++;
         DPRINTK("%x ", msg[i]);
     }
     DPRINTK("\n");
@@ -294,6 +317,7 @@ static void hpsc_mbox_chan_isr_a(struct hpsc_mbox_chan *chan)
 {
     volatile uint32_t *addr;
     uint32_t val;
+    assert(chan);
 
     DPRINTK("hpsc_mbox_chan_isr_a: base %p instance %u\n",
             chan->base, chan->instance);
@@ -312,6 +336,7 @@ static void hpsc_mbox_chan_isr_b(struct hpsc_mbox_chan *chan)
 {
     volatile uint32_t *addr;
     uint32_t val;
+    assert(chan);
 
     DPRINTK("hpsc_mbox_chan_isr_b: base %p instance %u\n",
             chan->base, chan->instance);
@@ -335,6 +360,8 @@ static void hpsc_mbox_isr(struct hpsc_mbox *mbox, unsigned event,
     uint32_t val;
     unsigned i;
     bool handled = false;
+    assert(mbox);
+    assert(cb);
 
     for (i = 0; i < HPSC_MBOX_CHANNELS; ++i) {
         chan = &mbox->chans[i];
@@ -362,12 +389,14 @@ static void hpsc_mbox_isr(struct hpsc_mbox *mbox, unsigned event,
 static void hpsc_mbox_isr_a(void *arg)
 {
     struct hpsc_mbox_irq_info *info = (struct hpsc_mbox_irq_info *)arg;
+    assert(info);
     hpsc_mbox_isr(info->mbox, HPSC_MBOX_EVENT_A,
                   HPSC_MBOX_INT_A(info->mbox->int_a.idx), hpsc_mbox_chan_isr_a);
 }
 static void hpsc_mbox_isr_b(void *arg)
 {
     struct hpsc_mbox_irq_info *info = (struct hpsc_mbox_irq_info *)arg;
+    assert(info);
     hpsc_mbox_isr(info->mbox, HPSC_MBOX_EVENT_B,
                   HPSC_MBOX_INT_B(info->mbox->int_b.idx), hpsc_mbox_chan_isr_b);
 }
@@ -416,6 +445,10 @@ rtems_status_code hpsc_mbox_probe(
 )
 {
     rtems_status_code sc;
+    assert(mbox);
+    assert(info);
+    assert(base);
+
     *mbox = malloc(sizeof(struct hpsc_mbox));
     if (!*mbox) {
         printf("hpsc_mbox_probe: malloc failed\n");
@@ -452,6 +485,8 @@ rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox)
 {
     rtems_status_code sc = RTEMS_SUCCESSFUL;
     rtems_status_code sc_tmp;
+    assert(mbox);
+
     printf("hpsc_mbox_remove: %s\n", mbox->info);
 
     sc_tmp = rtems_interrupt_handler_remove(mbox->int_a.n, hpsc_mbox_isr_a,
