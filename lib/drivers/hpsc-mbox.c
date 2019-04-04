@@ -118,6 +118,7 @@ void hpsc_mbox_chan_config_read(
     assert(mbox);
     assert(instance < HPSC_MBOX_CHANNELS);
 
+    DPRINTK("MBOX: %s: %u: read config\n", mbox->info, instance);
     val = REGB_READ32(mbox->chans[instance].base, REG_CONFIG);
     if (owner)
         *owner = (val & REG_CONFIG__OWNER__MASK) >> REG_CONFIG__OWNER__SHIFT;
@@ -144,6 +145,7 @@ int hpsc_mbox_chan_config_write(
              ((owner << REG_CONFIG__OWNER__SHIFT) & REG_CONFIG__OWNER__MASK) |
              ((src << REG_CONFIG__SRC__SHIFT)     & REG_CONFIG__SRC__MASK) |
              ((dest  << REG_CONFIG__DEST__SHIFT)  & REG_CONFIG__DEST__MASK);
+    DPRINTK("MBOX: %s: %u: write config\n", mbox->info, instance);
     REGB_WRITE32(mbox->chans[instance].base, REG_CONFIG, config);
     val = REGB_READ32(mbox->chans[instance].base, REG_CONFIG);
     if (val != config) {
@@ -160,6 +162,7 @@ void hpsc_mbox_chan_reset(struct hpsc_mbox *mbox, unsigned instance)
     assert(mbox);
     assert(instance < HPSC_MBOX_CHANNELS);
     // clearing owner also clears destination (resets the instance)
+    DPRINTK("MBOX: %s: %u: reset config\n", mbox->info, instance);
     REGB_WRITE32(mbox->chans[instance].base, REG_CONFIG, 0);
 }
 
@@ -182,6 +185,7 @@ struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
     assert(instance < HPSC_MBOX_CHANNELS);
 
     // NOTE: we don't verify that channels aren't already claimed
+    DPRINTK("MBOX: %s: %u: claim\n", mbox->info, instance);
     chan = &mbox->chans[instance];
     hpsc_mbox_chan_init(chan, owner, src, dest, cb_a, cb_b, cb_arg);
 
@@ -208,6 +212,7 @@ struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
         val |= HPSC_MBOX_INT_A(chan->mbox->int_a.idx);
     if (chan->int_b.cb)
         val |= HPSC_MBOX_INT_B(chan->mbox->int_b.idx);
+    DPRINTK("MBOX: %s: %u: enable interrupts\n", mbox->info, instance);
     REGB_SET32(chan->base, REG_INT_ENABLE, val);
 
     return chan;
@@ -219,6 +224,7 @@ cleanup:
 int hpsc_mbox_chan_release(struct hpsc_mbox_chan *chan)
 {
     assert(chan);
+    DPRINTK("MBOX: %s: %u: release\n", chan->mbox->info, chan->instance);
     if (chan->owner) {
         // We are the OWNER, so we can release
         hpsc_mbox_chan_reset(chan->mbox, chan->instance);
@@ -240,7 +246,7 @@ size_t hpsc_mbox_chan_write(struct hpsc_mbox_chan *chan, void *buf, size_t sz)
     if (sz % sizeof(uint32_t))
         len++;
 
-    DPRINTK("hpsc_mbox_chan_write:\n");
+    DPRINTK("MBOX: %s: %u: write\n", chan->mbox->info, chan->instance);
     for (i = 0; i < len; ++i)
         REGB_WRITE32(chan->base, REG_DATA + (i * sizeof(uint32_t)), msg[i]);
     // zero out any remaining registers
@@ -266,7 +272,7 @@ size_t hpsc_mbox_chan_read(struct hpsc_mbox_chan *chan, void *buf, size_t sz)
     if (sz % sizeof(uint32_t))
         len++;
 
-    DPRINTK("hpsc_mbox_chan_read:\n");
+    DPRINTK("MBOX: %s: %u: read\n", chan->mbox->info, chan->instance);
     for (i = 0; i < len && i < HPSC_MBOX_DATA_REGS; i++)
         msg[i] = REGB_READ32(chan->base, REG_DATA + (i * sizeof(uint32_t)));
 
@@ -299,31 +305,39 @@ static void hpsc_mbox_chan_isr_b(struct hpsc_mbox_chan *chan)
         chan->int_b.cb(chan->int_b.arg);
 }
 
+static bool hpsc_mbox_chan_is_subscribed(struct hpsc_mbox_chan *chan,
+                                         unsigned event,
+                                         unsigned interrupt)
+{
+    uint32_t val;
+    if (!chan->active)
+        return false;
+    DPRINTK("MBOX: %s: %u: check event subscription: %u\n",
+            chan->mbox->info, chan->instance, event);
+    // Are we 'signed up' for this event (A) from this channel?
+    // Two criteria: (1) Cause is set, and (2) Mapped to our IRQ
+    val = REGB_READ32(chan->base, REG_EVENT_CAUSE);
+    if (!(val & event))
+        return false; // this mailbox didn't raise the interrupt
+    val = REGB_READ32(chan->base, REG_INT_ENABLE);
+    if (!(val & interrupt))
+        return false; // this mailbox has an event but it's not ours
+    return true;
+}
+
 static void hpsc_mbox_isr(struct hpsc_mbox *mbox, unsigned event,
                           unsigned interrupt,
                           void (*cb)(struct hpsc_mbox_chan *))
 {
     struct hpsc_mbox_chan *chan;
-    uint32_t val;
     size_t i;
     bool handled = false;
     assert(mbox);
     assert(cb);
-
     for (i = 0; i < HPSC_MBOX_CHANNELS; ++i) {
         chan = &mbox->chans[i];
-        if (!chan->active)
+        if (!hpsc_mbox_chan_is_subscribed(chan, event, interrupt))
             continue;
-        DPRINTK("hpsc_mbox_isr: check chan: %u\n", i);
-        // Are we 'signed up' for this event (A) from this mailbox (i)?
-        // Two criteria: (1) Cause is set, and (2) Mapped to our IRQ
-        val = REGB_READ32(chan->base, REG_EVENT_CAUSE);
-        if (!(val & event))
-            continue; // this mailbox didn't raise the interrupt
-        val = REGB_READ32(chan->base, REG_INT_ENABLE);
-        if (!(val & interrupt))
-            continue; // this mailbox has an event but it's not ours
-
         handled = true;
         cb(chan);
    }
@@ -334,6 +348,7 @@ static void hpsc_mbox_isr_a(void *arg)
 {
     struct hpsc_mbox_irq_info *info = (struct hpsc_mbox_irq_info *)arg;
     assert(info);
+    DPRINTK("MBOX: %s: ISR A\n", info->mbox->info);
     hpsc_mbox_isr(info->mbox, HPSC_MBOX_EVENT_A,
                   HPSC_MBOX_INT_A(info->mbox->int_a.idx), hpsc_mbox_chan_isr_a);
 }
@@ -341,6 +356,7 @@ static void hpsc_mbox_isr_b(void *arg)
 {
     struct hpsc_mbox_irq_info *info = (struct hpsc_mbox_irq_info *)arg;
     assert(info);
+    DPRINTK("MBOX: %s: ISR B\n", info->mbox->info);
     hpsc_mbox_isr(info->mbox, HPSC_MBOX_EVENT_B,
                   HPSC_MBOX_INT_B(info->mbox->int_b.idx), hpsc_mbox_chan_isr_b);
 }
@@ -356,7 +372,6 @@ static void hpsc_mbox_init(
 )
 {
     size_t i;
-    printf("MBOX: %s: init\n", info);
     printf("\tbase: %p\n", base);
     printf("\tirq_a: %u\n", int_a);
     printf("\tidx_a: %u\n", int_idx_a);
@@ -393,6 +408,7 @@ rtems_status_code hpsc_mbox_probe(
     assert(info);
     assert(base);
 
+    printf("MBOX: %s: probe\n", info);
     *mbox = malloc(sizeof(struct hpsc_mbox));
     if (!*mbox) {
         printf("hpsc_mbox_probe: malloc failed\n");
