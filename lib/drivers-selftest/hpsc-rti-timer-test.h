@@ -5,6 +5,9 @@
 
 #include <rtems.h>
 
+// drivers
+#include <hpsc-rti-timer.h>
+
 enum hpsc_rti_timer_test_rc {
     HPSC_RTI_TIMER_TEST_SUCCESS = 0,
     HPSC_RTI_TIMER_TEST_PROBE,
@@ -17,6 +20,9 @@ enum hpsc_rti_timer_test_rc {
     HPSC_RTI_TIMER_TEST_UNEXPECTED_EVENTS,
     HPSC_RTI_TIMER_TEST_UNEXPECTED_EVENT_COUNT
 };
+
+int hpsc_rti_timer_test_device(struct hpsc_rti_timer *tmr,
+                               uint64_t reset_interval_ns);
 
 int hpsc_rti_timer_test(
     volatile uint32_t *base,
