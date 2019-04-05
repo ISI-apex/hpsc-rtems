@@ -2,7 +2,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
-#include <time.h>
 
 #include <rtems.h>
 
@@ -48,14 +47,13 @@ static void cb_ack(void *arg)
 
 static int test_loopback(struct hpsc_mbox_test *ctx)
 {
-    struct timespec ts;
+    rtems_interval ticks =
+        10000 / rtems_configuration_get_microseconds_per_tick(); // 10 ms;
     size_t sz = hpsc_mbox_chan_write(ctx->chan, TEST_MSG, sizeof(TEST_MSG));
     if (sz < sizeof(TEST_MSG))
         return HPSC_MBOX_TEST_CHAN_WRITE;
     // wait a short period
-    ts.tv_sec = 0;
-    ts.tv_nsec = 10000000; // 10 ms
-    nanosleep(&ts, NULL);
+    rtems_task_wake_after(ticks);
     if (!ctx->is_rx)
         return HPSC_MBOX_TEST_CHAN_NO_RECV;
     if (!ctx->is_ack)
