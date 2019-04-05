@@ -5,7 +5,6 @@
 #include "devices.h"
 
 static struct hpsc_mbox *devs_mbox[DEV_ID_MBOX_COUNT] = { 0 };
-
 int dev_add_mbox(dev_id_mbox id, struct hpsc_mbox *dev)
 {
     assert(id < DEV_ID_MBOX_COUNT);
@@ -16,21 +15,40 @@ int dev_add_mbox(dev_id_mbox id, struct hpsc_mbox *dev)
     devs_mbox[id] = dev;
     return 0;
 }
-
 void dev_remove_mbox(dev_id_mbox id)
 {
     assert(id < DEV_ID_MBOX_COUNT);
     devs_mbox[id] = NULL;
 }
-
 struct hpsc_mbox *dev_get_mbox(dev_id_mbox id)
 {
     assert(id < DEV_ID_MBOX_COUNT);
     return devs_mbox[id];
 }
 
-static struct hpsc_wdt *devs_wdt[DEV_ID_CPU_COUNT] = { 0 };
+static struct hpsc_rti_timer *devs_rtit[DEV_ID_CPU_COUNT] = { 0 };
+int dev_add_rtit(dev_id_cpu id, struct hpsc_rti_timer *dev)
+{
+    assert(id < DEV_ID_CPU_COUNT);
+    if (devs_rtit[id]) {
+        printf("ERROR: dev_add_rtit: already added id=%u\n", id);
+        return -1;
+    }
+    devs_rtit[id] = dev;
+    return 0;
+}
+void dev_remove_rtit(dev_id_cpu id)
+{
+    assert(id < DEV_ID_CPU_COUNT);
+    devs_rtit[id] = NULL;
+}
+struct hpsc_rti_timer *dev_get_rtit(dev_id_cpu id)
+{
+    assert(id < DEV_ID_CPU_COUNT);
+    return devs_rtit[id];
+}
 
+static struct hpsc_wdt *devs_wdt[DEV_ID_CPU_COUNT] = { 0 };
 int dev_add_wdt(dev_id_cpu id, struct hpsc_wdt *dev)
 {
     assert(id < DEV_ID_CPU_COUNT);
@@ -41,13 +59,11 @@ int dev_add_wdt(dev_id_cpu id, struct hpsc_wdt *dev)
     devs_wdt[id] = dev;
     return 0;
 }
-
 void dev_remove_wdt(dev_id_cpu id)
 {
     assert(id < DEV_ID_CPU_COUNT);
     devs_wdt[id] = NULL;
 }
-
 struct hpsc_wdt *dev_get_wdt(dev_id_cpu id)
 {
     assert(id < DEV_ID_CPU_COUNT);
