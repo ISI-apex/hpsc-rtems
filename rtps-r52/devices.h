@@ -28,6 +28,10 @@ int dev_add_mbox(dev_id_mbox id, struct hpsc_mbox *dev);
 void dev_remove_mbox(dev_id_mbox id);
 struct hpsc_mbox *dev_get_mbox(dev_id_mbox id);
 
+#define dev_id_cpu_for_each_rtit(cpu, rtit) \
+    for (cpu = 0, rtit = dev_get_rtit(cpu); \
+         cpu < DEV_ID_CPU_COUNT; \
+         cpu++, rtit = (cpu < DEV_ID_CPU_COUNT) ? dev_get_rtit(cpu) : NULL)
 int dev_add_rtit(dev_id_cpu id, struct hpsc_rti_timer *dev);
 void dev_remove_rtit(dev_id_cpu id);
 struct hpsc_rti_timer *dev_get_rtit(dev_id_cpu id);
