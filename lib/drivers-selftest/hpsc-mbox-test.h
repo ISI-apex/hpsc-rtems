@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <rtems.h>
+
 // drivers
 #include <hpsc-mbox.h>
 
