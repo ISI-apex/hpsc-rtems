@@ -28,7 +28,8 @@ int hpsc_rti_timer_test(
     uint64_t reset_interval_ns
 )
 {
-    struct hpsc_rti_timer *tmr;
+    struct hpsc_rti_timer *tmr = NULL;
+    struct hpsc_rti_timer_cb *tmr_handler = NULL;
     struct timespec ts;
     rtems_status_code sc;
     uint64_t count;
@@ -37,10 +38,21 @@ int hpsc_rti_timer_test(
     unsigned i;
     int rc;
 
-    sc = hpsc_rti_timer_probe(&tmr, "RTI TMR", base, vec,
-                              handle_event, &events);
+    sc = hpsc_rti_timer_probe(&tmr, "RTI TMR", base, vec);
     if (sc != RTEMS_SUCCESSFUL)
         return HPSC_RTI_TIMER_TEST_PROBE;
+
+    sc = hpsc_rti_timer_subscribe(tmr, &tmr_handler, handle_event, &events);
+    if (sc != RTEMS_SUCCESSFUL) {
+        rc = HPSC_RTI_TIMER_TEST_SUBSCRIBE;
+        goto remove;
+    }
+
+    sc = hpsc_rti_timer_start(tmr);
+    if (sc != RTEMS_SUCCESSFUL) {
+        rc = HPSC_RTI_TIMER_TEST_START;
+        goto unsubscribe;
+    }
 
     count = hpsc_rti_timer_capture(tmr);
     ts.tv_sec = 0;
@@ -90,6 +102,17 @@ cleanup:
     // Since there's no way to disable the RTI timer, the best we can do to
     // reduce the load in the HW emulator, set the interval to max.
     hpsc_rti_timer_configure(tmr, reset_interval_ns);
+
+    sc = hpsc_rti_timer_stop(tmr);
+    if (sc != RTEMS_SUCCESSFUL)
+        rc = HPSC_RTI_TIMER_TEST_STOP;
+
+unsubscribe:
+    sc = hpsc_rti_timer_unsubscribe(tmr_handler);
+    if (sc != RTEMS_SUCCESSFUL)
+        rc = HPSC_RTI_TIMER_TEST_UNSUBSCRIBE;
+
+remove:
     sc = hpsc_rti_timer_remove(tmr);
     if (sc != RTEMS_SUCCESSFUL)
         rc = HPSC_RTI_TIMER_TEST_REMOVE;
