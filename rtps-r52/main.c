@@ -105,6 +105,18 @@ static void init_devices(void)
     dev_add_mbox(DEV_ID_MBOX_HPPS, mbox_hpps);
 #endif // CONFIG_MBOX_HPPS
 
+#if CONFIG_RTI_TIMER
+    // TODO: RTITs for correct core or both cores, depending on configuration
+    struct hpsc_rti_timer *rtit0 = NULL;
+    rtems_status_code rtit0_sc;
+    rtems_vector_number rtit0_vec =
+        gic_irq_to_rvn(PPI_IRQ__RTI_TIMER, GIC_IRQ_TYPE_PPI);
+    rtit0_sc = hpsc_rti_timer_probe(&rtit0, "RTPS RTI TMR0",
+                                    RTI_TIMER_RTPS_R52_0__RTPS_BASE, rtit0_vec);
+    assert(rtit0_sc == RTEMS_SUCCESSFUL);
+    dev_add_rtit(DEV_ID_CPU_RTPS_R52_0, rtit0);
+#endif // CONFIG_RTI_TIMER
+
 #if CONFIG_WDT
     // TODO: WDTs for correct core or both cores, depending on configuration
     struct hpsc_wdt *wdt0 = NULL;
