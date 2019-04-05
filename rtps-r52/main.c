@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -10,6 +11,7 @@
 #include <mem-map.h>
 
 // libhpsc
+#include <affinity.h>
 #include <command.h>
 #include <mailbox-link.h>
 
@@ -36,23 +38,6 @@ static void main_loop(void)
         verbose = iter++ % MAIN_LOOP_SILENT_ITERS == 0;
         if (verbose)
             printf("RTPS: main loop\n");
-
-#if CONFIG_WDT
-        // Kicking from here is insufficient, because we sleep. There are two
-        // ways to complete:
-        //     (A) have TRCH disable the watchdog in response to the WFI output
-        //     signal from the core,
-        //     (B) have a scheduler (with a tick interval shorter than the
-        //     watchdog timeout interval) and kick from the scheuduler tick, or
-        //     (C) kick on return from WFI/WFI (which could be as a result of
-        //     either first stage timeout IRQ or the system timer tick IRQ).
-        // At this time, we can do either (B) or (C): (B) has the disadvantage
-        // that what is being monitored is the systick ISR, and not the main
-        // loop proper (so if any ISRs starve the main loop, that won't be
-        // detected), and (C) has the disadvantage that if the main loop
-        // performs long actions, those actions need to kick. We go with (C).
-        watchdog_kick();
-#endif // CONFIG_WDT
 
         while (!cmd_dequeue(&cmd)) {
             cmd_handle(&cmd);
@@ -109,24 +94,44 @@ static void init_devices(void)
     // TODO: RTITs for correct core or both cores, depending on configuration
     struct hpsc_rti_timer *rtit0 = NULL;
     rtems_status_code rtit0_sc;
+    cpu_set_t rtit0_cpuset;
     rtems_vector_number rtit0_vec =
         gic_irq_to_rvn(PPI_IRQ__RTI_TIMER, GIC_IRQ_TYPE_PPI);
+    // set CPU affinity
+    rtit0_sc =
+        rtems_task_get_affinity(RTEMS_SELF, sizeof(rtit0_cpuset), &rtit0_cpuset);
+    assert(rtit0_sc == RTEMS_SUCCESSFUL);
+    affinity_pin_self_to_cpu(0);
     rtit0_sc = hpsc_rti_timer_probe(&rtit0, "RTPS RTI TMR0",
                                     RTI_TIMER_RTPS_R52_0__RTPS_BASE, rtit0_vec);
     assert(rtit0_sc == RTEMS_SUCCESSFUL);
     dev_add_rtit(DEV_ID_CPU_RTPS_R52_0, rtit0);
+    // restore CPU affinity
+    rtit0_sc =
+        rtems_task_set_affinity(RTEMS_SELF, sizeof(rtit0_cpuset), &rtit0_cpuset);
+    assert(rtit0_sc == RTEMS_SUCCESSFUL);
 #endif // CONFIG_RTI_TIMER
 
 #if CONFIG_WDT
     // TODO: WDTs for correct core or both cores, depending on configuration
     struct hpsc_wdt *wdt0 = NULL;
     rtems_status_code wdt0_sc;
+    cpu_set_t wdt0_cpuset;
     rtems_vector_number wdt0_vec =
         gic_irq_to_rvn(PPI_IRQ__WDT, GIC_IRQ_TYPE_PPI);
+    // set CPU affinity
+    wdt0_sc =
+        rtems_task_get_affinity(RTEMS_SELF, sizeof(wdt0_cpuset), &wdt0_cpuset);
+    assert(wdt0_sc == RTEMS_SUCCESSFUL);
+    affinity_pin_self_to_cpu(0);
     wdt0_sc = hpsc_wdt_probe_target(&wdt0, "RTPS0", WDT_RTPS_R52_0_RTPS_BASE,
                                     wdt0_vec, watchdog_timeout_isr, NULL);
     assert(wdt0_sc == RTEMS_SUCCESSFUL);
     dev_add_wdt(DEV_ID_CPU_RTPS_R52_0, wdt0);
+    // restore CPU affinity
+    wdt0_sc =
+        rtems_task_set_affinity(RTEMS_SELF, sizeof(wdt0_cpuset), &wdt0_cpuset);
+    assert(wdt0_sc == RTEMS_SUCCESSFUL);
 #endif // CONFIG_WDT
 }
 
@@ -191,6 +196,11 @@ static void init_server_links()
 
 static void init_tasks(void)
 {
+#if CONFIG_WDT
+    if (watchdog_tasks_create() != RTEMS_SUCCESSFUL)
+        rtems_panic("watchdogs");
+#endif // CONFIG_WDT
+
 #if CONFIG_SHELL
     if (shell_create() != RTEMS_SUCCESSFUL)
         rtems_panic("shell");
@@ -214,11 +224,6 @@ void *POSIX_Init(void *arg)
 
     // start additional tasks
     init_tasks();
-
-#if CONFIG_WDT
-    // once enabled, the WDT can't be stopped - so we must be ready to kick it
-    watchdog_enable();
-#endif // CONFIG_WDT
 
     main_loop();
 
