@@ -19,7 +19,7 @@
 #include "devices.h"
 #include "test.h"
 
-int test_core_rti_timer()
+int test_cpu_rti_timers()
 {
     struct hpsc_rti_timer *tmr = NULL;
     dev_id_cpu id = 0;

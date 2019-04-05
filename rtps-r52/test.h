@@ -1,7 +1,7 @@
 #ifndef TEST_H
 #define TEST_H
 
-int test_core_rti_timer();
+int test_cpu_rti_timers();
 
 int test_mbox_lsio_loopback();
 int test_mbox_lsio_trch();

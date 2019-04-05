@@ -133,8 +133,12 @@ static void init_devices(void)
 static void init_tests(void)
 {
 #if TEST_RTI_TIMER
-    if (test_core_rti_timer())
+#if !CONFIG_RTI_TIMER
+    #warning Ignoring TEST_RTI_TIMER - requires CONFIG_RTI_TIMER
+#else
+    if (test_cpu_rti_timers())
         rtems_panic("RTI Timer test");
+#endif // CONFIG_RTI_TIMER
 #endif // TEST_RTI_TIMER
 
 #if TEST_MBOX_LSIO_LOOPBACK
