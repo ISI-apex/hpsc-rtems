@@ -2,8 +2,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <rtems.h>
-
 // plat
 #include <hwinfo.h>
 #include <mailbox-map.h>

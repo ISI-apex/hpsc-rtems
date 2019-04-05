@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include <rtems.h>
 #include <rtems/bspIo.h>
 
 // driver

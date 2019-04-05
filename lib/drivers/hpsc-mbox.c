@@ -8,8 +8,6 @@
 
 #include <rtems.h>
 #include <rtems/bspIo.h>
-#include <bsp.h>
-#include <bsp/fatal.h>
 #include <bsp/irq-generic.h>
 
 #include "debug.h"

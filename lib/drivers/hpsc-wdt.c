@@ -7,7 +7,6 @@
 
 #include <rtems.h>
 #include <rtems/bspIo.h>
-#include <bsp/fatal.h>
 #include <bsp/irq-generic.h>
 
 #include "bit.h"

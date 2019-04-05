@@ -1,8 +1,6 @@
 #include <stdint.h>
 
 #include <rtems.h>
-#include <bsp.h>
-#include <bsp/arm-gic.h>
 #include <bsp/arm-gic-irq.h>
 
 #include "gic-trigger.h"

@@ -4,6 +4,8 @@
 #include <rtems.h>
 #include <rtems/shell.h>
 
+#include "shell.h"
+
 static rtems_task shell_task(rtems_task_argument ignored)
 {
     printf(" =========================\n");

@@ -5,7 +5,6 @@
 #include <stdio.h>
 #include <time.h>
 
-#include <rtems.h>
 #include <rtems/bspIo.h>
 
 #include <hpsc-mbox.h>
