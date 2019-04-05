@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <time.h>
 
 #include <rtems.h>
 #include <rtems/bspIo.h>
@@ -12,6 +11,7 @@
 #include "hpsc-rti-timer-test.h"
 
 #define INTERVAL_NS 1000000000
+#define INTERVAL_US (INTERVAL_NS / 1000)
 
 // Number of intervals to expect the ISR for.
 #define NUM_EVENTS 3
@@ -27,17 +27,16 @@ static void handle_event(struct hpsc_rti_timer *tmr, void *arg)
 
 static int do_test(struct hpsc_rti_timer *tmr, unsigned *events)
 {
-    struct timespec ts;
     uint64_t count;
     uint64_t count2;
     unsigned i;
+    rtems_interval ticks;
     assert(tmr);
     assert(events);
 
     count = hpsc_rti_timer_capture(tmr);
-    ts.tv_sec = 0;
-    ts.tv_nsec = 1000000; // 1 ms
-    nanosleep(&ts, NULL);
+    ticks = 1000 / rtems_configuration_get_microseconds_per_tick(); // 1 ms
+    rtems_task_wake_after(ticks);
     count2 = hpsc_rti_timer_capture(tmr);
     if (count2 <= count) {
         printf("TEST: FAIL: RTI TMR: value did not advance: "
@@ -55,18 +54,15 @@ static int do_test(struct hpsc_rti_timer *tmr, unsigned *events)
     hpsc_rti_timer_configure(tmr, INTERVAL_NS);
 
     // offset the checks by an epsilon
-    ts.tv_sec = (INTERVAL_NS / 10) / 1000000000;
-    ts.tv_nsec = (INTERVAL_NS / 10) % 1000000000;
-    nanosleep(&ts, NULL);
+    ticks = INTERVAL_US / rtems_configuration_get_microseconds_per_tick() / 10;
+    rtems_task_wake_after(ticks);
+
+    ticks = INTERVAL_US / rtems_configuration_get_microseconds_per_tick();
 #if 1 // TODO: remove this once timing is fixed in RTEMS
-    ts.tv_sec = (INTERVAL_NS / 8) / 1000000000;
-    ts.tv_nsec = (INTERVAL_NS / 8) % 1000000000;
-#else
-    ts.tv_sec = INTERVAL_NS / 1000000000;
-    ts.tv_nsec = INTERVAL_NS % 1000000000;
+    ticks /= 8;
 #endif
     for (i = 1; i <= NUM_EVENTS; ++i) {
-        nanosleep(&ts, NULL);
+        rtems_task_wake_after(ticks);
         if (*events != i) {
             printf("TEST: FAIL: RTI TMR: unexpected event count: %u != %u\n",
                    *events, i);
