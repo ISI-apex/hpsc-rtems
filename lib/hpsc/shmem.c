@@ -4,12 +4,6 @@
 
 #include "shmem.h"
 
-// All subsystems must understand this structure and its protocol
-struct hpsc_shmem_region {
-    uint8_t data[SHMEM_MSG_SIZE];
-    uint32_t is_new;
-};
-
 struct shmem {
     void *addr;
 };

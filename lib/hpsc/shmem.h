@@ -7,6 +7,12 @@
 // size aligns with mailbox messages
 #define SHMEM_MSG_SIZE 64
 
+// All subsystems must understand this structure and its protocol
+struct hpsc_shmem_region {
+    uint8_t data[SHMEM_MSG_SIZE];
+    uint32_t is_new;
+};
+
 struct shmem;
 
 struct shmem *shmem_open(void *addr);
