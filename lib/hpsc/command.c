@@ -26,19 +26,13 @@ void cmd_handler_unregister()
 
 int cmd_enqueue(struct cmd *cmd)
 {
-    size_t i;
-
     if (cmdq_head + 1 % CMD_QUEUE_LEN == cmdq_tail) {
         printf("command: enqueue failed: queue full\n");
         return 1;
     }
     cmdq_head = (cmdq_head + 1) % CMD_QUEUE_LEN;
 
-    // cmdq[cmdq_head] = *cmd; // can't because GCC inserts a memcpy
-    cmdq[cmdq_head].link = cmd->link;
-    for (i = 0; i < CMD_MSG_SZ; ++i)
-        cmdq[cmdq_head].msg[i] = cmd->msg[i];
-
+    memcpy(&cmdq[cmdq_head], cmd, sizeof(struct cmd));
     printf("command: enqueue (tail %u head %u): cmd %u arg %u...\n",
            cmdq_tail, cmdq_head,
            cmdq[cmdq_head].msg[0], cmdq[cmdq_head].msg[CMD_MSG_PAYLOAD_OFFSET]);
@@ -50,17 +44,12 @@ int cmd_enqueue(struct cmd *cmd)
 
 int cmd_dequeue(struct cmd *cmd)
 {
-    size_t i;
-
     if (cmdq_head == cmdq_tail)
         return 1;
 
     cmdq_tail = (cmdq_tail + 1) % CMD_QUEUE_LEN;
 
-    // *cmd = cmdq[cmdq_tail].cmd; // can't because GCC inserts a memcpy
-    cmd->link = cmdq[cmdq_tail].link;
-    for (i = 0; i < CMD_MSG_SZ; ++i)
-        cmd->msg[i] = cmdq[cmdq_tail].msg[i];
+    memcpy(cmd, &cmdq[cmdq_tail], sizeof(struct cmd));
     printf("command: dequeue (tail %u head %u): cmd %u arg %u...\n",
            cmdq_tail, cmdq_head,
            cmdq[cmdq_tail].msg[0], cmdq[cmdq_tail].msg[CMD_MSG_PAYLOAD_OFFSET]);
