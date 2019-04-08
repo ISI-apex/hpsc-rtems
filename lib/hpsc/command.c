@@ -3,6 +3,9 @@
 #include <string.h>
 #include <time.h>
 
+#include <rtems.h>
+#include <rtems/bspIo.h>
+
 #include "command.h"
 
 #define CMD_QUEUE_LEN 4
@@ -27,13 +30,13 @@ void cmd_handler_unregister()
 int cmd_enqueue(struct cmd *cmd)
 {
     if (cmdq_head + 1 % CMD_QUEUE_LEN == cmdq_tail) {
-        printf("command: enqueue failed: queue full\n");
+        printk("command: enqueue failed: queue full\n");
         return 1;
     }
     cmdq_head = (cmdq_head + 1) % CMD_QUEUE_LEN;
 
     memcpy(&cmdq[cmdq_head], cmd, sizeof(struct cmd));
-    printf("command: enqueue (tail %u head %u): cmd %u arg %u...\n",
+    printk("command: enqueue (tail %u head %u): cmd %u arg %u...\n",
            cmdq_tail, cmdq_head,
            cmdq[cmdq_head].msg[0], cmdq[cmdq_head].msg[CMD_MSG_PAYLOAD_OFFSET]);
 
