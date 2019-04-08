@@ -40,9 +40,9 @@ TEST_SHMEM			= 1
 # C source names
 CSRCS = \
 	devices.c \
-	shell.c \
+	init.c \
 	server.c \
-	main.c \
+	shell.c \
 	watchdog.c
 CSRCS += \
 	tests/mailbox.c \
