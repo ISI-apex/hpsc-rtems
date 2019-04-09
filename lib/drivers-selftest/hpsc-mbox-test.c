@@ -47,13 +47,11 @@ static void cb_ack(void *arg)
 
 static int test_loopback(struct hpsc_mbox_test *ctx)
 {
-    rtems_interval ticks =
-        10000 / rtems_configuration_get_microseconds_per_tick(); // 10 ms;
     size_t sz = hpsc_mbox_chan_write(ctx->chan, TEST_MSG, sizeof(TEST_MSG));
     if (sz < sizeof(TEST_MSG))
         return HPSC_MBOX_TEST_CHAN_WRITE;
     // wait a short period
-    rtems_task_wake_after(ticks);
+    rtems_task_wake_after(RTEMS_MILLISECONDS_TO_TICKS(10));
     if (!ctx->is_rx)
         return HPSC_MBOX_TEST_CHAN_NO_RECV;
     if (!ctx->is_ack)

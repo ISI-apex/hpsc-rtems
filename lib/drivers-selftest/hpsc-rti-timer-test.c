@@ -30,13 +30,11 @@ static int do_test(struct hpsc_rti_timer *tmr, unsigned *events)
     uint64_t count;
     uint64_t count2;
     unsigned i;
-    rtems_interval ticks;
     assert(tmr);
     assert(events);
 
     count = hpsc_rti_timer_capture(tmr);
-    ticks = 1000 / rtems_configuration_get_microseconds_per_tick(); // 1 ms
-    rtems_task_wake_after(ticks);
+    rtems_task_wake_after(RTEMS_MILLISECONDS_TO_TICKS(1));
     count2 = hpsc_rti_timer_capture(tmr);
     if (count2 <= count) {
         printf("TEST: FAIL: RTI TMR: value did not advance: "
@@ -54,15 +52,14 @@ static int do_test(struct hpsc_rti_timer *tmr, unsigned *events)
     hpsc_rti_timer_configure(tmr, INTERVAL_NS);
 
     // offset the checks by an epsilon
-    ticks = INTERVAL_US / rtems_configuration_get_microseconds_per_tick() / 10;
-    rtems_task_wake_after(ticks);
+    rtems_task_wake_after(RTEMS_MICROSECONDS_TO_TICKS(INTERVAL_US) / 10);
 
-    ticks = INTERVAL_US / rtems_configuration_get_microseconds_per_tick();
-#if 1 // TODO: remove this once timing is fixed in RTEMS
-    ticks /= 8;
-#endif
     for (i = 1; i <= NUM_EVENTS; ++i) {
-        rtems_task_wake_after(ticks);
+#if 1  // TODO: remove this once timing is fixed in RTEMS
+        rtems_task_wake_after(RTEMS_MICROSECONDS_TO_TICKS(INTERVAL_US / 8));
+#else
+        rtems_task_wake_after(RTEMS_MICROSECONDS_TO_TICKS(INTERVAL_US));
+#endif
         if (*events != i) {
             printf("TEST: FAIL: RTI TMR: unexpected event count: %u != %u\n",
                    *events, i);
