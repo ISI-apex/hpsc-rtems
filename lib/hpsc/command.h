@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <rtems.h>
+
 #include "link.h"
 
 #define CMD_MSG_SZ 64
@@ -54,12 +56,11 @@ struct cmd_mbox_link_connect {
 typedef int (cmd_handler_t)(struct cmd *cmd, void *reply, size_t reply_sz);
 
 void cmd_handler_register(cmd_handler_t *cb);
-void cmd_handler_unregister();
-
-void cmd_handle(struct cmd *cmd);
+void cmd_handler_unregister(void);
 
 int cmd_enqueue(struct cmd *cmd);
-int cmd_dequeue(struct cmd *cmd);
-bool cmd_pending();
+
+rtems_status_code cmd_handle_task_create(void);
+rtems_status_code cmd_handle_task_destroy(void);
 
 #endif // COMMAND_H
