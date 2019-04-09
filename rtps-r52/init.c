@@ -25,35 +25,6 @@
 #include "test.h"
 #include "watchdog.h"
 
-#define MAIN_LOOP_SILENT_ITERS 100
-
-static void main_loop(void)
-{
-    struct cmd cmd;
-    unsigned iter = 0;
-    bool verbose;
-    rtems_interrupt_level level;
-
-    while (1) {
-        verbose = iter++ % MAIN_LOOP_SILENT_ITERS == 0;
-        if (verbose)
-            printf("RTPS: main loop\n");
-
-        while (!cmd_dequeue(&cmd)) {
-            cmd_handle(&cmd);
-            verbose = true; // to end log with 'waiting' msg
-        }
-
-        rtems_interrupt_local_disable(level); // the check and the WFI must be atomic
-        if (!cmd_pending()) {
-            if (verbose)
-                printf("[%u] Waiting for interrupt...\n", iter);
-            asm("wfi"); // ignores PRIMASK set by int_disable
-        }
-        rtems_interrupt_local_enable(level);
-    }
-}
-
 static void init_devices(void)
 {
 #if CONFIG_MBOX_LSIO
@@ -196,6 +167,9 @@ static void init_server_links()
 
 static void init_tasks(void)
 {
+    if (cmd_handle_task_create() != RTEMS_SUCCESSFUL)
+        rtems_panic("command handler");
+
 #if CONFIG_WDT
     if (watchdog_tasks_create() != RTEMS_SUCCESSFUL)
         rtems_panic("watchdogs");
@@ -225,9 +199,7 @@ void *POSIX_Init(void *arg)
     // start additional tasks
     init_tasks();
 
-    main_loop();
-
-    return NULL;
+    rtems_task_exit();
 }
 
 /* configuration information */
