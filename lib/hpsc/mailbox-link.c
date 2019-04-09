@@ -3,8 +3,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
 
+#include <rtems.h>
 #include <rtems/bspIo.h>
 
 #include <hpsc-mbox.h>
@@ -14,6 +14,8 @@
 #include "mailbox-link.h"
 
 struct cmd_ctx {
+    // listens for: RTEMS_EVENT_0 (ACK), RTEMS_EVENT_1 (reply)
+    rtems_id tid_requester;
     volatile bool tx_acked;
     uint32_t *reply;
     size_t reply_sz;
@@ -26,27 +28,21 @@ struct mbox_link {
     struct cmd_ctx cmd_ctx;
 };
 
-// TODO: use signals instead of actually polling
-#define MIN_SLEEP_MS 10
-
-
-static void msleep_and_dec(int *ms_rem)
-{
-    struct timespec ts;
-    ts.tv_sec = MIN_SLEEP_MS / 1000;
-    ts.tv_nsec = (MIN_SLEEP_MS % 1000) * 1000000;
-    nanosleep(&ts, NULL);
-    // if < 0, timeout is infinite
-    if (*ms_rem > 0)
-        *ms_rem -= *ms_rem >= MIN_SLEEP_MS ? MIN_SLEEP_MS : *ms_rem;
-}
 
 static void handle_ack(void *arg)
 {
     struct link *link = arg;
     struct mbox_link *mlink = link->priv;
+    rtems_status_code sc;
     printk("%s: handle_ack\n", link->name);
     mlink->cmd_ctx.tx_acked = true;
+    // only used internally for request
+    if (mlink->cmd_ctx.tid_requester != RTEMS_ID_NONE) {
+        sc = rtems_event_send(mlink->cmd_ctx.tid_requester, RTEMS_EVENT_0);
+        if (sc != RTEMS_SUCCESSFUL)
+            // there was a race with send timeout and clearing tid_requester
+            rtems_panic("handle_ack: failed to send ACK to listening task");
+    }
 }
 
 static void handle_cmd(void *arg)
@@ -68,10 +64,18 @@ static void handle_reply(void *arg)
 {
     struct link *link = arg;
     struct mbox_link *mlink = link->priv;
+    rtems_status_code sc;
     printk("%s: handle_reply\n", link->name);
     mlink->cmd_ctx.reply_sz_read = hpsc_mbox_chan_read(mlink->chan_from,
                                                        mlink->cmd_ctx.reply,
                                                        mlink->cmd_ctx.reply_sz);
+    // only used internally for request
+    if (mlink->cmd_ctx.tid_requester != RTEMS_ID_NONE) {
+        sc = rtems_event_send(mlink->cmd_ctx.tid_requester, RTEMS_EVENT_1);
+        if (sc != RTEMS_SUCCESSFUL)
+            // there was a race with reply timeout and clearing tid_requester
+            rtems_panic("handle_reply: failed to send reply to listening task");
+    }
 }
 
 static int mbox_link_disconnect(struct link *link) {
@@ -100,29 +104,13 @@ static bool mbox_link_is_send_acked(struct link *link)
     return mlink->cmd_ctx.tx_acked;
 }
 
-static size_t mbox_link_poll(struct link *link, int timeout_ms)
-{
-    struct mbox_link *mlink = link->priv;
-    int sleep_ms_rem = timeout_ms;
-    printk("%s: poll: waiting for reply...\n", link->name);
-    do {
-        if (mlink->cmd_ctx.reply_sz_read) {
-            printk("%s: poll: reply received\n", link->name);
-            break; // got data
-        }
-        if (!sleep_ms_rem)
-            break; // timeout
-        msleep_and_dec(&sleep_ms_rem);
-    } while(1);
-    return mlink->cmd_ctx.reply_sz_read;
-}
-
 static ssize_t mbox_link_request(struct link *link,
                                  int wtimeout_ms, void *wbuf, size_t wsz,
                                  int rtimeout_ms, void *rbuf, size_t rsz)
 {
     struct mbox_link *mlink = link->priv;
-    int sleep_ms_rem = wtimeout_ms;
+    rtems_interval ticks;
+    rtems_event_set events;
     ssize_t rc;
 
     printk("%s: request\n", link->name);
@@ -135,20 +123,38 @@ static ssize_t mbox_link_request(struct link *link,
         printk("mbox_link_request: send failed\n");
         return -1;
     }
+    mlink->cmd_ctx.tid_requester = rtems_task_self();
 
     printk("%s: request: waiting for ACK...\n", link->name);
-    do {
-        if (mlink->cmd_ctx.tx_acked)
-            break;
-        if (!sleep_ms_rem)
-            return -1; // send timeout (considered a send failure)
-        msleep_and_dec(&sleep_ms_rem);
-    } while(1);
-    printk("%s: request: ACK received\n", link->name);
+    ticks = wtimeout_ms < 0 ? RTEMS_NO_TIMEOUT :
+        RTEMS_MILLISECONDS_TO_TICKS(wtimeout_ms);
+    events = 0;
+    rtems_event_receive(RTEMS_EVENT_0, RTEMS_EVENT_ANY, ticks, &events);
+    if (events & RTEMS_EVENT_0) {
+        printk("%s: request: ACK received\n", link->name);
+        assert(mlink->cmd_ctx.tx_acked);
+    } else {
+        printk("%s: request: timed out waiting for ACK...\n", link->name);
+        rc = -1; // send timeout (considered a send failure)
+        goto out;
+    }
 
-    rc = mbox_link_poll(link, rtimeout_ms);
-    if (!rc)
-        printk("mbox_link_request: recv failed\n");
+    printk("%s: request: waiting for reply...\n", link->name);
+    ticks = rtimeout_ms < 0 ? RTEMS_NO_TIMEOUT :
+        RTEMS_MILLISECONDS_TO_TICKS(wtimeout_ms);
+    events = 0;
+    rtems_event_receive(RTEMS_EVENT_1, RTEMS_EVENT_ANY, ticks, &events);
+    if (events & RTEMS_EVENT_1) {
+        printk("%s: request: reply received\n", link->name);
+        rc = mlink->cmd_ctx.reply_sz_read;
+        assert(rc);
+    } else {
+        printk("%s: request: timed out waiting for reply...\n", link->name);
+        rc = 0;
+    }
+
+out:
+    mlink->cmd_ctx.tid_requester = RTEMS_ID_NONE;
     return rc;
 }
 
@@ -186,6 +192,7 @@ struct link *mbox_link_connect(const char *name, struct hpsc_mbox *mbox,
         goto free_from;
     }
 
+    mlink->cmd_ctx.tid_requester = RTEMS_ID_NONE;
     mlink->cmd_ctx.tx_acked = false;
     mlink->cmd_ctx.reply = NULL;
 
