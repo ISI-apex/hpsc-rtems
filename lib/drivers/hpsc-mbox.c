@@ -221,8 +221,12 @@ cleanup:
 
 int hpsc_mbox_chan_release(struct hpsc_mbox_chan *chan)
 {
+    uint32_t val;
     assert(chan);
     DPRINTK("MBOX: %s: %u: release\n", chan->mbox->info, chan->instance);
+    val = HPSC_MBOX_INT_A(chan->mbox->int_a.idx) |
+          HPSC_MBOX_INT_B(chan->mbox->int_b.idx);
+    REGB_CLEAR32(chan->base, REG_INT_ENABLE, val);
     if (chan->owner) {
         // We are the OWNER, so we can release
         hpsc_mbox_chan_reset(chan->mbox, chan->instance);
@@ -443,9 +447,13 @@ rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox)
 {
     rtems_status_code sc = RTEMS_SUCCESSFUL;
     rtems_status_code sc_tmp;
+    size_t i;
     assert(mbox);
 
     printf("MBOX: %s: remove\n", mbox->info);
+
+    for (i = 0; i < RTEMS_ARRAY_SIZE(mbox->chans); i++)
+        hpsc_mbox_chan_release(&mbox->chans[i]);
 
     sc_tmp = rtems_interrupt_handler_remove(mbox->int_a.n, hpsc_mbox_isr_a,
                                             &mbox->int_a);
