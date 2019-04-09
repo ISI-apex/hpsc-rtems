@@ -53,10 +53,10 @@ static void handle_cmd(void *arg)
 {
     struct link *link = arg;
     struct mbox_link *mlink = link->priv;
-    struct cmd cmd; // can't use initializer, because GCC inserts a memset for initing .msg
-    cmd.link = link;
-    assert(sizeof(cmd.msg) == HPSC_MBOX_DATA_SIZE); // o/w zero-fill rest of msg
-
+    struct cmd cmd = {
+        .link = link,
+        .msg = { 0 }
+    };
     printk("%s: handle_cmd\n", link->name);
     // read never fails if sizeof(cmd.msg) > 0
     hpsc_mbox_chan_read(mlink->chan_from, cmd.msg, sizeof(cmd.msg));
