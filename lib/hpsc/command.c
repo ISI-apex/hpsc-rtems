@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 
 #include <rtems.h>
 #include <rtems/bspIo.h>
@@ -106,20 +105,13 @@ out:
     return rc;
 }
 
-static void ms_to_ts(struct timespec *ts, uint32_t ms)
-{
-    ts->tv_sec = ms / 1000;
-    ts->tv_nsec = (ms % 1000) * 1000000;
-}
-
 static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
 {
     uint8_t reply[REPLY_SIZE] = { 0 };
     int reply_sz;
     size_t rc;
     cmd_status status = CMD_STATUS_SUCCESS;
-    uint32_t sleep_ms_rem = CMD_TIMEOUT_MS_REPLY;
-    struct timespec ts;
+    int32_t sleep_ms_rem = CMD_TIMEOUT_MS_REPLY;
     assert(cmd);
 
     printf("command: handle: cmd %u arg %u...\n",
@@ -153,23 +145,20 @@ static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
     }
     printf("command: handle: %s: waiting for ACK for our reply\n",
            cmd->link->name);
-    ms_to_ts(&ts, CMD_TIMEOUT_MS_RECV);
     do {
         if (cmd->link->is_send_acked(cmd->link)) {
             printf("command: handle: %s: ACK for our reply received\n", 
                    cmd->link->name);
             break;
         }
-        if (sleep_ms_rem) {
-            nanosleep(&ts, NULL);
-            sleep_ms_rem -= sleep_ms_rem < CMD_TIMEOUT_MS_RECV ?
-                sleep_ms_rem : CMD_TIMEOUT_MS_RECV;
-        } else {
+        if (sleep_ms_rem <= 0) {
             printf("command: handle: %s: timed out waiting for ACK\n",
                    cmd->link->name);
             status = CMD_STATUS_ACK_FAILED;
             break;
         }
+        rtems_task_wake_after(RTEMS_MILLISECONDS_TO_TICKS(CMD_TIMEOUT_MS_RECV));
+        sleep_ms_rem -= CMD_TIMEOUT_MS_RECV;
     } while (1);
 
 out:
