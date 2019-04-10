@@ -30,6 +30,17 @@
 // wait up to 30 seconds for replies - a timeout prevent hangs when remotes fail
 #define CMD_TIMEOUT_MS_REPLY 30000
 
+typedef enum {
+    CMD_STATUS_SUCCESS,
+    CMD_STATUS_NO_HANDLER,
+    CMD_STATUS_HANDLER_FAILED,
+    CMD_STATUS_REPLY_FAILED,
+    CMD_STATUS_ACK_FAILED,
+    CMD_STATUS_UNKNOWN
+} cmd_status;
+
+typedef void (cmd_handled_t)(void *arg, cmd_status status);
+
 struct cmd {
     // the first byte of the message is the type, the next 3 bytes are reserved
     // the remainder of the msg is available for the payload
@@ -58,6 +69,7 @@ typedef int (cmd_handler_t)(struct cmd *cmd, void *reply, size_t reply_sz);
 void cmd_handler_register(cmd_handler_t *cb);
 void cmd_handler_unregister(void);
 
+int cmd_enqueue_cb(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg);
 int cmd_enqueue(struct cmd *cmd);
 
 rtems_status_code cmd_handle_task_create(void);
