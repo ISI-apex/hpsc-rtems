@@ -4,18 +4,12 @@
 #include <stdint.h>
 
 #include <rtems.h>
+#include <rtems/irq-extension.h>
 
 /**
  * A RTI Timer device (IP block instance)
  */
 struct hpsc_rti_timer;
-
-/**
- * A RTI Timer callback handle
- */
-struct hpsc_rti_timer_cb;
-
-typedef void (hpsc_rti_timer_cb_t)(struct hpsc_rti_timer *tmr, void *arg);
 
 /**
  * Initialize a RTI Timer IP block
@@ -33,28 +27,22 @@ rtems_status_code hpsc_rti_timer_probe(
 rtems_status_code hpsc_rti_timer_remove(struct hpsc_rti_timer *tmr);
 
 /**
- * Subscribe to a RTI Timer
- * Currently, there can only be one subscriber
- */
-rtems_status_code hpsc_rti_timer_subscribe(struct hpsc_rti_timer *tmr,
-                                           struct hpsc_rti_timer_cb **handle,
-                                           hpsc_rti_timer_cb_t *cb,
-                                           void *cb_arg);
-
-/**
- * Unsubscribe from a RTI Timer
- */
-rtems_status_code hpsc_rti_timer_unsubscribe(struct hpsc_rti_timer_cb *handle);
-
-/**
  * Start a RTI Timer
  */
-rtems_status_code hpsc_rti_timer_start(struct hpsc_rti_timer *tmr);
+rtems_status_code hpsc_rti_timer_start(
+    struct hpsc_rti_timer *tmr,
+    rtems_interrupt_handler handler,
+    void *arg
+);
 
 /**
  * Stop a RTI Timer
  */
-rtems_status_code hpsc_rti_timer_stop(struct hpsc_rti_timer *tmr);
+rtems_status_code hpsc_rti_timer_stop(
+    struct hpsc_rti_timer *tmr,
+    rtems_interrupt_handler handler,
+    void *arg
+);
 
 /**
  * Read a RTI Timer

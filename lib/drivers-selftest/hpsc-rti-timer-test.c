@@ -16,10 +16,9 @@
 // Number of intervals to expect the ISR for.
 #define NUM_EVENTS 3
 
-static void handle_event(struct hpsc_rti_timer *tmr, void *arg)
+static void handle_event(void *arg)
 {
     volatile unsigned *events = arg;
-    assert(tmr);
     assert(events);
     (*events)++;
     printk("RTI TMR test: events -> %u\n", *events);
@@ -72,21 +71,14 @@ static int do_test(struct hpsc_rti_timer *tmr, unsigned *events)
 int hpsc_rti_timer_test_device(struct hpsc_rti_timer *tmr,
                                uint64_t reset_interval_ns)
 {
-    struct hpsc_rti_timer_cb *tmr_handler = NULL;
     rtems_status_code sc;
     unsigned events = 0;
     int rc;
     assert(tmr);
 
-    sc = hpsc_rti_timer_subscribe(tmr, &tmr_handler, handle_event, &events);
+    sc = hpsc_rti_timer_start(tmr, handle_event, &events);
     if (sc != RTEMS_SUCCESSFUL)
-        return HPSC_RTI_TIMER_TEST_SUBSCRIBE;
-
-    sc = hpsc_rti_timer_start(tmr);
-    if (sc != RTEMS_SUCCESSFUL) {
-        rc = HPSC_RTI_TIMER_TEST_START;
-        goto unsubscribe;
-    }
+        return HPSC_RTI_TIMER_TEST_START;
 
     rc = do_test(tmr, &events);
 
@@ -94,14 +86,9 @@ int hpsc_rti_timer_test_device(struct hpsc_rti_timer *tmr,
     // reduce the load in the HW emulator, set the interval to max.
     hpsc_rti_timer_configure(tmr, reset_interval_ns);
 
-    sc = hpsc_rti_timer_stop(tmr);
+    sc = hpsc_rti_timer_stop(tmr, handle_event, &events);
     if (sc != RTEMS_SUCCESSFUL)
         rc = HPSC_RTI_TIMER_TEST_STOP;
-
-unsubscribe:
-    sc = hpsc_rti_timer_unsubscribe(tmr_handler);
-    if (sc != RTEMS_SUCCESSFUL)
-        rc = HPSC_RTI_TIMER_TEST_UNSUBSCRIBE;
 
     return rc;
 }
