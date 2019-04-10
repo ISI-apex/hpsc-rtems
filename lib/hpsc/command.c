@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -21,6 +22,7 @@ struct cmdq_item {
 static size_t cmdq_head = 0;
 static size_t cmdq_tail = 0;
 static struct cmdq_item cmdq[CMD_QUEUE_LEN];
+static pthread_spinlock_t cmdq_lock; // no init is necessary
 
 static rtems_id cmdh_task_id = RTEMS_ID_NONE;
 
@@ -39,11 +41,17 @@ void cmd_handler_unregister(void)
 
 int cmd_enqueue_cb(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
 {
+    int err;
+    int rc = 0;
     assert(cmd);
     assert(cmdh_task_id != RTEMS_ID_NONE);
+
+    err = pthread_spin_lock(&cmdq_lock);
+    assert(!err);
     if (cmdq_head + 1 % CMD_QUEUE_LEN == cmdq_tail) {
         printk("command: enqueue failed: queue full\n");
-        return 1;
+        rc = 1;
+        goto out;
     }
     cmdq_head = (cmdq_head + 1) % CMD_QUEUE_LEN;
 
@@ -55,9 +63,12 @@ int cmd_enqueue_cb(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
            cmdq[cmdq_head].cmd.msg[0],
            cmdq[cmdq_head].cmd.msg[CMD_MSG_PAYLOAD_OFFSET]);
 
-    if (rtems_event_send(cmdh_task_id, RTEMS_EVENT_0) == RTEMS_SUCCESSFUL)
-        return 0;
-    return 1;
+out:
+    err = pthread_spin_unlock(&cmdq_lock);
+    assert(!err);
+    if (!rc)
+        rc = rtems_event_send(cmdh_task_id, RTEMS_EVENT_0) != RTEMS_SUCCESSFUL;
+    return rc;
 }
 
 int cmd_enqueue(struct cmd *cmd)
@@ -67,11 +78,18 @@ int cmd_enqueue(struct cmd *cmd)
 
 static int cmd_dequeue(struct cmd *cmd, cmd_handled_t **cb, void **cb_arg)
 {
+    int err;
+    int rc = 0;
     assert(cmd);
     assert(cb);
     assert(cb_arg);
-    if (cmdq_head == cmdq_tail)
-        return 1;
+
+    err = pthread_spin_lock(&cmdq_lock);
+    assert(!err);
+    if (cmdq_head == cmdq_tail) {
+        rc = 1;
+        goto out;
+    }
     cmdq_tail = (cmdq_tail + 1) % CMD_QUEUE_LEN;
 
     memcpy(cmd, &cmdq[cmdq_tail].cmd, sizeof(struct cmd));
@@ -81,7 +99,11 @@ static int cmd_dequeue(struct cmd *cmd, cmd_handled_t **cb, void **cb_arg)
            cmdq_tail, cmdq_head,
            cmdq[cmdq_tail].cmd.msg[0],
            cmdq[cmdq_tail].cmd.msg[CMD_MSG_PAYLOAD_OFFSET]);
-    return 0;
+
+out:
+    err = pthread_spin_unlock(&cmdq_lock);
+    assert(!err);
+    return rc;
 }
 
 static void ms_to_ts(struct timespec *ts, uint32_t ms)
