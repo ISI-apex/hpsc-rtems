@@ -89,8 +89,6 @@ struct hpsc_wdt {
     volatile uint32_t *base; 
     const char *name;
     rtems_vector_number vec;
-    hpsc_wdt_cb_t cb;
-    void *cb_arg;
     unsigned num_stages;
     bool monitor; // only the monitor can configure the timer
     uint32_t clk_freq_hz;
@@ -121,22 +119,11 @@ static void exec_stage_cmd(struct hpsc_wdt *wdt, enum stage_cmd scmd,
     exec_cmd(wdt, &stage_cmd_codes[stage][scmd]);
 }
 
-static void hpsc_wdt_isr(void *arg)
-{
-    struct hpsc_wdt *wdt = (struct hpsc_wdt *)arg;
-    assert(wdt);
-    printk("WDT %s: ISR\n", wdt->name);
-    if (wdt->cb)
-        wdt->cb(wdt, wdt->cb_arg);
-}
-
-static rtems_status_code hpsc_wdt_init(
+static void hpsc_wdt_init(
     struct hpsc_wdt *wdt,
     const char *name,
     volatile uint32_t *base,
     rtems_vector_number intr_vec,
-    hpsc_wdt_cb_t cb,
-    void *cb_arg,
     bool monitor,
     uint32_t clk_freq_hz,
     unsigned max_div
@@ -147,17 +134,12 @@ static rtems_status_code hpsc_wdt_init(
     wdt->name = name;
     wdt->monitor = false;
     wdt->vec = intr_vec;
-    wdt->cb = cb;
-    wdt->cb_arg = cb_arg;
     wdt->monitor = monitor;
     if (wdt->monitor) {
         wdt->clk_freq_hz = clk_freq_hz;
         wdt->max_div = max_div;
         wdt->counter_width = (64 - log2_of_pow2(wdt->max_div) - 1);
     }
-    return rtems_interrupt_handler_install(wdt->vec, wdt->name, 
-                                           RTEMS_INTERRUPT_UNIQUE,
-                                           hpsc_wdt_isr, wdt);
 }
 
 rtems_status_code hpsc_wdt_probe_monitor(
@@ -165,8 +147,6 @@ rtems_status_code hpsc_wdt_probe_monitor(
     const char *name,
     volatile uint32_t *base,
     rtems_vector_number intr_vec,
-    hpsc_wdt_cb_t cb,
-    void *cb_arg,
     uint32_t clk_freq_hz,
     unsigned max_div
 )
@@ -176,17 +156,16 @@ rtems_status_code hpsc_wdt_probe_monitor(
         printf("ERROR: WDT: malloc failed\n");
         return RTEMS_NO_MEMORY;
     }
-    return hpsc_wdt_init(*wdt, name, base, intr_vec, cb, cb_arg, true,
-                         clk_freq_hz, max_div);
+    hpsc_wdt_init(*wdt, name, base, intr_vec, true, clk_freq_hz,
+                  max_div);
+    return RTEMS_SUCCESSFUL;
 }
 
 rtems_status_code hpsc_wdt_probe_target(
     struct hpsc_wdt **wdt,
     const char *name,
     volatile uint32_t *base,
-    rtems_vector_number intr_vec,
-    hpsc_wdt_cb_t cb,
-    void *cb_arg
+    rtems_vector_number intr_vec
 )
 {
     *wdt = malloc(sizeof(struct hpsc_wdt));
@@ -194,7 +173,8 @@ rtems_status_code hpsc_wdt_probe_target(
         printf("ERROR: WDT: malloc failed\n");
         return RTEMS_NO_MEMORY;
     }
-    return hpsc_wdt_init(*wdt, name, base, intr_vec, cb, cb_arg, false, 0, 0);
+    hpsc_wdt_init(*wdt, name, base, intr_vec, false, 0, 0);
+    return RTEMS_SUCCESSFUL;
 }
 
 int hpsc_wdt_configure(
@@ -253,14 +233,12 @@ int hpsc_wdt_configure(
 
 rtems_status_code hpsc_wdt_remove(struct hpsc_wdt *wdt)
 {
-    rtems_status_code sc;
     assert(wdt);
     printf("WDT %s: destroy\n", wdt->name);
-    sc = rtems_interrupt_handler_remove(wdt->vec, hpsc_wdt_isr, wdt);
     if (wdt->monitor)
         assert(!hpsc_wdt_is_enabled(wdt));
     free(wdt);
-    return sc;
+    return RTEMS_SUCCESSFUL;
 }
 
 uint64_t hpsc_wdt_count(struct hpsc_wdt *wdt, unsigned stage)
@@ -300,19 +278,36 @@ bool hpsc_wdt_is_enabled(struct hpsc_wdt *wdt)
     return enabled;
 }
 
-void hpsc_wdt_enable(struct hpsc_wdt *wdt)
+rtems_status_code hpsc_wdt_enable(
+    struct hpsc_wdt *wdt,
+    rtems_interrupt_handler cb,
+    void *cb_arg
+)
 {
+    rtems_status_code sc;
     assert(wdt);
     printk("WDT %s: enable\n", wdt->name);
-    REGB_SET32(wdt->base, REG__CONFIG, REG__CONFIG__EN);
+    sc = rtems_interrupt_handler_install(wdt->vec, wdt->name, 
+                                         RTEMS_INTERRUPT_UNIQUE, cb, cb_arg);
+    if (sc == RTEMS_SUCCESSFUL)
+        REGB_SET32(wdt->base, REG__CONFIG, REG__CONFIG__EN);
+    return sc;
 }
 
-void hpsc_wdt_disable(struct hpsc_wdt *wdt)
+rtems_status_code hpsc_wdt_disable(
+    struct hpsc_wdt *wdt,
+    rtems_interrupt_handler cb,
+    void *cb_arg
+)
 {
+    rtems_status_code sc;
     assert(wdt);
     assert(wdt->monitor);
     printk("WDT %s: disable\n", wdt->name);
-    exec_global_cmd(wdt, CMD_DISABLE);
+    sc = rtems_interrupt_handler_remove(wdt->vec, cb, cb_arg);
+    if (sc == RTEMS_SUCCESSFUL)
+        exec_global_cmd(wdt, CMD_DISABLE);
+    return sc;
 }
 
 void hpsc_wdt_kick(struct hpsc_wdt *wdt)

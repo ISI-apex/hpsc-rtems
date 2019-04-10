@@ -96,7 +96,7 @@ static void init_devices(void)
     assert(wdt0_sc == RTEMS_SUCCESSFUL);
     affinity_pin_self_to_cpu(0);
     wdt0_sc = hpsc_wdt_probe_target(&wdt0, "RTPS0", WDT_RTPS_R52_0_RTPS_BASE,
-                                    wdt0_vec, watchdog_timeout_isr, NULL);
+                                    wdt0_vec);
     assert(wdt0_sc == RTEMS_SUCCESSFUL);
     dev_add_wdt(DEV_ID_CPU_RTPS_R52_0, wdt0);
     // restore CPU affinity

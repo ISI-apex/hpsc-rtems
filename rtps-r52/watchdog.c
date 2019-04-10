@@ -18,10 +18,18 @@
 #define WDT_KICK_INTERVAL_US 500000
 
 
+static void watchdog_timeout_isr(void *arg)
+{
+    struct hpsc_wdt *wdt = (struct hpsc_wdt *)arg;
+    assert(wdt);
+    hpsc_wdt_timeout_clear(wdt, 0);
+    printk("watchdog: expired\n");
+    // TODO: the WDT task failed to kick - maybe initiate a graceful shutdown
+}
+
 static rtems_task watchdog_task(rtems_task_argument arg)
 {
-    rtems_interval ticks = 
-        WDT_KICK_INTERVAL_US / rtems_configuration_get_microseconds_per_tick();
+    rtems_interval ticks = RTEMS_MICROSECONDS_TO_TICKS(WDT_KICK_INTERVAL_US);
     unsigned cpu = (unsigned) arg;
     struct hpsc_wdt *wdt = dev_get_wdt(cpu);
     assert(wdt);
@@ -34,7 +42,7 @@ static rtems_task watchdog_task(rtems_task_argument arg)
     affinity_pin_self_to_cpu(cpu);
 
     // once enabled, the WDT can't be stopped
-    hpsc_wdt_enable(wdt);
+    hpsc_wdt_enable(wdt, watchdog_timeout_isr, wdt);
 
     while (1) {
         // get WDT every time, in case it's removed (still a race condition)
@@ -86,11 +94,4 @@ rtems_status_code watchdog_tasks_create(void)
 
     assert(count); // we should have at least one WDT
     return sc;
-}
-
-void watchdog_timeout_isr(struct hpsc_wdt *wdt, void *arg)
-{
-    hpsc_wdt_timeout_clear(wdt, 0);
-    printk("watchdog: expired\n");
-    // TODO: the WDT task failed to kick - maybe initiate a graceful shutdown
 }
