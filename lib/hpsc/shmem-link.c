@@ -1,7 +1,8 @@
 #include <inttypes.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
+
+#include <rtems.h>
 
 #include "link.h"
 #include "shmem.h"
@@ -28,10 +29,7 @@ static int shmem_link_disconnect(struct link *link)
 
 static void msleep_and_dec(int *ms_rem)
 {
-    struct timespec ts;
-    ts.tv_sec = MIN_SLEEP_MS / 1000;
-    ts.tv_nsec = (MIN_SLEEP_MS % 1000) * 1000000;
-    nanosleep(&ts, NULL);
+    rtems_task_wake_after(RTEMS_MILLISECONDS_TO_TICKS(MIN_SLEEP_MS));
     // if < 0, timeout is infinite
     if (*ms_rem > 0)
         *ms_rem -= *ms_rem >= MIN_SLEEP_MS ? MIN_SLEEP_MS : *ms_rem;
