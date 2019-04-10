@@ -8,7 +8,7 @@
 
 #include <rtems.h>
 #include <rtems/bspIo.h>
-#include <bsp/irq-generic.h>
+#include <rtems/irq-extension.h>
 
 #include "debug.h"
 #include "hpsc-mbox.h"
@@ -42,7 +42,7 @@
 #define HPSC_MBOX_INSTANCE_REGION (REG_DATA + HPSC_MBOX_DATA_SIZE)
 
 struct hpsc_mbox_chan_irq_info {
-    hpsc_mbox_chan_irq_cb cb;
+    rtems_interrupt_handler cb;
     void *arg;
 };
 
@@ -76,8 +76,8 @@ struct hpsc_mbox {
 
 static void hpsc_mbox_chan_init(struct hpsc_mbox_chan *chan,
                                 uint32_t owner, uint32_t src, uint32_t dest,
-                                hpsc_mbox_chan_irq_cb cb_a,
-                                hpsc_mbox_chan_irq_cb cb_b,
+                                rtems_interrupt_handler cb_a,
+                                rtems_interrupt_handler cb_b,
                                 void *cb_arg)
 {
     chan->base = (volatile uint32_t *)((uint8_t *)chan->mbox->base +
@@ -170,8 +170,8 @@ struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
     uint32_t owner,
     uint32_t src,
     uint32_t dest,
-    hpsc_mbox_chan_irq_cb cb_a,
-    hpsc_mbox_chan_irq_cb cb_b,
+    rtems_interrupt_handler cb_a,
+    rtems_interrupt_handler cb_b,
     void *cb_arg
 )
 {

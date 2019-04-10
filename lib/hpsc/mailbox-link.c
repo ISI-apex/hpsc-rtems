@@ -1,12 +1,14 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <rtems.h>
 #include <rtems/bspIo.h>
+#include <rtems/irq-extension.h>
 
+// drivers
 #include <hpsc-mbox.h>
 
 #include "command.h"
@@ -164,7 +166,7 @@ struct link *mbox_link_connect(const char *name, struct hpsc_mbox *mbox,
 {
     struct mbox_link *mlink;
     struct link *link;
-    hpsc_mbox_chan_irq_cb rcv_cb = server ? handle_cmd : handle_reply;
+    rtems_interrupt_handler rcv_cb = server ? handle_cmd : handle_reply;
 
     printk("%s: connect\n", name);
     link = malloc(sizeof(*link));

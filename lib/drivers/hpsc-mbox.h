@@ -5,13 +5,12 @@
 #include <stdint.h>
 
 #include <rtems.h>
+#include <rtems/irq-extension.h>
 
 #define HPSC_MBOX_DATA_REGS 16
 #define HPSC_MBOX_DATA_SIZE (HPSC_MBOX_DATA_REGS * 4)
 
 #define HPSC_MBOX_CHANNELS 32
-
-typedef void (*hpsc_mbox_chan_irq_cb)(void *);
 
 /**
  * A mailbox device (IP block instance)
@@ -81,8 +80,8 @@ struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
     uint32_t owner,
     uint32_t src,
     uint32_t dest,
-    hpsc_mbox_chan_irq_cb cb_a,
-    hpsc_mbox_chan_irq_cb cb_b,
+    rtems_interrupt_handler cb_a,
+    rtems_interrupt_handler cb_b,
     void *cb_arg
 );
 
