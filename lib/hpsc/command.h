@@ -25,10 +25,10 @@
 
 #define CMD_ACTION_RESET_HPPS           1
 
-#define CMD_TIMEOUT_MS_SEND 1000
-#define CMD_TIMEOUT_MS_RECV 1000
-// wait up to 30 seconds for replies - a timeout prevent hangs when remotes fail
-#define CMD_TIMEOUT_MS_REPLY 30000
+#define CMD_TIMEOUT_MS_SEND 100
+#define CMD_TIMEOUT_MS_RECV 100
+// wait up to 10 seconds for replies - a timeout prevent hangs when remotes fail
+#define CMD_TIMEOUT_MS_REPLY 10000
 
 typedef enum {
     CMD_STATUS_SUCCESS,
