@@ -45,6 +45,7 @@ CSRCS = \
 	shell.c \
 	watchdog.c
 CSRCS += \
+	tests/command.c \
 	tests/mailbox.c \
 	tests/rti-timer.c \
 	tests/shmem.c

@@ -174,11 +174,21 @@ static void init_tasks(void)
     if (watchdog_tasks_create() != RTEMS_SUCCESSFUL)
         rtems_panic("watchdogs");
 #endif // CONFIG_WDT
+}
 
+static void late_tasks(void)
+{
 #if CONFIG_SHELL
     if (shell_create() != RTEMS_SUCCESSFUL)
         rtems_panic("shell");
 #endif // CONFIG_SHELL
+}
+
+
+static void runtime_tests(void)
+{
+    if (test_command_server())
+        rtems_panic("Command server test");
 }
 
 void *POSIX_Init(void *arg)
@@ -196,9 +206,16 @@ void *POSIX_Init(void *arg)
     init_client_links();
     init_server_links();
 
-    // start additional tasks
+    // start basic tasks
     init_tasks();
 
+    // run tests that require basic tasks
+    runtime_tests();
+
+    // start remaining tasks
+    late_tasks();
+
+    // init task is finished
     rtems_task_exit();
 }
 
