@@ -24,6 +24,10 @@ typedef enum {
 } dev_id_mbox;
 
 
+#define dev_id_mbox_for_each(id, mbox) \
+    for (id = 0, mbox = dev_get_mbox(id); \
+         id < DEV_ID_MBOX_COUNT; \
+         id++, mbox = (id < DEV_ID_MBOX_COUNT) ? dev_get_mbox(id) : NULL)
 int dev_add_mbox(dev_id_mbox id, struct hpsc_mbox *dev);
 void dev_remove_mbox(dev_id_mbox id);
 struct hpsc_mbox *dev_get_mbox(dev_id_mbox id);
