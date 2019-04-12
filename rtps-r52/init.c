@@ -25,7 +25,11 @@
 #include "test.h"
 #include "watchdog.h"
 
-static void init_devices(void)
+static rtems_status_code init_extra_drivers(
+  rtems_device_major_number major,
+  rtems_device_minor_number minor,
+  void *arg
+)
 {
 #if CONFIG_MBOX_LSIO
     struct hpsc_mbox *mbox_lsio = NULL;
@@ -104,6 +108,8 @@ static void init_devices(void)
         rtems_task_set_affinity(RTEMS_SELF, sizeof(wdt0_cpuset), &wdt0_cpuset);
     assert(wdt0_sc == RTEMS_SUCCESSFUL);
 #endif // CONFIG_WDT
+
+    return RTEMS_SUCCESSFUL;
 }
 
 static void init_tests(void)
@@ -193,10 +199,8 @@ static void runtime_tests(void)
 
 void *POSIX_Init(void *arg)
 {
+    // device drivers already initialized
     printf("\n\nRTPS\n");
-
-    // first initialize devices - hopefully this can be managed by a device tree
-    init_devices();
 
     // run boot tests
     init_tests();
@@ -230,6 +234,8 @@ void *POSIX_Init(void *arg)
 /* drivers */
 #define CONFIGURE_APPLICATION_NEEDS_CLOCK_DRIVER
 #define CONFIGURE_APPLICATION_NEEDS_CONSOLE_DRIVER
+#define CONFIGURE_APPLICATION_EXTRA_DRIVERS \
+  { .initialization_entry = init_extra_drivers }
 
 /* POSIX */
 #define CONFIGURE_POSIX_INIT_THREAD_TABLE
