@@ -13,7 +13,8 @@
 #define TEST_MSG "HPSC MBOX TEST MSG"
 
 struct hpsc_mbox_test {
-    struct hpsc_mbox_chan *chan;
+    struct hpsc_mbox *mbox;
+    unsigned instance;
     int rx_rc;
     bool is_rx;
     bool is_ack;
@@ -25,10 +26,10 @@ static void cb_recv(void *arg)
     uint8_t buf[HPSC_MBOX_DATA_SIZE] = { 0 };
     struct hpsc_mbox_test *ctx = (struct hpsc_mbox_test *)arg;
     assert(ctx);
-    assert(ctx->chan);
+    assert(ctx->mbox);
     assert(!ctx->is_rx);
 
-    sz = hpsc_mbox_chan_read(ctx->chan, buf, sizeof(buf));
+    sz = hpsc_mbox_chan_read(ctx->mbox, ctx->instance, buf, sizeof(buf));
     if (sz == HPSC_MBOX_DATA_SIZE)
         ctx->rx_rc = strncmp((const char *)buf, TEST_MSG, sizeof(buf)) ?
             HPSC_MBOX_TEST_CHAN_BAD_RECV : HPSC_MBOX_TEST_SUCCESS;
@@ -47,7 +48,8 @@ static void cb_ack(void *arg)
 
 static int test_loopback(struct hpsc_mbox_test *ctx)
 {
-    size_t sz = hpsc_mbox_chan_write(ctx->chan, TEST_MSG, sizeof(TEST_MSG));
+    size_t sz = hpsc_mbox_chan_write(ctx->mbox, ctx->instance, TEST_MSG,
+                                     sizeof(TEST_MSG));
     if (sz < sizeof(TEST_MSG))
         return HPSC_MBOX_TEST_CHAN_WRITE;
     // wait a short period
@@ -68,20 +70,23 @@ int hpsc_mbox_chan_test(
 )
 {
     int rc;
+    rtems_status_code sc;
     struct hpsc_mbox_test ctx = {
-        .chan = NULL,
+        .mbox = mbox,
+        .instance = instance,
         .is_rx = false,
         .rx_rc = HPSC_MBOX_TEST_CHAN_NO_RECV,
         .is_ack = false
     };
-    ctx.chan = hpsc_mbox_chan_claim(mbox, instance, owner, src, dest,
-                                     cb_recv, cb_ack, &ctx);
-    if (!ctx.chan)
+    sc = hpsc_mbox_chan_claim(mbox, instance, owner, src, dest, cb_recv, cb_ack,
+                              &ctx);
+    if (sc != RTEMS_SUCCESSFUL)
         return HPSC_MBOX_TEST_CHAN_CLAIM;
 
     rc = test_loopback(&ctx);
 
-    if (hpsc_mbox_chan_release(ctx.chan))
+    sc = hpsc_mbox_chan_release(mbox, instance);
+    if (sc != RTEMS_SUCCESSFUL)
         return HPSC_MBOX_TEST_CHAN_RELEASE;
     return rc;
 }

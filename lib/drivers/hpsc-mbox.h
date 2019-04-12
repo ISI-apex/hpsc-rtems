@@ -18,11 +18,6 @@
 struct hpsc_mbox;
 
 /**
- * A channel (up at HPSC_MBOX_CHANNELS instances per device)
- */
-struct hpsc_mbox_chan;
-
-/**
  * Initialize a mailbox IP block
  */
 rtems_status_code hpsc_mbox_probe(
@@ -56,7 +51,7 @@ void hpsc_mbox_chan_config_read(
  * This is performed automatically by hpsc_mbox_chan_claim when owner is set,
  * and should not usually be used directly.
  */
-int hpsc_mbox_chan_config_write(
+rtems_status_code hpsc_mbox_chan_config_write(
     struct hpsc_mbox *mbox,
     unsigned instance,
     uint32_t owner,
@@ -74,7 +69,7 @@ void hpsc_mbox_chan_reset(struct hpsc_mbox *mbox, unsigned instance);
 /**
  * Claim a mailbox channel
  */
-struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
+rtems_status_code hpsc_mbox_chan_claim(
     struct hpsc_mbox *mbox,
     unsigned instance,
     uint32_t owner,
@@ -88,16 +83,29 @@ struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
 /**
  * Release a mailbox channel
  */
-int hpsc_mbox_chan_release(struct hpsc_mbox_chan *chan);
+rtems_status_code hpsc_mbox_chan_release(
+    struct hpsc_mbox *mbox,
+    unsigned instance
+);
 
 /**
  * Write to a mailbox channel (send a message)
  */
-size_t hpsc_mbox_chan_write(struct hpsc_mbox_chan *chan, void *buf, size_t sz);
+size_t hpsc_mbox_chan_write(
+    struct hpsc_mbox *mbox,
+    unsigned instance,
+    void *buf,
+    size_t sz
+);
 
 /**
  * Read from a mailbox channel (receive a message)
  */
-size_t hpsc_mbox_chan_read(struct hpsc_mbox_chan *chan, void *buf, size_t sz);
+size_t hpsc_mbox_chan_read(
+    struct hpsc_mbox *mbox,
+    unsigned instance,
+    void *buf,
+    size_t sz
+);
 
 #endif // HPSC_MBOX_H

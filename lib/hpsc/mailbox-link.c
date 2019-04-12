@@ -25,8 +25,9 @@ struct cmd_ctx {
 };
 
 struct mbox_link {
-    struct hpsc_mbox_chan *chan_from;
-    struct hpsc_mbox_chan *chan_to;
+    struct hpsc_mbox *mbox;
+    unsigned chan_from;
+    unsigned chan_to;
     struct cmd_ctx cmd_ctx;
 };
 
@@ -57,7 +58,7 @@ static void handle_cmd(void *arg)
     };
     printk("%s: handle_cmd\n", link->name);
     // read never fails if sizeof(cmd.msg) > 0
-    hpsc_mbox_chan_read(mlink->chan_from, cmd.msg, sizeof(cmd.msg));
+    hpsc_mbox_chan_read(mlink->mbox, mlink->chan_from, cmd.msg, sizeof(cmd.msg));
     if (cmd_enqueue(&cmd))
         rtems_panic("handle_cmd: failed to enqueue command");
 }
@@ -68,7 +69,8 @@ static void handle_reply(void *arg)
     struct mbox_link *mlink = link->priv;
     rtems_status_code sc;
     printk("%s: handle_reply\n", link->name);
-    mlink->cmd_ctx.reply_sz_read = hpsc_mbox_chan_read(mlink->chan_from,
+    mlink->cmd_ctx.reply_sz_read = hpsc_mbox_chan_read(mlink->mbox,
+                                                       mlink->chan_from,
                                                        mlink->cmd_ctx.reply,
                                                        mlink->cmd_ctx.reply_sz);
     // only used internally for request
@@ -82,11 +84,16 @@ static void handle_reply(void *arg)
 
 static int mbox_link_disconnect(struct link *link) {
     struct mbox_link *mlink = link->priv;
-    int rc;
+    rtems_status_code sc;
+    int rc = 0;
     printk("%s: disconnect\n", link->name);
     // in case of failure, keep going and fwd code
-    rc = hpsc_mbox_chan_release(mlink->chan_from);
-    rc |= hpsc_mbox_chan_release(mlink->chan_to);
+    sc = hpsc_mbox_chan_release(mlink->mbox, mlink->chan_from);
+    if (sc != RTEMS_SUCCESSFUL)
+        rc = 1;
+    sc = hpsc_mbox_chan_release(mlink->mbox, mlink->chan_to);
+    if (sc != RTEMS_SUCCESSFUL)
+        rc = 1;
     free(mlink);
     free(link);
     return rc;
@@ -97,7 +104,7 @@ static size_t mbox_link_send(struct link *link, int timeout_ms, void *buf,
 {
     struct mbox_link *mlink = link->priv;
     mlink->cmd_ctx.tx_acked = false;
-    return hpsc_mbox_chan_write(mlink->chan_to, buf, sz);
+    return hpsc_mbox_chan_write(mlink->mbox, mlink->chan_to, buf, sz);
 }
 
 static bool mbox_link_is_send_acked(struct link *link)
@@ -166,6 +173,7 @@ struct link *mbox_link_connect(const char *name, struct hpsc_mbox *mbox,
 {
     struct mbox_link *mlink;
     struct link *link;
+    rtems_status_code sc;
     rtems_interrupt_handler rcv_cb = server ? handle_cmd : handle_reply;
 
     printk("%s: connect\n", name);
@@ -178,25 +186,25 @@ struct link *mbox_link_connect(const char *name, struct hpsc_mbox *mbox,
         printk("ERROR: mbox_link_connect: failed to allocate mlink state\n");
         goto free_link;
     }
-
-    mlink->chan_from = hpsc_mbox_chan_claim(mbox, idx_from,
-                                            server, client, server,
-                                            rcv_cb, NULL, link);
-    if (!mlink->chan_from) {
-        printk("ERROR: mbox_link_connect: failed to claim chan_from\n");
-        goto free_links;
-    }
-    mlink->chan_to = hpsc_mbox_chan_claim(mbox, idx_to,
-                                          server, server, client,
-                                          NULL, handle_ack, link);
-    if (!mlink->chan_to) {
-        printk("ERROR: mbox_link_connect: failed to claim chan_to\n");
-        goto free_from;
-    }
-
+    mlink->mbox = mbox;
+    mlink->chan_from = idx_from;
+    mlink->chan_to = idx_to;
     mlink->cmd_ctx.tid_requester = RTEMS_ID_NONE;
     mlink->cmd_ctx.tx_acked = false;
     mlink->cmd_ctx.reply = NULL;
+
+    sc = hpsc_mbox_chan_claim(mbox, idx_from, server, client, server,
+                              rcv_cb, NULL, link);
+    if (sc != RTEMS_SUCCESSFUL) {
+        printk("ERROR: mbox_link_connect: failed to claim chan_from\n");
+        goto free_links;
+    }
+    sc = hpsc_mbox_chan_claim(mbox, idx_to, server, server, client,
+                              NULL, handle_ack, link);
+    if (sc != RTEMS_SUCCESSFUL) {
+        printk("ERROR: mbox_link_connect: failed to claim chan_to\n");
+        goto free_from;
+    }
 
     link->priv = mlink;
     link->name = name;
@@ -208,7 +216,7 @@ struct link *mbox_link_connect(const char *name, struct hpsc_mbox *mbox,
     return link;
 
 free_from:
-    hpsc_mbox_chan_release(mlink->chan_from);
+    hpsc_mbox_chan_release(mbox, idx_from);
 free_links:
     free(mlink);
 free_link:

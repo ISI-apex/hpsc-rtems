@@ -126,7 +126,7 @@ void hpsc_mbox_chan_config_read(
         *dest = (val & REG_CONFIG__DEST__MASK) >> REG_CONFIG__DEST__SHIFT;
 }
 
-int hpsc_mbox_chan_config_write(
+rtems_status_code hpsc_mbox_chan_config_write(
     struct hpsc_mbox *mbox,
     unsigned instance,
     uint32_t owner,
@@ -150,9 +150,9 @@ int hpsc_mbox_chan_config_write(
         printk("hpsc_mbox_chan_config_write: failed to write chan %u for %x: "
                "already owned by %x\n", instance, owner,
                (val & REG_CONFIG__OWNER__MASK) >> REG_CONFIG__OWNER__SHIFT);
-        return -1;
+        return RTEMS_NOT_OWNER_OF_RESOURCE;
     }
-    return 0;
+    return RTEMS_SUCCESSFUL;
 }
 
 void hpsc_mbox_chan_reset(struct hpsc_mbox *mbox, unsigned instance)
@@ -164,7 +164,7 @@ void hpsc_mbox_chan_reset(struct hpsc_mbox *mbox, unsigned instance)
     REGB_WRITE32(mbox->chans[instance].base, REG_CONFIG, 0);
 }
 
-struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
+rtems_status_code hpsc_mbox_chan_claim(
     struct hpsc_mbox *mbox,
     unsigned instance,
     uint32_t owner,
@@ -179,6 +179,7 @@ struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
     uint32_t src_hw;
     uint32_t dest_hw;
     struct hpsc_mbox_chan *chan;
+    rtems_status_code sc;
     assert(mbox);
     assert(instance < HPSC_MBOX_CHANNELS);
 
@@ -188,7 +189,8 @@ struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
     hpsc_mbox_chan_init(chan, owner, src, dest, cb_a, cb_b, cb_arg);
 
     if (chan->owner) {
-        if (hpsc_mbox_chan_config_write(mbox, instance, owner, src, dest))
+        sc = hpsc_mbox_chan_config_write(mbox, instance, owner, src, dest);
+        if (sc != RTEMS_SUCCESSFUL)
             goto cleanup;
     } else { // not owner, just check the value in registers against the requested value
         hpsc_mbox_chan_config_read(mbox, instance, NULL, &src_hw, &dest_hw);
@@ -196,12 +198,14 @@ struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
             printk("hpsc_mbox_chan_claim: failed to claim mailbox %u: "
                    "src mismatch: %x (expected %x)\n",
                    chan->instance, src, src_hw);
+            sc = RTEMS_UNSATISFIED;
             goto cleanup;
         }
         if (cb_a && dest && dest_hw != src) {
             printk("hpsc_mbox_chan_claim: failed to claim mailbox %u: "
                    "dest mismatch: %x (expected %x)\n",
                    chan->instance, dest, dest_hw);
+            sc = RTEMS_UNSATISFIED;
             goto cleanup;
         }
     }
@@ -213,73 +217,92 @@ struct hpsc_mbox_chan *hpsc_mbox_chan_claim(
     DPRINTK("MBOX: %s: %u: enable interrupts\n", mbox->info, instance);
     REGB_SET32(chan->base, REG_INT_ENABLE, val);
 
-    return chan;
+    return RTEMS_SUCCESSFUL;
 cleanup:
     hpsc_mbox_chan_destroy(chan);
-    return NULL;
+    return sc;
 }
 
-int hpsc_mbox_chan_release(struct hpsc_mbox_chan *chan)
+rtems_status_code hpsc_mbox_chan_release(
+    struct hpsc_mbox *mbox,
+    unsigned instance
+)
 {
+    struct hpsc_mbox_chan *chan;
     uint32_t val;
-    assert(chan);
-    DPRINTK("MBOX: %s: %u: release\n", chan->mbox->info, chan->instance);
-    val = HPSC_MBOX_INT_A(chan->mbox->int_a.idx) |
-          HPSC_MBOX_INT_B(chan->mbox->int_b.idx);
+    assert(instance < HPSC_MBOX_CHANNELS);
+    chan = &mbox->chans[instance];
+    DPRINTK("MBOX: %s: %u: release\n", mbox->info, instance);
+    val = HPSC_MBOX_INT_A(mbox->int_a.idx) |
+          HPSC_MBOX_INT_B(mbox->int_b.idx);
     REGB_CLEAR32(chan->base, REG_INT_ENABLE, val);
     if (chan->owner) {
         // We are the OWNER, so we can release
-        hpsc_mbox_chan_reset(chan->mbox, chan->instance);
+        hpsc_mbox_chan_reset(mbox, instance);
     }
     hpsc_mbox_chan_destroy(chan);
-    return 0;
+    return RTEMS_SUCCESSFUL;
 }
 
-size_t hpsc_mbox_chan_write(struct hpsc_mbox_chan *chan, void *buf, size_t sz)
+size_t hpsc_mbox_chan_write(
+    struct hpsc_mbox *mbox,
+    unsigned instance,
+    void *buf,
+    size_t sz
+)
 {
+    struct hpsc_mbox_chan *chan;
     uint32_t *msg = buf;
     size_t len;
     size_t i;
-    assert(chan);
+    assert(instance < HPSC_MBOX_CHANNELS);
     assert(buf);
     assert(sz <= HPSC_MBOX_DATA_SIZE);
+    chan = &mbox->chans[instance];
 
     len = sz / sizeof(uint32_t);
     if (sz % sizeof(uint32_t))
         len++;
 
-    DPRINTK("MBOX: %s: %u: write\n", chan->mbox->info, chan->instance);
+    DPRINTK("MBOX: %s: %u: write\n", mbox->info, instance);
     for (i = 0; i < len; ++i)
         REGB_WRITE32(chan->base, REG_DATA + (i * sizeof(uint32_t)), msg[i]);
     // zero out any remaining registers
     for (; i < HPSC_MBOX_DATA_REGS; i++)
         REGB_WRITE32(chan->base, REG_DATA + (i * sizeof(uint32_t)), 0);
 
-    printk("MBOX: %s: %u: raise int A\n", chan->mbox->info, chan->instance);
+    printk("MBOX: %s: %u: raise int A\n", mbox->info, instance);
     REGB_WRITE32(chan->base, REG_EVENT_SET, HPSC_MBOX_EVENT_A);
 
     return sz;
 }
 
-size_t hpsc_mbox_chan_read(struct hpsc_mbox_chan *chan, void *buf, size_t sz)
+size_t hpsc_mbox_chan_read(
+    struct hpsc_mbox *mbox,
+    unsigned instance,
+    void *buf,
+    size_t sz
+)
 {
+    struct hpsc_mbox_chan *chan;
     uint32_t *msg = buf;
     size_t len;
     size_t i;
-    assert(chan);
+    assert(instance < HPSC_MBOX_CHANNELS);
     assert(buf);
     // assert(sz >= HPSC_MBOX_DATA_SIZE); // not a strict requirement
+    chan = &mbox->chans[instance];
 
     len = sz / sizeof(uint32_t);
     if (sz % sizeof(uint32_t))
         len++;
 
-    DPRINTK("MBOX: %s: %u: read\n", chan->mbox->info, chan->instance);
+    DPRINTK("MBOX: %s: %u: read\n", mbox->info, instance);
     for (i = 0; i < len && i < HPSC_MBOX_DATA_REGS; i++)
         msg[i] = REGB_READ32(chan->base, REG_DATA + (i * sizeof(uint32_t)));
 
     // ACK
-    printk("MBOX: %s: %u: raise int B\n", chan->mbox->info, chan->instance);
+    printk("MBOX: %s: %u: raise int B\n", mbox->info, instance);
     REGB_WRITE32(chan->base, REG_EVENT_SET, HPSC_MBOX_EVENT_B);
 
     return i * sizeof(uint32_t);
@@ -453,7 +476,7 @@ rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox)
     printf("MBOX: %s: remove\n", mbox->info);
 
     for (i = 0; i < RTEMS_ARRAY_SIZE(mbox->chans); i++)
-        hpsc_mbox_chan_release(&mbox->chans[i]);
+        hpsc_mbox_chan_release(mbox, i);
 
     sc_tmp = rtems_interrupt_handler_remove(mbox->int_a.n, hpsc_mbox_isr_a,
                                             &mbox->int_a);
