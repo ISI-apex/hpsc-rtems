@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <rtems.h>
@@ -74,12 +73,12 @@ rtems_status_code hpsc_rti_timer_probe(
     rtems_vector_number vec
 )
 {
-    printf("RTI TMR: %s: probe\n", name);
-    printf("\tbase: %p\n", base);
-    printf("\tvec: %u\n", vec);
+    printk("RTI TMR: %s: probe\n", name);
+    printk("\tbase: %p\n", base);
+    printk("\tvec: %u\n", vec);
     *tmr = malloc(sizeof(struct hpsc_rti_timer));
     if (!*tmr) {
-        printf("RTI TMR: malloc failed\n");
+        printk("RTI TMR: malloc failed\n");
         return RTEMS_NO_MEMORY;
     }
     hpsc_rti_timer_init(*tmr, name, base, vec);
@@ -91,7 +90,7 @@ rtems_status_code hpsc_rti_timer_probe(
 rtems_status_code hpsc_rti_timer_remove(struct hpsc_rti_timer *tmr)
 {
     assert(tmr);
-    printf("RTI TMR: %s: remove\n", tmr->name);
+    printk("RTI TMR: %s: remove\n", tmr->name);
     if (tmr->is_started)
         return RTEMS_RESOURCE_IN_USE;
     // reset vector to level-sensitive

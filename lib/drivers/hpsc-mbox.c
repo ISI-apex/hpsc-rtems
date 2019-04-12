@@ -3,7 +3,6 @@
 #include <assert.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <rtems.h>
@@ -397,11 +396,11 @@ static void hpsc_mbox_init(
 )
 {
     size_t i;
-    printf("\tbase: %p\n", base);
-    printf("\tirq_a: %u\n", int_a);
-    printf("\tidx_a: %u\n", int_idx_a);
-    printf("\tirq_b: %u\n", int_b);
-    printf("\tidx_b: %u\n", int_idx_b);
+    printk("\tbase: %p\n", base);
+    printk("\tirq_a: %u\n", int_a);
+    printk("\tidx_a: %u\n", int_idx_a);
+    printk("\tirq_b: %u\n", int_b);
+    printk("\tidx_b: %u\n", int_idx_b);
     mbox->info = info;
     mbox->base = base;
     mbox->int_a.mbox = mbox;
@@ -433,10 +432,10 @@ rtems_status_code hpsc_mbox_probe(
     assert(info);
     assert(base);
 
-    printf("MBOX: %s: probe\n", info);
+    printk("MBOX: %s: probe\n", info);
     *mbox = malloc(sizeof(struct hpsc_mbox));
     if (!*mbox) {
-        printf("hpsc_mbox_probe: malloc failed\n");
+        printk("hpsc_mbox_probe: malloc failed\n");
         return RTEMS_NO_MEMORY;
     }
 
@@ -447,13 +446,13 @@ rtems_status_code hpsc_mbox_probe(
     sc = rtems_interrupt_handler_install(int_a, info, RTEMS_INTERRUPT_UNIQUE,
                                          hpsc_mbox_isr_a, &(*mbox)->int_a);
     if (sc != RTEMS_SUCCESSFUL) {
-        printf("hpsc_mbox_probe: failed to install interrupt handler A\n");
+        printk("hpsc_mbox_probe: failed to install interrupt handler A\n");
         goto free_mbox;
     }
     sc = rtems_interrupt_handler_install(int_b, info, RTEMS_INTERRUPT_UNIQUE,
                                          hpsc_mbox_isr_b, &(*mbox)->int_b);
     if (sc != RTEMS_SUCCESSFUL) {
-        printf("hpsc_mbox_probe: failed to install interrupt handler B\n");
+        printk("hpsc_mbox_probe: failed to install interrupt handler B\n");
         goto fail_isr_b;
     }
 
@@ -473,7 +472,7 @@ rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox)
     size_t i;
     assert(mbox);
 
-    printf("MBOX: %s: remove\n", mbox->info);
+    printk("MBOX: %s: remove\n", mbox->info);
 
     for (i = 0; i < RTEMS_ARRAY_SIZE(mbox->chans); i++)
         hpsc_mbox_chan_release(mbox, i);
@@ -481,13 +480,13 @@ rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox)
     sc_tmp = rtems_interrupt_handler_remove(mbox->int_a.n, hpsc_mbox_isr_a,
                                             &mbox->int_a);
     if (sc_tmp != RTEMS_SUCCESSFUL) {
-        printf("hpsc_mbox_remove: failed to uninstall interrupt handler A\n");
+        printk("hpsc_mbox_remove: failed to uninstall interrupt handler A\n");
         sc = sc_tmp;
     }
     sc_tmp = rtems_interrupt_handler_remove(mbox->int_b.n, hpsc_mbox_isr_b,
                                             &mbox->int_b);
     if (sc_tmp != RTEMS_SUCCESSFUL) {
-        printf("hpsc_mbox_remove: failed to uninstall interrupt handler B\n");
+        printk("hpsc_mbox_remove: failed to uninstall interrupt handler B\n");
         sc = sc_tmp;
     }
     free(mbox);

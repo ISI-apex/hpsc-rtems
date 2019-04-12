@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 
 #include <rtems.h>
@@ -129,7 +128,7 @@ static void hpsc_wdt_init(
     unsigned max_div
 )
 {
-    printf("WDT %s: create base %p\n", name, base);
+    printk("WDT %s: create base %p\n", name, base);
     wdt->base = base;
     wdt->name = name;
     wdt->monitor = false;
@@ -153,7 +152,7 @@ rtems_status_code hpsc_wdt_probe_monitor(
 {
     *wdt = malloc(sizeof(struct hpsc_wdt));
     if (!*wdt) {
-        printf("ERROR: WDT: malloc failed\n");
+        printk("ERROR: WDT: malloc failed\n");
         return RTEMS_NO_MEMORY;
     }
     hpsc_wdt_init(*wdt, name, base, intr_vec, true, clk_freq_hz,
@@ -170,7 +169,7 @@ rtems_status_code hpsc_wdt_probe_target(
 {
     *wdt = malloc(sizeof(struct hpsc_wdt));
     if (!*wdt) {
-        printf("ERROR: WDT: malloc failed\n");
+        printk("ERROR: WDT: malloc failed\n");
         return RTEMS_NO_MEMORY;
     }
     hpsc_wdt_init(*wdt, name, base, intr_vec, false, 0, 0);
@@ -234,7 +233,7 @@ int hpsc_wdt_configure(
 rtems_status_code hpsc_wdt_remove(struct hpsc_wdt *wdt)
 {
     assert(wdt);
-    printf("WDT %s: destroy\n", wdt->name);
+    printk("WDT %s: destroy\n", wdt->name);
     if (wdt->monitor)
         assert(!hpsc_wdt_is_enabled(wdt));
     free(wdt);

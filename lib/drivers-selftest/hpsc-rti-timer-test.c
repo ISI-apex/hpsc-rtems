@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <stdint.h>
-#include <stdio.h>
 
 #include <rtems.h>
 #include <rtems/bspIo.h>
@@ -36,7 +35,7 @@ static int do_test(struct hpsc_rti_timer *tmr, unsigned *events)
     rtems_task_wake_after(RTEMS_MILLISECONDS_TO_TICKS(1));
     count2 = hpsc_rti_timer_capture(tmr);
     if (count2 <= count) {
-        printf("TEST: FAIL: RTI TMR: value did not advance: "
+        printk("TEST: FAIL: RTI TMR: value did not advance: "
                "0x%08x%08x <= 0x%08x%08x\n",
                (uint32_t)(count2 >> 32), (uint32_t)count2,
                (uint32_t)(count >> 32), (uint32_t)count);
@@ -44,7 +43,7 @@ static int do_test(struct hpsc_rti_timer *tmr, unsigned *events)
     }
 
     if (*events > 0) {
-        printf("TEST: FAIL: RTI TMR: unexpected events\n");
+        printk("TEST: FAIL: RTI TMR: unexpected events\n");
         return HPSC_RTI_TIMER_TEST_UNEXPECTED_EVENTS;
     }
 
@@ -60,7 +59,7 @@ static int do_test(struct hpsc_rti_timer *tmr, unsigned *events)
         rtems_task_wake_after(RTEMS_MICROSECONDS_TO_TICKS(INTERVAL_US));
 #endif
         if (*events != i) {
-            printf("TEST: FAIL: RTI TMR: unexpected event count: %u != %u\n",
+            printk("TEST: FAIL: RTI TMR: unexpected event count: %u != %u\n",
                    *events, i);
             return HPSC_RTI_TIMER_TEST_UNEXPECTED_EVENT_COUNT;
         }
