@@ -8,9 +8,9 @@
 #include <rtems/bspIo.h>
 
 #include "command.h"
+#include "hpsc-msg.h"
 
-#define CMD_QUEUE_LEN 4
-#define REPLY_SIZE CMD_MSG_SZ
+#define CMDQ_LEN 4
 
 struct cmdq_item {
     struct cmd cmd;
@@ -20,7 +20,7 @@ struct cmdq_item {
 
 static size_t cmdq_head = 0;
 static size_t cmdq_tail = 0;
-static struct cmdq_item cmdq[CMD_QUEUE_LEN];
+static struct cmdq_item cmdq[CMDQ_LEN];
 static pthread_spinlock_t cmdq_lock; // no init is necessary
 
 static rtems_id cmdh_task_id = RTEMS_ID_NONE;
@@ -47,12 +47,12 @@ int cmd_enqueue_cb(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
 
     err = pthread_spin_lock(&cmdq_lock);
     assert(!err);
-    if (cmdq_head + 1 % CMD_QUEUE_LEN == cmdq_tail) {
+    if (cmdq_head + 1 % CMDQ_LEN == cmdq_tail) {
         printk("command: enqueue failed: queue full\n");
         rc = 1;
         goto out;
     }
-    cmdq_head = (cmdq_head + 1) % CMD_QUEUE_LEN;
+    cmdq_head = (cmdq_head + 1) % CMDQ_LEN;
 
     memcpy(&cmdq[cmdq_head].cmd, cmd, sizeof(struct cmd));
     cmdq[cmdq_head].cb = cb;
@@ -60,7 +60,7 @@ int cmd_enqueue_cb(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
     printk("command: enqueue (tail %u head %u): cmd %u arg %u...\n",
            cmdq_tail, cmdq_head,
            cmdq[cmdq_head].cmd.msg[0],
-           cmdq[cmdq_head].cmd.msg[CMD_MSG_PAYLOAD_OFFSET]);
+           cmdq[cmdq_head].cmd.msg[HPSC_MSG_PAYLOAD_OFFSET]);
 
 out:
     err = pthread_spin_unlock(&cmdq_lock);
@@ -89,7 +89,7 @@ static int cmd_dequeue(struct cmd *cmd, cmd_handled_t **cb, void **cb_arg)
         rc = 1;
         goto out;
     }
-    cmdq_tail = (cmdq_tail + 1) % CMD_QUEUE_LEN;
+    cmdq_tail = (cmdq_tail + 1) % CMDQ_LEN;
 
     memcpy(cmd, &cmdq[cmdq_tail].cmd, sizeof(struct cmd));
     *cb = cmdq[cmdq_tail].cb;
@@ -97,7 +97,7 @@ static int cmd_dequeue(struct cmd *cmd, cmd_handled_t **cb, void **cb_arg)
     printf("command: dequeue (tail %u head %u): cmd %u arg %u...\n",
            cmdq_tail, cmdq_head,
            cmdq[cmdq_tail].cmd.msg[0],
-           cmdq[cmdq_tail].cmd.msg[CMD_MSG_PAYLOAD_OFFSET]);
+           cmdq[cmdq_tail].cmd.msg[HPSC_MSG_PAYLOAD_OFFSET]);
 
 out:
     err = pthread_spin_unlock(&cmdq_lock);
@@ -107,7 +107,7 @@ out:
 
 static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
 {
-    uint8_t reply[REPLY_SIZE] = { 0 };
+    HPSC_MSG_DEFINE(reply);
     int reply_sz;
     size_t rc;
     cmd_status status = CMD_STATUS_SUCCESS;
@@ -115,7 +115,7 @@ static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
     assert(cmd);
 
     printf("command: handle: cmd %u arg %u...\n",
-           cmd->msg[0], cmd->msg[CMD_MSG_PAYLOAD_OFFSET]);
+           cmd->msg[0], cmd->msg[HPSC_MSG_PAYLOAD_OFFSET]);
 
     if (!cmd_handler) {
         printf("command: handle: no handler registered\n");
@@ -135,7 +135,7 @@ static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
     }
 
     printf("command: handle: %s: reply %u arg %u...\n", cmd->link->name,
-           reply[0], reply[CMD_MSG_PAYLOAD_OFFSET]);
+           reply[0], reply[HPSC_MSG_PAYLOAD_OFFSET]);
 
     rc = cmd->link->send(cmd->link, CMD_TIMEOUT_MS_SEND, reply, sizeof(reply));
     if (!rc) {
