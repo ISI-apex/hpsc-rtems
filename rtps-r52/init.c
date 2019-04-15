@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include <rtems.h>
+#include <rtems/shell.h>
 
 // plat
 #include <hwinfo.h>
@@ -22,6 +23,7 @@
 #include "gic.h"
 #include "shell.h"
 #include "server.h"
+#include "shutdown.h"
 #include "test.h"
 #include "watchdog.h"
 
@@ -229,6 +231,8 @@ void *POSIX_Init(void *arg)
 
 #define CONFIGURE_SHELL_COMMANDS_INIT
 #define CONFIGURE_SHELL_COMMANDS_ALL
+#define CONFIGURE_SHELL_NO_COMMAND_SHUTDOWN // we override
+#define CONFIGURE_SHELL_USER_COMMANDS &shutdown_rtps_r52_command
 #include <rtems/shellconfig.h>
 
 /* drivers */

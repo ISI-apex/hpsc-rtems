@@ -43,6 +43,7 @@ CSRCS = \
 	init.c \
 	server.c \
 	shell.c \
+	shutdown.c \
 	watchdog.c
 CSRCS += \
 	tests/command.c \
@@ -56,6 +57,7 @@ H_FILES = \
 	gic.h \
 	shell.h \
 	server.h \
+	shutdown.h \
 	test.h \
 	watchdog.h \
 
