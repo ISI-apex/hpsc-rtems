@@ -9,6 +9,7 @@ LIB=${ARCH}/${LIBNAME}
 C_PIECES= \
 	affinity \
 	command \
+	hpsc-msg \
 	mailbox-link \
 	shmem \
 	shmem-link
@@ -22,6 +23,7 @@ CC_O_FILES=$(CC_PIECES:%=${ARCH}/%.o)
 H_FILES = \
 	affinity.h \
 	command.h \
+	hpsc-msg.h \
 	link.h \
 	mailbox-link.h \
 	shmem.h \
