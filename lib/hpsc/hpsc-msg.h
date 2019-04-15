@@ -47,8 +47,8 @@ void hpsc_msg_lifecycle(void *buf, size_t sz,
                         enum hpsc_msg_lifecycle_status status,
                         const char *fmt, ...);
 
-void hpsc_msg_ping(void *buf, size_t sz);
+void hpsc_msg_ping(void *buf, size_t sz, void *payload, size_t psz);
 
-void hpsc_msg_pong(void *buf, size_t sz);
+void hpsc_msg_pong(void *buf, size_t sz, void *payload, size_t psz);
 
 #endif // HPSC_MSG_H

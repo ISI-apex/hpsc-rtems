@@ -48,14 +48,14 @@ void hpsc_msg_lifecycle(void *buf, size_t sz,
     msg_fill(buf, LIFECYCLE, &p, sizeof(p));
 }
 
-void hpsc_msg_ping(void *buf, size_t sz)
+void hpsc_msg_ping(void *buf, size_t sz, void *payload, size_t psz)
 {
     assert(sz == HPSC_MSG_SIZE);
-    msg_fill(buf, PING, NULL, 0);
+    msg_fill(buf, PING, payload, psz);
 }
 
-void hpsc_msg_pong(void *buf, size_t sz)
+void hpsc_msg_pong(void *buf, size_t sz, void *payload, size_t psz)
 {
     assert(sz == HPSC_MSG_SIZE);
-    msg_fill(buf, PONG, NULL, 0);
+    msg_fill(buf, PONG, payload, psz);
 }
