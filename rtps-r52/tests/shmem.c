@@ -7,10 +7,9 @@
 #include "test.h"
 
 static char *msg = "Test Message";
-// double the size just to make sure it works
-static char buf[SHMEM_MSG_SIZE * 2] = {0};
+static char buf[HPSC_SHMEM_REGION_SZ] = {0};
 // a dummy shared memory region
-static char shmem_reg[SHMEM_MSG_SIZE * 2] = {0};
+static char shmem_reg[HPSC_SHMEM_REGION_SZ] = {0};
 
 int test_shmem()
 {
