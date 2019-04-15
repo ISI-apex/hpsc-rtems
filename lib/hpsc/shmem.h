@@ -4,14 +4,17 @@
 #include <stdint.h>
 #include <unistd.h>
 
-// size aligns with mailbox messages
-#define SHMEM_MSG_SIZE 64
+#include "hpsc-msg.h"
+
+#define SHMEM_MSG_SIZE HPSC_MSG_SIZE
 
 // All subsystems must understand this structure and its protocol
 struct hpsc_shmem_region {
     uint8_t data[SHMEM_MSG_SIZE];
     uint32_t is_new;
 };
+
+#define HPSC_SHMEM_REGION_SZ sizeof(struct hpsc_shmem_region)
 
 struct shmem;
 
