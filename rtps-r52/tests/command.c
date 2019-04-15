@@ -4,6 +4,7 @@
 
 // libhpsc
 #include <command.h>
+#include <hpsc-msg.h>
 #include <shmem.h>
 #include <shmem-link.h>
 
@@ -27,7 +28,7 @@ static int do_test(struct link *slink, struct link *clink)
     uint8_t ibuf[SHMEM_MSG_SIZE] = { 0 };
     struct cmd_test cmdt = {
         .cmd = {
-            .msg = { CMD_PING, 0 },
+            .msg = { PING, 0 },
             .link = slink,
         },
         .status = CMD_STATUS_UNKNOWN
@@ -41,7 +42,7 @@ static int do_test(struct link *slink, struct link *clink)
     // wait for reply
     while (!clink->recv(clink, ibuf, sizeof(ibuf)));
     // reply should be a PONG
-    if (ibuf[0] != CMD_PONG)
+    if (ibuf[0] != PONG)
         rc = 1;
 
     // wait for command handler to finish, o/w we prematurely destroy the link

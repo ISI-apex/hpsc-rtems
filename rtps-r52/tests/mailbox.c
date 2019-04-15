@@ -11,6 +11,7 @@
 
 // libhpsc
 #include <command.h>
+#include <hpsc-msg.h>
 #include <mailbox-link.h>
 
 #include "devices.h"
@@ -30,9 +31,12 @@ int test_mbox_lsio_trch()
 {
     struct hpsc_mbox *mbox_lsio = dev_get_mbox(DEV_ID_MBOX_LSIO);
     struct link *trch_link;
-    uint32_t arg[] = { CMD_PING, 42 };
-    uint32_t reply[sizeof(arg) / sizeof(arg[0])] = {0};
+    HPSC_MSG_DEFINE(arg);
+    HPSC_MSG_DEFINE(reply);
+    uint32_t payload = 42;
     ssize_t rc;
+
+    hpsc_msg_ping(arg, sizeof(arg), &payload, sizeof(payload));
 
     assert(mbox_lsio);
     trch_link = mbox_link_connect("RTPS_TRCH_MBOX_TEST_LINK", mbox_lsio,
