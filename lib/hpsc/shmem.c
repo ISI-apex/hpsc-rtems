@@ -1,11 +1,12 @@
 #include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 
 #include "shmem.h"
 
 struct shmem {
-    void *addr;
+    volatile void *addr;
 };
 
 static volatile void *vmem_set(volatile void *s, int c, unsigned n)
@@ -46,7 +47,7 @@ static void *mem_vcpy(void *restrict dest, volatile void *restrict src,
     return dest;
 }
 
-struct shmem *shmem_open(void *addr)
+struct shmem *shmem_open(volatile void *addr)
 {
     struct shmem *s = malloc(sizeof(struct shmem));
     if (s)
@@ -67,14 +68,32 @@ size_t shmem_send(struct shmem *s, void *msg, size_t sz)
     vmem_cpy(shm->data, msg, sz);
     if (sz_rem)
         vmem_set(shm->data + sz, 0, sz_rem);
-    shm->is_new = 1;
+    shm->status = shm->status | HPSC_SHMEM_STATUS_BIT_NEW;
     return sz;
 }
 
 uint32_t shmem_get_status(struct shmem *s)
 {
     volatile struct hpsc_shmem_region *shm = (volatile struct hpsc_shmem_region *) s->addr;
-    return shm->is_new;
+    return shm->status;
+}
+
+bool shmem_is_new(struct shmem *s)
+{
+    volatile struct hpsc_shmem_region *shm = (volatile struct hpsc_shmem_region *) s->addr;
+    return shm->status & HPSC_SHMEM_STATUS_BIT_NEW;
+}
+
+bool shmem_is_ack(struct shmem *s)
+{
+    volatile struct hpsc_shmem_region *shm = (volatile struct hpsc_shmem_region *) s->addr;
+    return shm->status & HPSC_SHMEM_STATUS_BIT_ACK;
+}
+
+void shmem_clear_ack(struct shmem *s)
+{
+    volatile struct hpsc_shmem_region *shm = (volatile struct hpsc_shmem_region *) s->addr;
+    shm->status &= ~HPSC_SHMEM_STATUS_BIT_ACK;
 }
 
 size_t shmem_recv(struct shmem *s, void *msg, size_t sz)
@@ -82,6 +101,7 @@ size_t shmem_recv(struct shmem *s, void *msg, size_t sz)
     volatile struct hpsc_shmem_region *shm = (volatile struct hpsc_shmem_region *) s->addr;
     assert(sz >= SHMEM_MSG_SIZE);
     mem_vcpy(msg, shm->data, SHMEM_MSG_SIZE);
-    shm->is_new = 0;
+    shm->status = shm->status & ~HPSC_SHMEM_STATUS_BIT_NEW; // clear new
+    shm->status = shm->status | HPSC_SHMEM_STATUS_BIT_ACK; // set ACK
     return SHMEM_MSG_SIZE;
 }
