@@ -46,10 +46,10 @@ int test_mbox_lsio_trch()
     if (!trch_link)
         return -1;
 
-    rc = trch_link->request(trch_link,
-                            CMD_TIMEOUT_MS_SEND, arg, sizeof(arg),
-                            CMD_TIMEOUT_MS_RECV, reply, sizeof(reply));
+    rc = link_request(trch_link,
+                      CMD_TIMEOUT_MS_SEND, arg, sizeof(arg),
+                      CMD_TIMEOUT_MS_RECV, reply, sizeof(reply));
     rc = rc <= 0 ? -1 : 0;
 
-    return trch_link->disconnect(trch_link) ? -1 : (int) rc;
+    return link_disconnect(trch_link) ? -1 : (int) rc;
 }

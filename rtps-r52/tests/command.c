@@ -5,50 +5,41 @@
 // libhpsc
 #include <command.h>
 #include <hpsc-msg.h>
+#include <link.h>
 #include <shmem.h>
 #include <shmem-link.h>
 
 #include "test.h"
 
-struct cmd_test {
-    struct cmd cmd;
-    cmd_status status;
-};
-
 static void handled_cb(void *arg, cmd_status status)
 {
-    struct cmd_test *cmdt = arg;
-    cmdt->status = status;
+    cmd_status *s = (cmd_status *)arg;
+    *s = status;
 }
 
 static int do_test(struct link *slink, struct link *clink)
 {
-    // pretend client sent a PING to server (we can skip the actual exchange)
-    // command will be processed asynchronously and reply sent to client
-    uint8_t ibuf[SHMEM_MSG_SIZE] = { 0 };
-    struct cmd_test cmdt = {
-        .cmd = {
-            .msg = { PING, 0 },
-            .link = slink,
-        },
-        .status = CMD_STATUS_UNKNOWN
-    };
-    int rc;
+    // command is sent by client and received by server
+    HPSC_MSG_DEFINE(cmd);
+    HPSC_MSG_DEFINE(reply);
+    ssize_t sz;
+    int rc = 0;
+    cmd_status status = CMD_STATUS_UNKNOWN;
 
-    rc = cmd_enqueue_cb(&cmdt.cmd, handled_cb, &cmdt);
-    if (rc)
-        return rc;
+    cmd_handled_register_cb(handled_cb, &status);
 
-    // wait for reply
-    while (!clink->recv(clink, ibuf, sizeof(ibuf)));
-    // reply should be a PONG
-    if (ibuf[0] != PONG)
+    hpsc_msg_ping(cmd, sizeof(cmd), NULL, 0);
+    sz = link_request(clink, 1000, cmd, sizeof(cmd), 1000, reply, sizeof(reply));
+    if (sz <= 0)
+        rc = 1;
+    else if (reply[0] != PONG)
         rc = 1;
 
     // wait for command handler to finish, o/w we prematurely destroy the link
-    while(cmdt.status == CMD_STATUS_UNKNOWN);
+    while (status == CMD_STATUS_UNKNOWN);
+    cmd_handled_unregister_cb();
 
-    return cmdt.status == CMD_STATUS_SUCCESS ? rc : 1;
+    return status == CMD_STATUS_SUCCESS ? rc : 1;
 }
 
 // test command handler using a loopback shmem-link
@@ -56,27 +47,34 @@ int test_command_server()
 {
     struct hpsc_shmem_region reg_a = { 0 };
     struct hpsc_shmem_region reg_b = { 0 };
-    
+    rtems_name sname_recv = rtems_build_name('T','C','S','R');
+    rtems_name sname_ack = rtems_build_name('T','C','S','A');
+    rtems_name cname_recv = rtems_build_name('T','C','C','R');
+    rtems_name cname_ack = rtems_build_name('T','C','C','A');
     struct link *slink;
     struct link *clink;
     int rc;
 
     printf("TEST: test_command_server: begin\n");
 
-    slink = shmem_link_connect("Command Test Server Shmem Link", &reg_a, &reg_b);
+    slink = shmem_link_connect("Command Test Server Link", &reg_a, &reg_b,
+                               true, 10, sname_recv, sname_ack);
     if (!slink)
         return 1;
-    clink = shmem_link_connect("Command Test Client Shmem Link", &reg_b, &reg_a);
+    clink = shmem_link_connect("Command Test Client Link", &reg_b, &reg_a,
+                               false, 10, cname_recv, cname_ack);
     if (!clink) {
         rc = 1;
         goto free_slink;
     }
 
     rc = do_test(slink, clink);
-
-    clink->disconnect(clink); // never fails
-free_slink:
-    slink->disconnect(slink); // never fails
     printf("TEST: test_command_server: %s\n", rc ? "failed": "success");
+
+    if (link_disconnect(clink))
+        rc = 1;
+free_slink:
+    if (link_disconnect(slink))
+        rc = 1;
     return rc;
 }
