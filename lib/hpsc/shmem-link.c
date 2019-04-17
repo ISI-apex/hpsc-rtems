@@ -1,137 +1,152 @@
+#include <assert.h>
 #include <inttypes.h>
+#include <stdbool.h>
 #include <stdlib.h>
-#include <stdio.h>
 
 #include <rtems.h>
+#include <rtems/bspIo.h>
+#include <rtems/irq-extension.h>
 
 #include "link.h"
 #include "shmem.h"
+#include "shmem-link.h"
+#include "shmem-poll.h"
 
 struct shmem_link {
     struct shmem *shmem_out;
     struct shmem *shmem_in;
+    struct shmem_poll *sp_recv;
+    struct shmem_poll *sp_ack;
 };
 
-// TODO: use signals instead of actually polling
-#define MIN_SLEEP_MS 10
 
+static void shmem_link_ack(void *arg)
+{
+    struct link *link = arg;
+    struct shmem_link *slink = link->priv;
+    shmem_clear_ack(slink->shmem_out);
+    link_ack(arg);
+}
 
-static int shmem_link_disconnect(struct link *link)
+static size_t shmem_link_write(struct link *link, void *buf, size_t sz)
 {
     struct shmem_link *slink = link->priv;
-    printf("%s: disconnect\n", link->name);
+    return shmem_send(slink->shmem_out, buf, sz);
+}
+
+static size_t shmem_link_read(struct link *link, void *buf, size_t sz)
+{
+    struct shmem_link *slink = link->priv;
+    return shmem_recv(slink->shmem_in, buf, sz);
+}
+
+static int shmem_link_close(struct link *link)
+{
+    struct shmem_link *slink = link->priv;
+    int rc = 0;
+    rtems_status_code sc;
+    sc = shmem_poll_task_destroy(slink->sp_ack);
+    if (sc != RTEMS_SUCCESSFUL)
+        rc = -1;
+    sc = shmem_poll_task_destroy(slink->sp_recv);
+    if (sc != RTEMS_SUCCESSFUL)
+        rc = -1;
     shmem_close(slink->shmem_out);
     shmem_close(slink->shmem_in);
     free(slink);
     free(link);
-    return 0;
-}
-
-static void msleep_and_dec(int *ms_rem)
-{
-    rtems_task_wake_after(RTEMS_MILLISECONDS_TO_TICKS(MIN_SLEEP_MS));
-    // if < 0, timeout is infinite
-    if (*ms_rem > 0)
-        *ms_rem -= *ms_rem >= MIN_SLEEP_MS ? MIN_SLEEP_MS : *ms_rem;
-}
-
-static size_t shmem_link_send(struct link *link, int timeout_ms, void *buf,
-                              size_t sz)
-{
-    struct shmem_link *slink = link->priv;
-    int sleep_ms_rem = timeout_ms;
-    do {
-        if (!shmem_get_status(slink->shmem_out)) {
-            return shmem_send(slink->shmem_out, buf, sz);
-        }
-        if (!sleep_ms_rem)
-            break; // timeout
-        msleep_and_dec(&sleep_ms_rem);
-    } while (1);
-    return 0;
-}
-
-static bool shmem_link_is_send_acked(struct link *link)
-{
-    struct shmem_link *slink = link->priv;
-    // status is currently the "is_new" field, so not ACK'd until cleared
-    return shmem_get_status(slink->shmem_out) ? false : true;
-}
-
-static size_t shmem_link_recv(struct link *link, void *buf, size_t sz)
-{
-    struct shmem_link *slink = link->priv;
-    if (shmem_get_status(slink->shmem_in))
-        return shmem_recv(slink->shmem_in, buf, sz);
-    return 0;
-}
-
-static size_t shmem_link_poll(struct link *link, int timeout_ms, void *buf,
-                              size_t sz)
-{
-    int sleep_ms_rem = timeout_ms;
-    size_t rc;
-    do {
-        rc = shmem_link_recv(link, buf, sz);
-        if (rc > 0)
-            break; // got data
-        if (!sleep_ms_rem)
-            break; // timeout
-        msleep_and_dec(&sleep_ms_rem);
-    } while (1);
     return rc;
 }
 
-static ssize_t shmem_link_request(struct link *link,
-                                  int wtimeout_ms, void *wbuf, size_t wsz,
-                                  int rtimeout_ms, void *rbuf, size_t rsz)
+static int shmem_link_init(
+    struct shmem_link *slink,
+    struct link *link,
+    void *addr_out,
+    void *addr_in,
+    bool is_server,
+    unsigned long poll_us,
+    rtems_name tname_recv,
+    rtems_name tname_ack
+)
 {
-    ssize_t rc;
-    printf("%s: request\n", link->name);
-    rc = shmem_link_send(link, wtimeout_ms, wbuf, wsz);
-    if (!rc) {
-        printf("shmem_link_request: send timed out\n");
-        return -1;
-    }
-    rc = shmem_link_poll(link, rtimeout_ms, rbuf, rsz);
-    if (!rc)
-        printf("shmem_link_request: recv timed out\n");
-    return rc;
-}
-
-struct link *shmem_link_connect(const char* name, void *addr_out, void *addr_in)
-{
-    struct shmem_link *slink;
-    struct link *link;
-    printf("%s: connect\n", name);
-    printf("\taddr_out = 0x%"PRIXPTR"\n", (uintptr_t) addr_out);
-    printf("\taddr_in  = 0x%"PRIXPTR"\n", (uintptr_t) addr_in);
-    link = malloc(sizeof(*link));
-    if (!link)
-        return NULL;
-
-    slink = malloc(sizeof(*slink));
-    if (!slink) {
-        goto free_link;
-    }
+    rtems_status_code sc;
     slink->shmem_out = shmem_open(addr_out);
     if (!slink->shmem_out)
-        goto free_links;
+        return -1;
     slink->shmem_in = shmem_open(addr_in);
     if (!slink->shmem_in)
         goto free_out;
+    // start listening tasks
+    if (is_server) {
+        sc = shmem_poll_task_create(&slink->sp_recv, slink->shmem_in, poll_us,
+                                    HPSC_SHMEM_STATUS_BIT_NEW,
+                                    tname_recv, link_recv_cmd, link);
+    } else {
+        sc = shmem_poll_task_create(&slink->sp_recv, slink->shmem_in, poll_us,
+                                    HPSC_SHMEM_STATUS_BIT_NEW,
+                                    tname_recv, link_recv_reply, link);
+    }
+    if (sc != RTEMS_SUCCESSFUL) {
+        printk("Failed to create receive polling task\n");
+        goto free_all;
+    }
+    sc = shmem_poll_task_create(&slink->sp_ack, slink->shmem_out, poll_us,
+                                HPSC_SHMEM_STATUS_BIT_ACK,
+                                tname_ack, shmem_link_ack, link);
+    if (sc != RTEMS_SUCCESSFUL) {
+        printk("Failed to create ACK polling task\n");
+        goto stop_recv_task;
+    }
+    return 0;
 
-    link->priv = slink;
-    link->name = name;
-    link->disconnect = shmem_link_disconnect;
-    link->send = shmem_link_send;
-    link->is_send_acked = shmem_link_is_send_acked;
-    link->request = shmem_link_request;
-    link->recv = shmem_link_recv;
-    return link;
-
+stop_recv_task:
+    shmem_poll_task_destroy(slink->sp_recv);
+free_all:
+    shmem_close(slink->shmem_in);
 free_out:
     shmem_close(slink->shmem_out);
+    return -1;
+}
+
+struct link *shmem_link_connect(
+    const char* name,
+    void *addr_out,
+    void *addr_in,
+    bool is_server,
+    unsigned long poll_us,
+    rtems_name tname_recv,
+    rtems_name tname_ack
+)
+{
+    struct shmem_link *slink;
+    struct link *link;
+    assert(name);
+    assert(addr_out);
+    assert(addr_in);
+
+    printk("%s: connect\n", name);
+    printk("\taddr_out = 0x%"PRIXPTR"\n", (uintptr_t) addr_out);
+    printk("\taddr_in  = 0x%"PRIXPTR"\n", (uintptr_t) addr_in);
+    printk("\tpoll_us  = %lu\n", poll_us);
+
+    link = malloc(sizeof(*link));
+    if (!link)
+        return NULL;
+    slink = malloc(sizeof(*slink));
+    if (!slink)
+        goto free_link;
+
+    link_init(link, name, slink);
+    link->write = shmem_link_write;
+    link->read = shmem_link_read;
+    link->close = shmem_link_close;
+
+    if (shmem_link_init(slink, link, addr_out, addr_in, is_server, poll_us,
+                        tname_recv, tname_ack))
+        goto free_links;
+
+    return link;
+
 free_links:
     free(slink);
 free_link:

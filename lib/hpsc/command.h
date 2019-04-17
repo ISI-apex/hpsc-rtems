@@ -35,6 +35,9 @@ void cmd_handler_unregister(void);
 
 typedef void (cmd_handled_t)(void *arg, cmd_status status);
 
+void cmd_handled_register_cb(cmd_handled_t *cb, void *cb_arg);
+void cmd_handled_unregister_cb(void);
+
 int cmd_enqueue_cb(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg);
 int cmd_enqueue(struct cmd *cmd);
 

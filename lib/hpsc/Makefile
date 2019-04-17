@@ -10,9 +10,11 @@ C_PIECES= \
 	affinity \
 	command \
 	hpsc-msg \
+	link \
 	mailbox-link \
 	shmem \
-	shmem-link
+	shmem-link \
+	shmem-poll
 C_FILES=$(C_PIECES:%=%.c)
 C_O_FILES=$(C_FILES:%.c=${ARCH}/%.o)
 
@@ -28,6 +30,7 @@ H_FILES = \
 	mailbox-link.h \
 	shmem.h \
 	shmem-link.h \
+	shmem-poll.h \
 
 # Assembly source names, if any, go here -- minus the .S
 S_PIECES=

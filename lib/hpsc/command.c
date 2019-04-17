@@ -27,6 +27,9 @@ static rtems_id cmdh_task_id = RTEMS_ID_NONE;
 
 static cmd_handler_t *cmd_handler = NULL;
 
+static cmd_handled_t *cmd_handled_cb = NULL;
+static void *cmd_handled_cb_arg = NULL;
+
 void cmd_handler_register(cmd_handler_t cb)
 {
     assert(!cmd_handler);
@@ -68,6 +71,18 @@ out:
     if (!rc)
         rc = rtems_event_send(cmdh_task_id, RTEMS_EVENT_0) != RTEMS_SUCCESSFUL;
     return rc;
+}
+
+void cmd_handled_register_cb(cmd_handled_t *cb, void *cb_arg)
+{
+    cmd_handled_cb = cb;
+    cmd_handled_cb_arg = cb_arg;
+}
+
+void cmd_handled_unregister_cb(void)
+{
+    cmd_handled_cb = NULL;
+    cmd_handled_cb_arg = NULL;
 }
 
 int cmd_enqueue(struct cmd *cmd)
@@ -137,7 +152,7 @@ static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
     printf("command: handle: %s: reply %u arg %u...\n", cmd->link->name,
            reply[0], reply[HPSC_MSG_PAYLOAD_OFFSET]);
 
-    rc = cmd->link->send(cmd->link, CMD_TIMEOUT_MS_SEND, reply, sizeof(reply));
+    rc = link_send(cmd->link, reply, sizeof(reply));
     if (!rc) {
         printf("command: handle: %s: failed to send reply\n", cmd->link->name);
         status = CMD_STATUS_REPLY_FAILED;
@@ -146,7 +161,7 @@ static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
     printf("command: handle: %s: waiting for ACK for our reply\n",
            cmd->link->name);
     do {
-        if (cmd->link->is_send_acked(cmd->link)) {
+        if (link_is_send_acked(cmd->link)) {
             printf("command: handle: %s: ACK for our reply received\n", 
                    cmd->link->name);
             break;
@@ -164,6 +179,8 @@ static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
 out:
     if (cb)
         cb(cb_arg, status);
+    if (cmd_handled_cb)
+        cmd_handled_cb(cmd_handled_cb_arg, status);
 }
 
 static rtems_task cmd_handle_task(rtems_task_argument ignored)
