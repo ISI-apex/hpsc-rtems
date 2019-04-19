@@ -61,7 +61,7 @@ CLOBBER_ADDITIONS +=
 
 all:	${ARCH} $(SRCS) $(LIB)
 
-$(OBJS): ${H_FILES} Makefile
+$(OBJS): ${ARCH} ${H_FILES} Makefile
 
 $(LIB): ${OBJS}
 	$(make-library)

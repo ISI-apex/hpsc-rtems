@@ -67,7 +67,7 @@ include $(PROJECT_ROOT)/make/leaf.cfg
 
 OBJS = $(COBJS) $(CXXOBJS) $(ASOBJS)
 
-${ARCH}/tests:
+${ARCH}/tests: ${ARCH}
 	mkdir -p ${ARCH}/tests
 
 all:    ${ARCH} ${ARCH}/tests $(PGM)
@@ -86,7 +86,7 @@ LD_LIBS += \
 	$(LIBDRIVERS_TEST) \
 	$(LIBDRIVERS) \
 
-$(OBJS): $(LIBDRIVERS) $(LIBDRIVERS_TEST) $(LIBHPSC) ${H_FILES} ../plat/* Makefile
+$(OBJS): $(LIBDRIVERS) $(LIBDRIVERS_TEST) $(LIBHPSC) ${ARCH} ${H_FILES} ../plat/* Makefile
 
 $(PGM): $(OBJS)
 	$(make-exe)
