@@ -1,7 +1,6 @@
 #include <assert.h>
 #include <pthread.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 
 #include <rtems.h>
@@ -113,7 +112,7 @@ static int cmd_dequeue(struct cmd *cmd, cmd_handled_t **cb, void **cb_arg)
     memcpy(cmd, &cmdq.q[cmdq.tail].cmd, sizeof(struct cmd));
     *cb = cmdq.q[cmdq.tail].cb;
     *cb_arg = cmdq.q[cmdq.tail].cb_arg;
-    printf("command: dequeue (tail %u head %u): cmd %u arg %u...\n",
+    printk("command: dequeue (tail %u head %u): cmd %u arg %u...\n",
            cmdq.tail, cmdq.head,
            cmdq.q[cmdq.tail].cmd.msg[0],
            cmdq.q[cmdq.tail].cmd.msg[HPSC_MSG_PAYLOAD_OFFSET]);
@@ -133,45 +132,45 @@ static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
     rtems_interval sleep_ticks_rem = CMD_TIMEOUT_TICKS_REPLY;
     assert(cmd);
 
-    printf("command: handle: cmd %u arg %u...\n",
+    printk("command: handle: cmd %u arg %u...\n",
            cmd->msg[0], cmd->msg[HPSC_MSG_PAYLOAD_OFFSET]);
 
     if (!cmd_handler) {
-        printf("command: handle: no handler registered\n");
+        printk("command: handle: no handler registered\n");
         status = CMD_STATUS_NO_HANDLER;
         goto out;
     }
 
     reply_sz = cmd_handler(cmd, reply, sizeof(reply));
     if (reply_sz < 0) {
-        printf("ERROR: command: handle: server failed to process request\n");
+        printk("ERROR: command: handle: server failed to process request\n");
         status = CMD_STATUS_HANDLER_FAILED;
         goto out;
     }
     if (!reply_sz) {
-        printf("command: handle: server did not produce a reply\n");
+        printk("command: handle: server did not produce a reply\n");
         goto out;
     }
 
-    printf("command: handle: %s: reply %u arg %u...\n", cmd->link->name,
+    printk("command: handle: %s: reply %u arg %u...\n", cmd->link->name,
            reply[0], reply[HPSC_MSG_PAYLOAD_OFFSET]);
 
     rc = link_send(cmd->link, reply, sizeof(reply));
     if (!rc) {
-        printf("command: handle: %s: failed to send reply\n", cmd->link->name);
+        printk("command: handle: %s: failed to send reply\n", cmd->link->name);
         status = CMD_STATUS_REPLY_FAILED;
         goto out;
     }
-    printf("command: handle: %s: waiting for ACK for our reply\n",
+    printk("command: handle: %s: waiting for ACK for our reply\n",
            cmd->link->name);
     do {
         if (link_is_send_acked(cmd->link)) {
-            printf("command: handle: %s: ACK for our reply received\n", 
+            printk("command: handle: %s: ACK for our reply received\n", 
                    cmd->link->name);
             break;
         }
         if (!sleep_ticks_rem) {
-            printf("command: handle: %s: timed out waiting for ACK\n",
+            printk("command: handle: %s: timed out waiting for ACK\n",
                    cmd->link->name);
             status = CMD_STATUS_ACK_FAILED;
             break;
