@@ -34,10 +34,6 @@ static rtems_task watchdog_task(rtems_task_argument arg)
     struct hpsc_wdt *wdt = dev_get_wdt(cpu);
     assert(wdt);
 
-    printf(" =========================\n");
-    printf(" Starting WDT: %u\n", cpu);
-    printf(" =========================\n");
-
     // must run from the WDT's CPU
     affinity_pin_self_to_cpu(cpu);
 
