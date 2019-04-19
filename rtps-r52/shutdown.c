@@ -13,6 +13,7 @@
 
 // libhpsc
 #include <affinity.h>
+#include <command.h>
 
 #include "devices.h"
 #include "shutdown.h"
@@ -59,6 +60,12 @@ void shutdown(void)
     size_t i;
 
     // TODO: Send a message to TRCH
+
+    // try to stop gracefully
+    printf("Stopping command handler...\n");
+    sc = cmd_handle_task_destroy();
+    if (sc != RTEMS_SUCCESSFUL)
+        printf("Failed to stop command handler\n");
 
     // stop running tasks
     printf("Suspending tasks...\n");
