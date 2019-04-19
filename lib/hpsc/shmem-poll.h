@@ -2,6 +2,7 @@
 #define SHMEM_POLL_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <rtems.h>
 #include <rtems/irq-extension.h>
