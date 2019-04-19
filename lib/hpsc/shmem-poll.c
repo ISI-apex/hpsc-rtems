@@ -11,7 +11,7 @@
 
 struct shmem_poll {
     struct shmem *shm;
-    unsigned long poll_us;
+    rtems_interval poll_ticks;
     rtems_interrupt_handler cb;
     void *cb_arg;
     rtems_id tid;
@@ -23,15 +23,12 @@ static rtems_task shm_poll_task(rtems_task_argument arg)
 {
     struct shmem_poll *sp = (struct shmem_poll *)arg;
     rtems_event_set events;
-    rtems_interval ticks = RTEMS_MICROSECONDS_TO_TICKS(sp->poll_us);
     uint32_t status;
-    // 0 ticks means no timeout (waits forever), which we don't want
-    if (sp->poll_us && !ticks)
-        ticks = 1;
     // polling for a change in status
     while (1) {
         events = 0;
-        rtems_event_receive(RTEMS_EVENT_0, RTEMS_EVENT_ANY, ticks, &events);
+        rtems_event_receive(RTEMS_EVENT_0, RTEMS_EVENT_ANY, sp->poll_ticks,
+                            &events);
         if (events & RTEMS_EVENT_0)
             break; // we've been ordered to exit
         status = shmem_get_status(sp->shm);
@@ -46,14 +43,14 @@ static rtems_task shm_poll_task(rtems_task_argument arg)
 static void shmem_poll_init(
     struct shmem_poll *sp,
     struct shmem *shm,
-    unsigned long poll_us,
+    rtems_interval poll_ticks,
     uint32_t status_mask,
     rtems_interrupt_handler cb,
     void *cb_arg
 )
 {
     sp->shm = shm;
-    sp->poll_us = poll_us;
+    sp->poll_ticks = poll_ticks;
     sp->status_mask = status_mask;
     sp->cb = cb;
     sp->cb_arg = cb_arg;
@@ -64,7 +61,7 @@ static void shmem_poll_init(
 rtems_status_code shmem_poll_task_create(
     struct shmem_poll **sp,
     struct shmem *shm,
-    unsigned long poll_us,
+    rtems_interval poll_ticks,
     uint32_t status_mask,
     rtems_name tname,
     rtems_interrupt_handler cb,
@@ -74,11 +71,12 @@ rtems_status_code shmem_poll_task_create(
     rtems_status_code sc;
     assert(sp);
     assert(shm);
+    assert(poll_ticks);
     assert(cb);
     *sp = malloc(sizeof(struct shmem_poll));
     if (!*sp)
         return RTEMS_NO_MEMORY;
-    shmem_poll_init(*sp, shm, poll_us, status_mask, cb, cb_arg);
+    shmem_poll_init(*sp, shm, poll_ticks, status_mask, cb, cb_arg);
     sc = rtems_task_create(
         tname, 1, RTEMS_MINIMUM_STACK_SIZE * 2,
         RTEMS_DEFAULT_MODES,

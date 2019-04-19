@@ -12,7 +12,7 @@ struct link *shmem_link_connect(
     volatile void *addr_out,
     volatile void *addr_in,
     bool is_server,
-    unsigned long poll_us,
+    rtems_interval poll_ticks,
     rtems_name tname_recv,
     rtems_name tname_ack
 );

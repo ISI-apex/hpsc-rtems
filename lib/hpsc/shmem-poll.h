@@ -13,7 +13,7 @@ struct shmem_poll;
 rtems_status_code shmem_poll_task_create(
     struct shmem_poll **sp,
     struct shmem *shm,
-    unsigned long poll_us,
+    rtems_interval poll_ticks,
     uint32_t status_mask,
     rtems_name tname,
     rtems_interrupt_handler cb,

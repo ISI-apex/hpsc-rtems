@@ -64,7 +64,7 @@ static int shmem_link_init(
     volatile void *addr_out,
     volatile void *addr_in,
     bool is_server,
-    unsigned long poll_us,
+    rtems_interval poll_ticks,
     rtems_name tname_recv,
     rtems_name tname_ack
 )
@@ -78,19 +78,19 @@ static int shmem_link_init(
         goto free_out;
     // start listening tasks
     if (is_server) {
-        sc = shmem_poll_task_create(&slink->sp_recv, slink->shmem_in, poll_us,
-                                    HPSC_SHMEM_STATUS_BIT_NEW,
+        sc = shmem_poll_task_create(&slink->sp_recv, slink->shmem_in,
+                                    poll_ticks, HPSC_SHMEM_STATUS_BIT_NEW,
                                     tname_recv, link_recv_cmd, link);
     } else {
-        sc = shmem_poll_task_create(&slink->sp_recv, slink->shmem_in, poll_us,
-                                    HPSC_SHMEM_STATUS_BIT_NEW,
+        sc = shmem_poll_task_create(&slink->sp_recv, slink->shmem_in,
+                                    poll_ticks, HPSC_SHMEM_STATUS_BIT_NEW,
                                     tname_recv, link_recv_reply, link);
     }
     if (sc != RTEMS_SUCCESSFUL) {
         printk("Failed to create receive polling task\n");
         goto free_all;
     }
-    sc = shmem_poll_task_create(&slink->sp_ack, slink->shmem_out, poll_us,
+    sc = shmem_poll_task_create(&slink->sp_ack, slink->shmem_out, poll_ticks,
                                 HPSC_SHMEM_STATUS_BIT_ACK,
                                 tname_ack, shmem_link_ack, link);
     if (sc != RTEMS_SUCCESSFUL) {
@@ -113,7 +113,7 @@ struct link *shmem_link_connect(
     volatile void *addr_out,
     volatile void *addr_in,
     bool is_server,
-    unsigned long poll_us,
+    rtems_interval poll_ticks,
     rtems_name tname_recv,
     rtems_name tname_ack
 )
@@ -127,7 +127,7 @@ struct link *shmem_link_connect(
     printk("%s: connect\n", name);
     printk("\taddr_out = 0x%"PRIXPTR"\n", (uintptr_t) addr_out);
     printk("\taddr_in  = 0x%"PRIXPTR"\n", (uintptr_t) addr_in);
-    printk("\tpoll_us  = %lu\n", poll_us);
+    printk("\tpoll_ticks  = %u\n", poll_ticks);
 
     link = malloc(sizeof(*link));
     if (!link)
@@ -141,7 +141,7 @@ struct link *shmem_link_connect(
     link->read = shmem_link_read;
     link->close = shmem_link_close;
 
-    if (shmem_link_init(slink, link, addr_out, addr_in, is_server, poll_us,
+    if (shmem_link_init(slink, link, addr_out, addr_in, is_server, poll_ticks,
                         tname_recv, tname_ack))
         goto free_links;
 
