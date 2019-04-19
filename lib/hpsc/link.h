@@ -34,9 +34,13 @@ struct link {
 size_t link_send(struct link *link, void *buf, size_t sz);
 bool link_is_send_acked(struct link *link);
 // returns -1 on send failure, 0 on read timeout, or number of bytes read
+/**
+ * Send a message and wait for a response.
+ * Use RTEMS_NO_TIMEOUT for tick parameters to wait forever.
+ */
 ssize_t link_request(struct link *link,
-                     int wtimeout_ms, void *wbuf, size_t wsz,
-                     int rtimeout_ms, void *rbuf, size_t rsz);
+                     rtems_interval wtimeout_ticks, void *wbuf, size_t wsz,
+                     rtems_interval rtimeout_ticks, void *rbuf, size_t rsz);
 int link_disconnect(struct link *link);
 
 /*

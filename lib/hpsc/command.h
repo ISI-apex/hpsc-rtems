@@ -9,10 +9,10 @@
 #include "hpsc-msg.h"
 #include "link.h"
 
-#define CMD_TIMEOUT_MS_SEND 100
-#define CMD_TIMEOUT_MS_RECV 100
-// wait up to 10 seconds for replies - a timeout prevent hangs when remotes fail
-#define CMD_TIMEOUT_MS_REPLY 10000
+#define CMD_TIMEOUT_TICKS_SEND 10
+#define CMD_TIMEOUT_TICKS_RECV 10
+// timeout prevent hangs when remotes fail
+#define CMD_TIMEOUT_TICKS_REPLY 1000
 
 typedef enum {
     CMD_STATUS_SUCCESS,

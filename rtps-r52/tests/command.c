@@ -29,7 +29,9 @@ static int do_test(struct link *slink, struct link *clink)
     cmd_handled_register_cb(handled_cb, &status);
 
     hpsc_msg_ping(cmd, sizeof(cmd), NULL, 0);
-    sz = link_request(clink, 1000, cmd, sizeof(cmd), 1000, reply, sizeof(reply));
+    sz = link_request(clink,
+                      CMD_TIMEOUT_TICKS_SEND, cmd, sizeof(cmd),
+                      CMD_TIMEOUT_TICKS_RECV, reply, sizeof(reply));
     if (sz <= 0)
         rc = 1;
     else if (reply[0] != PONG)
@@ -58,11 +60,11 @@ int test_command_server()
     printf("TEST: test_command_server: begin\n");
 
     slink = shmem_link_connect("Command Test Server Link", &reg_a, &reg_b,
-                               true, 10, sname_recv, sname_ack);
+                               true, 1, sname_recv, sname_ack);
     if (!slink)
         return 1;
     clink = shmem_link_connect("Command Test Client Link", &reg_b, &reg_a,
-                               false, 10, cname_recv, cname_ack);
+                               false, 1, cname_recv, cname_ack);
     if (!clink) {
         rc = 1;
         goto free_slink;

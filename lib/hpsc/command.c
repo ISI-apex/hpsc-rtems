@@ -126,7 +126,7 @@ static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
     int reply_sz;
     size_t rc;
     cmd_status status = CMD_STATUS_SUCCESS;
-    int32_t sleep_ms_rem = CMD_TIMEOUT_MS_REPLY;
+    rtems_interval sleep_ticks_rem = CMD_TIMEOUT_TICKS_REPLY;
     assert(cmd);
 
     printf("command: handle: cmd %u arg %u...\n",
@@ -166,14 +166,15 @@ static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
                    cmd->link->name);
             break;
         }
-        if (sleep_ms_rem <= 0) {
+        if (!sleep_ticks_rem) {
             printf("command: handle: %s: timed out waiting for ACK\n",
                    cmd->link->name);
             status = CMD_STATUS_ACK_FAILED;
             break;
         }
-        rtems_task_wake_after(RTEMS_MILLISECONDS_TO_TICKS(CMD_TIMEOUT_MS_RECV));
-        sleep_ms_rem -= CMD_TIMEOUT_MS_RECV;
+        rtems_task_wake_after(CMD_TIMEOUT_TICKS_RECV);
+        sleep_ticks_rem -= sleep_ticks_rem < CMD_TIMEOUT_TICKS_RECV ?
+                           sleep_ticks_rem : CMD_TIMEOUT_TICKS_RECV;
     } while (1);
 
 out:
