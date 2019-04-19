@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,27 +45,42 @@ static int do_test(struct link *slink, struct link *clink)
     return status == CMD_STATUS_SUCCESS ? rc : 1;
 }
 
+static void create_poll_task(rtems_name name, rtems_id *id)
+{
+    assert(id);
+    rtems_status_code sc = rtems_task_create(
+        name, 1, RTEMS_MINIMUM_STACK_SIZE * 2,
+        RTEMS_DEFAULT_MODES,
+        RTEMS_FLOATING_POINT | RTEMS_DEFAULT_ATTRIBUTES, id
+    );
+    assert(sc == RTEMS_SUCCESSFUL);
+}
+
 // test command handler using a loopback shmem-link
 int test_command_server()
 {
     struct hpsc_shmem_region reg_a = { 0 };
     struct hpsc_shmem_region reg_b = { 0 };
-    rtems_name sname_recv = rtems_build_name('T','C','S','R');
-    rtems_name sname_ack = rtems_build_name('T','C','S','A');
-    rtems_name cname_recv = rtems_build_name('T','C','C','R');
-    rtems_name cname_ack = rtems_build_name('T','C','C','A');
+    rtems_id stid_recv;
+    rtems_id stid_ack;
+    rtems_id ctid_recv;
+    rtems_id ctid_ack;
     struct link *slink;
     struct link *clink;
     int rc;
 
     printf("TEST: test_command_server: begin\n");
 
+    create_poll_task(rtems_build_name('T','C','S','R'), &stid_recv);
+    create_poll_task(rtems_build_name('T','C','S','A'), &stid_ack);
+    create_poll_task(rtems_build_name('T','C','C','R'), &ctid_recv);
+    create_poll_task(rtems_build_name('T','C','C','A'), &ctid_ack);
     slink = shmem_link_connect("Command Test Server Link", &reg_a, &reg_b,
-                               true, 1, sname_recv, sname_ack);
+                               true, 1, stid_recv, stid_ack);
     if (!slink)
         return 1;
     clink = shmem_link_connect("Command Test Client Link", &reg_b, &reg_a,
-                               false, 1, cname_recv, cname_ack);
+                               false, 1, ctid_recv, ctid_ack);
     if (!clink) {
         rc = 1;
         goto free_slink;

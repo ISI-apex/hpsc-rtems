@@ -45,6 +45,7 @@ static void shmem_poll_init(
     struct shmem *shm,
     rtems_interval poll_ticks,
     uint32_t status_mask,
+    rtems_id task_id,
     rtems_interrupt_handler cb,
     void *cb_arg
 )
@@ -54,16 +55,16 @@ static void shmem_poll_init(
     sp->status_mask = status_mask;
     sp->cb = cb;
     sp->cb_arg = cb_arg;
-    sp->tid = RTEMS_ID_NONE;
+    sp->tid = task_id;
     sp->running = true;
 }
 
-rtems_status_code shmem_poll_task_create(
+rtems_status_code shmem_poll_task_start(
     struct shmem_poll **sp,
     struct shmem *shm,
     rtems_interval poll_ticks,
     uint32_t status_mask,
-    rtems_name tname,
+    rtems_id task_id,
     rtems_interrupt_handler cb,
     void *cb_arg
 )
@@ -76,21 +77,10 @@ rtems_status_code shmem_poll_task_create(
     *sp = malloc(sizeof(struct shmem_poll));
     if (!*sp)
         return RTEMS_NO_MEMORY;
-    shmem_poll_init(*sp, shm, poll_ticks, status_mask, cb, cb_arg);
-    sc = rtems_task_create(
-        tname, 1, RTEMS_MINIMUM_STACK_SIZE * 2,
-        RTEMS_DEFAULT_MODES,
-        RTEMS_FLOATING_POINT | RTEMS_DEFAULT_ATTRIBUTES, &(*sp)->tid
-    );
-    if (sc != RTEMS_SUCCESSFUL) {
-        printk("Failed to create shmem poll task\n");
+    shmem_poll_init(*sp, shm, poll_ticks, status_mask, task_id, cb, cb_arg);
+    sc = rtems_task_start(task_id, shm_poll_task, (rtems_task_argument) *sp);
+    if (sc != RTEMS_SUCCESSFUL)
         goto free_sp;
-    }
-    sc = rtems_task_start((*sp)->tid, shm_poll_task, (rtems_task_argument) *sp);
-    if (sc != RTEMS_SUCCESSFUL) {
-        printk("Failed to start shmem poll task\n");
-        goto free_sp;
-    }
     return RTEMS_SUCCESSFUL;
 
 free_sp:

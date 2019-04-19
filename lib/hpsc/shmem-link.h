@@ -13,8 +13,8 @@ struct link *shmem_link_connect(
     volatile void *addr_in,
     bool is_server,
     rtems_interval poll_ticks,
-    rtems_name tname_recv,
-    rtems_name tname_ack
+    rtems_id tid_recv,
+    rtems_id tid_ack
 );
 
 #endif // SHMEM_LINK_H

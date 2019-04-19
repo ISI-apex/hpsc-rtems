@@ -10,12 +10,12 @@
 
 struct shmem_poll;
 
-rtems_status_code shmem_poll_task_create(
+rtems_status_code shmem_poll_task_start(
     struct shmem_poll **sp,
     struct shmem *shm,
     rtems_interval poll_ticks,
     uint32_t status_mask,
-    rtems_name tname,
+    rtems_id task_id,
     rtems_interrupt_handler cb,
     void *cb_arg
 );
