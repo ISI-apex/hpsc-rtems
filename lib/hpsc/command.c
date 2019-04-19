@@ -212,22 +212,10 @@ static rtems_task cmd_handle_task(rtems_task_argument ignored)
     rtems_task_exit();
 }
 
-rtems_status_code cmd_handle_task_create(void)
+rtems_status_code cmd_handle_task_start(rtems_id task_id)
 {
-    rtems_name task_name = rtems_build_name('C','M','D','H');
-    rtems_status_code sc = rtems_task_create(
-        task_name, 1, RTEMS_MINIMUM_STACK_SIZE * 2,
-        RTEMS_DEFAULT_MODES,
-        RTEMS_FLOATING_POINT | RTEMS_DEFAULT_ATTRIBUTES, &cmdh_task_id
-    );
-    if (sc != RTEMS_SUCCESSFUL) {
-        printf("Failed to create command handler task\n");
-    } else {
-        sc = rtems_task_start(cmdh_task_id, cmd_handle_task, 1);
-        if (sc != RTEMS_SUCCESSFUL)
-            printf("Failed to start command handler task\n");
-    }
-    return sc;
+    cmdh_task_id = task_id;
+    return rtems_task_start(cmdh_task_id, cmd_handle_task, 1);
 }
 
 rtems_status_code cmd_handle_task_destroy(void)

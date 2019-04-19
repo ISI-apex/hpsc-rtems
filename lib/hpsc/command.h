@@ -41,7 +41,7 @@ void cmd_handled_unregister_cb(void);
 int cmd_enqueue_cb(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg);
 int cmd_enqueue(struct cmd *cmd);
 
-rtems_status_code cmd_handle_task_create(void);
+rtems_status_code cmd_handle_task_start(rtems_id task_id);
 rtems_status_code cmd_handle_task_destroy(void);
 
 #endif // COMMAND_H

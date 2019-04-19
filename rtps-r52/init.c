@@ -175,8 +175,22 @@ static void init_server_links()
 
 static void init_tasks(void)
 {
-    if (cmd_handle_task_create() != RTEMS_SUCCESSFUL)
-        rtems_panic("command handler");
+    rtems_name task_name;
+    rtems_id task_id;
+    rtems_status_code sc;
+
+    // command queue handler task
+    task_name = rtems_build_name('C','M','D','H');
+    sc = rtems_task_create(
+        task_name, 1, RTEMS_MINIMUM_STACK_SIZE * 2,
+        RTEMS_DEFAULT_MODES,
+        RTEMS_FLOATING_POINT | RTEMS_DEFAULT_ATTRIBUTES, &task_id
+    );
+    if (sc != RTEMS_SUCCESSFUL) 
+        rtems_panic("command handler task create");
+    sc = cmd_handle_task_start(task_id);
+    if (sc != RTEMS_SUCCESSFUL)
+        rtems_panic("command handler task create");
 
 #if CONFIG_WDT
     if (watchdog_tasks_create() != RTEMS_SUCCESSFUL)
