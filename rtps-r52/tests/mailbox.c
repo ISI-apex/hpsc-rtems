@@ -10,11 +10,13 @@
 #include <hpsc-mbox-test.h>
 
 // libhpsc
-#include <command.h>
 #include <hpsc-msg.h>
 #include <mailbox-link.h>
 
 #include "devices.h"
+
+#define WTIMEOUT_TICKS 10
+#define RTIMEOUT_TICKS 10
 
 int test_mbox_lsio_loopback()
 {
@@ -47,8 +49,8 @@ int test_mbox_lsio_trch()
         return -1;
 
     rc = link_request(trch_link,
-                      CMD_TIMEOUT_TICKS_SEND, arg, sizeof(arg),
-                      CMD_TIMEOUT_TICKS_RECV, reply, sizeof(reply));
+                      WTIMEOUT_TICKS, arg, sizeof(arg),
+                      RTIMEOUT_TICKS, reply, sizeof(reply));
     rc = rc <= 0 ? -1 : 0;
 
     return link_disconnect(trch_link) ? -1 : (int) rc;

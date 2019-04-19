@@ -12,6 +12,9 @@
 
 #include "test.h"
 
+#define WTIMEOUT_TICKS 10
+#define RTIMEOUT_TICKS 10
+
 static void handled_cb(void *arg, cmd_status status)
 {
     cmd_status *s = (cmd_status *)arg;
@@ -31,8 +34,8 @@ static int do_test(struct link *slink, struct link *clink)
 
     hpsc_msg_ping(cmd, sizeof(cmd), NULL, 0);
     sz = link_request(clink,
-                      CMD_TIMEOUT_TICKS_SEND, cmd, sizeof(cmd),
-                      CMD_TIMEOUT_TICKS_RECV, reply, sizeof(reply));
+                      WTIMEOUT_TICKS, cmd, sizeof(cmd),
+                      RTIMEOUT_TICKS, reply, sizeof(reply));
     if (sz <= 0)
         rc = 1;
     else if (reply[0] != PONG)
