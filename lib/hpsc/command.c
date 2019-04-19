@@ -29,7 +29,7 @@ struct cmdq {
 struct cmd_handler_ctx {
     rtems_id tid;
     cmd_handler_t *cb;
-    rtems_interval ticks_reply;
+    rtems_interval timeout_ticks;
     bool running;
 };
 
@@ -40,13 +40,11 @@ struct cmd_handled_ctx {
 
 static struct cmdq cmdq = { 0 };
 
-#define CMD_TIMEOUT_TICKS_REPLY 1000
-#define CMD_TIMEOUT_TICKS_RECV 10
 static struct cmd_handler_ctx cmd_handler = {
     .tid = RTEMS_ID_NONE,
     .cb = NULL,
     // timeout prevents hanging when remotes fail
-    .ticks_reply = CMD_TIMEOUT_TICKS_REPLY,
+    .timeout_ticks = 0,
     .running = false
 };
 
@@ -142,7 +140,6 @@ static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
     ssize_t reply_sz;
     size_t rc;
     cmd_status status = CMD_STATUS_SUCCESS;
-    rtems_interval sleep_ticks_rem = CMD_TIMEOUT_TICKS_REPLY;
     assert(cmd);
     assert(cmd_handler.cb);
 
@@ -162,31 +159,12 @@ static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
 
     printk("command: handle: %s: reply %u arg %u...\n", cmd->link->name,
            reply[0], reply[HPSC_MSG_PAYLOAD_OFFSET]);
-
-    rc = link_send(cmd->link, reply, sizeof(reply));
+    rc = link_request_send(cmd->link, reply, sizeof(reply),
+                           cmd_handler.timeout_ticks);
     if (!rc) {
         printk("command: handle: %s: failed to send reply\n", cmd->link->name);
         status = CMD_STATUS_REPLY_FAILED;
-        goto out;
     }
-    printk("command: handle: %s: waiting for ACK for our reply\n",
-           cmd->link->name);
-    do {
-        if (link_is_send_acked(cmd->link)) {
-            printk("command: handle: %s: ACK for our reply received\n", 
-                   cmd->link->name);
-            break;
-        }
-        if (!sleep_ticks_rem) {
-            printk("command: handle: %s: timed out waiting for ACK\n",
-                   cmd->link->name);
-            status = CMD_STATUS_ACK_FAILED;
-            break;
-        }
-        rtems_task_wake_after(CMD_TIMEOUT_TICKS_RECV);
-        sleep_ticks_rem -= sleep_ticks_rem < CMD_TIMEOUT_TICKS_RECV ?
-                           sleep_ticks_rem : CMD_TIMEOUT_TICKS_RECV;
-    } while (1);
 
 out:
     if (cb)
@@ -221,23 +199,26 @@ static rtems_task cmd_handle_task(rtems_task_argument ignored)
     rtems_task_exit();
 }
 
-static void cmd_handler_set(rtems_id tid, cmd_handler_t cb, bool running)
+static void cmd_handler_set(rtems_id tid, cmd_handler_t cb,
+                            rtems_interval timeout_ticks, bool running)
 {
     cmd_handler.tid = tid;
     cmd_handler.cb = cb;
+    cmd_handler.timeout_ticks = timeout_ticks;
     cmd_handler.running = running;
 }
 
-rtems_status_code cmd_handle_task_start(rtems_id task_id, cmd_handler_t cb)
+rtems_status_code cmd_handle_task_start(rtems_id task_id, cmd_handler_t cb,
+                                        rtems_interval timeout_ticks)
 {
     rtems_status_code sc;
     assert(!cmd_handler.running);
     assert(task_id != RTEMS_ID_NONE);
     assert(cb);
-    cmd_handler_set(task_id, cb, true);
+    cmd_handler_set(task_id, cb, timeout_ticks, true);
     sc = rtems_task_start(cmd_handler.tid, cmd_handle_task, 1);
     if (sc != RTEMS_SUCCESSFUL)
-        cmd_handler_set(RTEMS_ID_NONE, NULL, false);
+        cmd_handler_set(RTEMS_ID_NONE, NULL, 0, false);
     return sc;
 }
 
@@ -248,7 +229,7 @@ rtems_status_code cmd_handle_task_destroy(void)
         sc = rtems_event_send(cmd_handler.tid, RTEMS_EVENT_1);
         if (sc == RTEMS_SUCCESSFUL) {
             while (cmd_handler.running); // wait for task to finish
-            cmd_handler_set(RTEMS_ID_NONE, NULL, false);
+            cmd_handler_set(RTEMS_ID_NONE, NULL, 0, false);
         }
     }
     return sc;

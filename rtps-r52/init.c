@@ -27,6 +27,8 @@
 #include "test.h"
 #include "watchdog.h"
 
+#define CMD_TIMEOUT_TICKS 1000
+
 static rtems_status_code init_extra_drivers(
   rtems_device_major_number major,
   rtems_device_minor_number minor,
@@ -188,7 +190,7 @@ static void early_tasks(void)
     );
     if (sc != RTEMS_SUCCESSFUL) 
         rtems_panic("command handler task create");
-    sc = cmd_handle_task_start(task_id, server_process);
+    sc = cmd_handle_task_start(task_id, server_process, CMD_TIMEOUT_TICKS);
     if (sc != RTEMS_SUCCESSFUL)
         rtems_panic("command handler task start");
 }

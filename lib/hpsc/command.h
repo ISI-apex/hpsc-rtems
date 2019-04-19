@@ -12,10 +12,8 @@
 
 typedef enum {
     CMD_STATUS_SUCCESS,
-    CMD_STATUS_NO_HANDLER,
     CMD_STATUS_HANDLER_FAILED,
     CMD_STATUS_REPLY_FAILED,
-    CMD_STATUS_ACK_FAILED,
     CMD_STATUS_UNKNOWN
 } cmd_status;
 
@@ -33,7 +31,8 @@ void cmd_handled_unregister_cb(void);
 int cmd_enqueue_cb(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg);
 int cmd_enqueue(struct cmd *cmd);
 
-rtems_status_code cmd_handle_task_start(rtems_id task_id, cmd_handler_t cb);
+rtems_status_code cmd_handle_task_start(rtems_id task_id, cmd_handler_t cb,
+                                        rtems_interval timeout_ticks);
 rtems_status_code cmd_handle_task_destroy(void);
 
 #endif // COMMAND_H
