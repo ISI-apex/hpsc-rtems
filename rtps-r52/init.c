@@ -173,7 +173,7 @@ static void init_server_links()
 #endif // CONFIG_MBOX_LINK_SERVER_HPPS
 }
 
-static void init_tasks(void)
+static void early_tasks(void)
 {
     rtems_name task_name;
     rtems_id task_id;
@@ -188,10 +188,13 @@ static void init_tasks(void)
     );
     if (sc != RTEMS_SUCCESSFUL) 
         rtems_panic("command handler task create");
-    sc = cmd_handle_task_start(task_id);
+    sc = cmd_handle_task_start(task_id, server_process);
     if (sc != RTEMS_SUCCESSFUL)
-        rtems_panic("command handler task create");
+        rtems_panic("command handler task start");
+}
 
+static void init_tasks(void)
+{
 #if CONFIG_WDT
     if (watchdog_tasks_create() != RTEMS_SUCCESSFUL)
         rtems_panic("watchdogs");
@@ -221,8 +224,10 @@ void *POSIX_Init(void *arg)
     // run boot tests
     init_tests();
 
-    // initialize links with other subsystems - this order matters
-    cmd_handler_register(server_process);
+    // start early tasks
+    early_tasks();
+
+    // initialize links - this order matters
     init_client_links();
     init_server_links();
 
