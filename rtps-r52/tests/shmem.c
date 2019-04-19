@@ -39,7 +39,7 @@ int test_shmem()
         goto out;
     }
     sz = shmem_recv(shm, buf, sizeof(buf));
-    if (sz != SHMEM_MSG_SIZE) {
+    if (sz != HPSC_MSG_SIZE) {
         printf("ERROR: TEST: shmem: recv failed\n");
         ret = 1;
         goto out;

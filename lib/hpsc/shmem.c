@@ -63,8 +63,8 @@ void shmem_close(struct shmem *s)
 size_t shmem_send(struct shmem *s, void *msg, size_t sz)
 {
     volatile struct hpsc_shmem_region *shm = (volatile struct hpsc_shmem_region *) s->addr;
-    size_t sz_rem = SHMEM_MSG_SIZE - sz;
-    assert(sz <= SHMEM_MSG_SIZE);
+    size_t sz_rem = HPSC_MSG_SIZE - sz;
+    assert(sz <= HPSC_MSG_SIZE);
     vmem_cpy(shm->data, msg, sz);
     if (sz_rem)
         vmem_set(shm->data + sz, 0, sz_rem);
@@ -99,9 +99,9 @@ void shmem_clear_ack(struct shmem *s)
 size_t shmem_recv(struct shmem *s, void *msg, size_t sz)
 {
     volatile struct hpsc_shmem_region *shm = (volatile struct hpsc_shmem_region *) s->addr;
-    assert(sz >= SHMEM_MSG_SIZE);
-    mem_vcpy(msg, shm->data, SHMEM_MSG_SIZE);
+    assert(sz >= HPSC_MSG_SIZE);
+    mem_vcpy(msg, shm->data, HPSC_MSG_SIZE);
     shm->status = shm->status & ~HPSC_SHMEM_STATUS_BIT_NEW; // clear new
     shm->status = shm->status | HPSC_SHMEM_STATUS_BIT_ACK; // set ACK
-    return SHMEM_MSG_SIZE;
+    return HPSC_MSG_SIZE;
 }

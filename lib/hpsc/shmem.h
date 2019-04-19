@@ -7,13 +7,11 @@
 
 #include "hpsc-msg.h"
 
-#define SHMEM_MSG_SIZE HPSC_MSG_SIZE
-
 // All subsystems must understand this structure and its protocol
 #define HPSC_SHMEM_STATUS_BIT_NEW 0x01
 #define HPSC_SHMEM_STATUS_BIT_ACK 0x02
 struct hpsc_shmem_region {
-    uint8_t data[SHMEM_MSG_SIZE];
+    uint8_t data[HPSC_MSG_SIZE];
     uint32_t status;
 };
 
