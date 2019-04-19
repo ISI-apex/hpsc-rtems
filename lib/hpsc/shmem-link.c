@@ -31,13 +31,13 @@ static void shmem_link_ack(void *arg)
 static size_t shmem_link_write(struct link *link, void *buf, size_t sz)
 {
     struct shmem_link *slink = link->priv;
-    return shmem_send(slink->shmem_out, buf, sz);
+    return shmem_write(slink->shmem_out, buf, sz);
 }
 
 static size_t shmem_link_read(struct link *link, void *buf, size_t sz)
 {
     struct shmem_link *slink = link->priv;
-    return shmem_recv(slink->shmem_in, buf, sz);
+    return shmem_read(slink->shmem_in, buf, sz);
 }
 
 static int shmem_link_close(struct link *link)

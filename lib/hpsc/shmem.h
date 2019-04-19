@@ -34,14 +34,14 @@ void shmem_close(struct shmem *s);
  * Automatically sets the NEW status bit.
  * Returns the number of bytes written
  */
-size_t shmem_send(struct shmem *s, void *msg, size_t sz);
+size_t shmem_write(struct shmem *s, void *msg, size_t sz);
 
 /**
  * Read data from the shared memory region.
  * Automatically clears the NEW status bit and sets the ACK status bit.
  * Returns the number of bytes read
  */
-size_t shmem_recv(struct shmem *s, void *msg, size_t sz);
+size_t shmem_read(struct shmem *s, void *msg, size_t sz);
 
 /**
  * Read the entire status field so it can be parsed directly.

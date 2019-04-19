@@ -60,7 +60,7 @@ void shmem_close(struct shmem *s)
     free(s);
 }
 
-size_t shmem_send(struct shmem *s, void *msg, size_t sz)
+size_t shmem_write(struct shmem *s, void *msg, size_t sz)
 {
     volatile struct hpsc_shmem_region *shm = (volatile struct hpsc_shmem_region *) s->addr;
     size_t sz_rem = HPSC_MSG_SIZE - sz;
@@ -96,7 +96,7 @@ void shmem_clear_ack(struct shmem *s)
     shm->status &= ~HPSC_SHMEM_STATUS_BIT_ACK;
 }
 
-size_t shmem_recv(struct shmem *s, void *msg, size_t sz)
+size_t shmem_read(struct shmem *s, void *msg, size_t sz)
 {
     volatile struct hpsc_shmem_region *shm = (volatile struct hpsc_shmem_region *) s->addr;
     assert(sz >= HPSC_MSG_SIZE);

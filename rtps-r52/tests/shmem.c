@@ -26,9 +26,9 @@ int test_shmem()
         ret = 1;
         goto out;
     }
-    sz = shmem_send(shm, msg, sizeof(msg));
+    sz = shmem_write(shm, msg, sizeof(msg));
     if (sz != sizeof(msg)) {
-        printf("ERROR: TEST: shmem: send failed\n");
+        printf("ERROR: TEST: shmem: write failed\n");
         ret = 1;
         goto out;
     }
@@ -38,9 +38,9 @@ int test_shmem()
         ret = 1;
         goto out;
     }
-    sz = shmem_recv(shm, buf, sizeof(buf));
+    sz = shmem_read(shm, buf, sizeof(buf));
     if (sz != HPSC_MSG_SIZE) {
-        printf("ERROR: TEST: shmem: recv failed\n");
+        printf("ERROR: TEST: shmem: read failed\n");
         ret = 1;
         goto out;
     }
