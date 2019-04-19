@@ -6,7 +6,7 @@
 #include <command.h>
 #include <server.h>
 
-int server_process(struct cmd *cmd, void *reply, size_t reply_sz)
+ssize_t server_process(struct cmd *cmd, void *reply, size_t reply_sz)
 {
     assert(reply_sz <= HPSC_MSG_SIZE);
     switch (cmd->msg[0]) {

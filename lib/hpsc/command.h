@@ -3,6 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <unistd.h>
 
 #include <rtems.h>
 
@@ -28,12 +29,11 @@ struct cmd {
     struct link *link;
 };
 
-typedef int (cmd_handler_t)(struct cmd *cmd, void *reply, size_t reply_sz);
+typedef ssize_t (cmd_handler_t)(struct cmd *cmd, void *reply, size_t reply_sz);
+typedef void (cmd_handled_t)(void *arg, cmd_status status);
 
 void cmd_handler_register(cmd_handler_t *cb);
 void cmd_handler_unregister(void);
-
-typedef void (cmd_handled_t)(void *arg, cmd_status status);
 
 void cmd_handled_register_cb(cmd_handled_t *cb, void *cb_arg);
 void cmd_handled_unregister_cb(void);

@@ -126,7 +126,7 @@ out:
 static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
 {
     HPSC_MSG_DEFINE(reply);
-    int reply_sz;
+    ssize_t reply_sz;
     size_t rc;
     cmd_status status = CMD_STATUS_SUCCESS;
     rtems_interval sleep_ticks_rem = CMD_TIMEOUT_TICKS_REPLY;
