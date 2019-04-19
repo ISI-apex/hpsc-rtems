@@ -19,42 +19,36 @@ bool link_is_send_acked(struct link *link)
     return link->rctx.tx_acked;
 }
 
-ssize_t link_request(struct link *link,
-                     rtems_interval wtimeout_ticks, void *wbuf, size_t wsz,
-                     rtems_interval rtimeout_ticks, void *rbuf, size_t rsz)
+// caller responsible for setting rctx tid_requester
+static size_t _link_request_send(struct link *link, void *buf, size_t sz,
+                                 rtems_interval ticks)
 {
-    rtems_event_set events;
-    ssize_t rc;
+    rtems_event_set events = 0;
+    size_t rc;
 
-    printk("%s: request\n", link->name);
-    link->rctx.reply_sz_read = 0;
-    link->rctx.reply = rbuf;
-    link->rctx.reply_sz = rsz;
-
-    rc = link_send(link, wbuf, wsz);
-    if (!rc) {
-        printk("%s: request: send failed\n", link->name);
-        return -1;
+    rc = link_send(link, buf, sz);
+    if (rc) {
+        printk("%s: request: waiting for ACK...\n", link->name);
+        rtems_event_receive(RTEMS_EVENT_0, RTEMS_EVENT_ANY, ticks, &events);
+        if (events & RTEMS_EVENT_0) {
+            printk("%s: request: ACK received\n", link->name);
+            assert(link->rctx.tx_acked);
+        } else {
+            printk("%s: request: timed out waiting for ACK...\n", link->name);
+            rc = 0;
+        }
     }
-    link->rctx.tid_requester = rtems_task_self();
+    return rc;
+}
 
-    printk("%s: request: waiting for ACK...\n", link->name);
-    events = 0;
-    rtems_event_receive(RTEMS_EVENT_0, RTEMS_EVENT_ANY, wtimeout_ticks,
-                        &events);
-    if (events & RTEMS_EVENT_0) {
-        printk("%s: request: ACK received\n", link->name);
-        assert(link->rctx.tx_acked);
-    } else {
-        printk("%s: request: timed out waiting for ACK...\n", link->name);
-        rc = -1; // send timeout (considered a send failure)
-        goto out;
-    }
+// caller responsible for setting rctx reply-related / tid_requester fields
+static size_t _link_request_recv(struct link *link, rtems_interval ticks)
+{
+    rtems_event_set events = 0;
+    size_t rc;
 
     printk("%s: request: waiting for reply...\n", link->name);
-    events = 0;
-    rtems_event_receive(RTEMS_EVENT_1, RTEMS_EVENT_ANY, rtimeout_ticks,
-                        &events);
+    rtems_event_receive(RTEMS_EVENT_1, RTEMS_EVENT_ANY, ticks, &events);
     if (events & RTEMS_EVENT_1) {
         printk("%s: request: reply received\n", link->name);
         rc = link->rctx.reply_sz_read;
@@ -63,10 +57,34 @@ ssize_t link_request(struct link *link,
         printk("%s: request: timed out waiting for reply...\n", link->name);
         rc = 0;
     }
-
-out:
     link->rctx.tid_requester = RTEMS_ID_NONE;
     return rc;
+}
+
+size_t link_request_send(struct link *link, void *buf, size_t sz,
+                         rtems_interval ticks)
+{
+    size_t rc;
+    link->rctx.tid_requester = rtems_task_self();
+    rc = _link_request_send(link, buf, sz, ticks);
+    link->rctx.tid_requester = RTEMS_ID_NONE;
+    return rc;
+}
+
+ssize_t link_request(struct link *link,
+                     rtems_interval wtimeout_ticks, void *wbuf, size_t wsz,
+                     rtems_interval rtimeout_ticks, void *rbuf, size_t rsz)
+{
+    size_t rc;
+    printk("%s: request\n", link->name);
+    link->rctx.reply_sz_read = 0;
+    link->rctx.reply = rbuf;
+    link->rctx.reply_sz = rsz;
+    link->rctx.tid_requester = rtems_task_self();
+    rc = _link_request_send(link, wbuf, wsz, wtimeout_ticks);
+    if (!rc)
+        return -1;
+    return _link_request_recv(link, rtimeout_ticks);
 }
 
 int link_disconnect(struct link *link)

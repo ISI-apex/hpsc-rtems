@@ -31,12 +31,24 @@ struct link {
 /*
  * These functions are for link users
  */
+/**
+ * Send a message, but don't wait for an ACK.
+ * Returns 0 on send failure, or number of bytes read.
+ */
 size_t link_send(struct link *link, void *buf, size_t sz);
 bool link_is_send_acked(struct link *link);
-// returns -1 on send failure, 0 on read timeout, or number of bytes read
 /**
- * Send a message and wait for a response.
+ * Send a message and wait for an ACK, but not a reply message.
  * Use RTEMS_NO_TIMEOUT for tick parameters to wait forever.
+ * Returns 0 on send failure or timeout, or number of bytes read.
+ */
+size_t link_request_send(struct link *link, void *buf, size_t sz,
+                         rtems_interval ticks);
+/**
+ * Send a message and wait for a reply.
+ * Use RTEMS_NO_TIMEOUT for tick parameters to wait forever.
+ * Returns -1 on send failure or timeout, 0 on read timeout, or number of bytes
+ * read.
  */
 ssize_t link_request(struct link *link,
                      rtems_interval wtimeout_ticks, void *wbuf, size_t wsz,
