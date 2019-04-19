@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <unistd.h>
+#include <stdlib.h>
 
 #include "hpsc-msg.h"
 

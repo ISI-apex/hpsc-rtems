@@ -1,7 +1,6 @@
 #ifndef SHMEM_POLL_H
 #define SHMEM_POLL_H
 
-#include <stdbool.h>
 #include <stdint.h>
 
 #include <rtems.h>

@@ -1,5 +1,6 @@
 #include <assert.h>
-#include <assert.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include <rtems.h>
 #include <rtems/bspIo.h>
