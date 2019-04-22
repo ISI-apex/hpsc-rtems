@@ -23,7 +23,6 @@
 #include "devices.h"
 #include "gic.h"
 #include "link-names.h"
-#include "shell.h"
 #include "server.h"
 #include "shutdown.h"
 #include "test.h"
@@ -212,7 +211,22 @@ static void init_tasks(void)
 static void late_tasks(void)
 {
 #if CONFIG_SHELL
-    if (shell_create() != RTEMS_SUCCESSFUL)
+    rtems_status_code sc_shell;
+    printf(" =========================\n");
+    printf(" Starting shell\n");
+    printf(" =========================\n");
+    sc_shell = rtems_shell_init(
+        "SHLL",                       /* task name */
+        RTEMS_MINIMUM_STACK_SIZE * 4, /* task stack size */
+        100,                          /* task priority */
+        "/dev/console",               /* device name */
+        /* device is currently ignored by the shell if it is not a pty */
+        false,                        /* run forever */
+        false,                        /* wait for shell to terminate */
+        NULL                          /* login check function,
+                                         use NULL to disable a login check */
+    );
+    if (sc_shell != RTEMS_SUCCESSFUL)
         rtems_panic("shell");
 #endif // CONFIG_SHELL
 }
