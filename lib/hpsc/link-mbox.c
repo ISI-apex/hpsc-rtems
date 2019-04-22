@@ -13,27 +13,27 @@
 #include "link.h"
 #include "link-mbox.h"
 
-struct mbox_link {
+struct link_mbox {
     struct hpsc_mbox *mbox;
     unsigned chan_from;
     unsigned chan_to;
 };
 
 
-static size_t mbox_link_write(struct link *link, void *buf, size_t sz)
+static size_t link_mbox_write(struct link *link, void *buf, size_t sz)
 {
-    struct mbox_link *mlink = link->priv;
+    struct link_mbox *mlink = link->priv;
     return hpsc_mbox_chan_write(mlink->mbox, mlink->chan_to, buf, sz);
 }
 
-static size_t mbox_link_read(struct link *link, void *buf, size_t sz)
+static size_t link_mbox_read(struct link *link, void *buf, size_t sz)
 {
-    struct mbox_link *mlink = link->priv;
+    struct link_mbox *mlink = link->priv;
     return hpsc_mbox_chan_read(mlink->mbox, mlink->chan_from, buf, sz);
 }
 
-static int mbox_link_close(struct link *link) {
-    struct mbox_link *mlink = link->priv;
+static int link_mbox_close(struct link *link) {
+    struct link_mbox *mlink = link->priv;
     rtems_status_code sc;
     int rc = 0;
     printk("%s: close\n", link->name);
@@ -53,7 +53,7 @@ struct link *link_mbox_connect(const char *name, struct hpsc_mbox *mbox,
                                unsigned idx_from, unsigned idx_to,
                                unsigned server, unsigned client)
 {
-    struct mbox_link *mlink;
+    struct link_mbox *mlink;
     struct link *link;
     rtems_status_code sc;
     rtems_interrupt_handler rcv_cb = server ? link_recv_cmd : link_recv_reply;
@@ -67,9 +67,9 @@ struct link *link_mbox_connect(const char *name, struct hpsc_mbox *mbox,
         goto free_link;
 
     link_init(link, name, mlink);
-    link->write = mbox_link_write;
-    link->read = mbox_link_read;
-    link->close = mbox_link_close;
+    link->write = link_mbox_write;
+    link->read = link_mbox_read;
+    link->close = link_mbox_close;
 
     mlink->mbox = mbox;
     mlink->chan_from = idx_from;
