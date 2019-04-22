@@ -1,10 +1,13 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <unistd.h>
 
 // plat
-#include <hwinfo.h>
 #include <mailbox-map.h>
+
+// drivers
+#include <hpsc-mbox.h>
 
 // drivers-selftest
 #include <hpsc-mbox-test.h>
@@ -46,5 +49,6 @@ int test_mbox_lsio_trch()
                       RTIMEOUT_TICKS, reply, sizeof(reply));
     rc = rc <= 0 ? -1 : 0;
 
+    printf("TEST: mbox_lsio_trch: %s\n", rc ? "failed" : "success");
     return (int) rc;
 }
