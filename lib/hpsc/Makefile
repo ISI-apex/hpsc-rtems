@@ -11,9 +11,9 @@ C_PIECES= \
 	command \
 	hpsc-msg \
 	link \
-	mailbox-link \
+	link-mbox \
+	link-shmem \
 	shmem \
-	shmem-link \
 	shmem-poll
 C_FILES=$(C_PIECES:%=%.c)
 C_O_FILES=$(C_FILES:%.c=${ARCH}/%.o)
@@ -27,9 +27,9 @@ H_FILES = \
 	command.h \
 	hpsc-msg.h \
 	link.h \
-	mailbox-link.h \
+	link-mbox.h \
+	link-shmem.h \
 	shmem.h \
-	shmem-link.h \
 	shmem-poll.h \
 
 # Assembly source names, if any, go here -- minus the .S

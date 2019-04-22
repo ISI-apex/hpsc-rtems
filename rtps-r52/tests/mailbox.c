@@ -11,7 +11,7 @@
 
 // libhpsc
 #include <hpsc-msg.h>
-#include <mailbox-link.h>
+#include <link-mbox.h>
 
 #include "devices.h"
 
@@ -41,7 +41,7 @@ int test_mbox_lsio_trch()
     hpsc_msg_ping(arg, sizeof(arg), &payload, sizeof(payload));
 
     assert(mbox_lsio);
-    trch_link = mbox_link_connect("RTPS_TRCH_MBOX_TEST_LINK", mbox_lsio,
+    trch_link = link_mbox_connect("RTPS_TRCH_MBOX_TEST_LINK", mbox_lsio,
                                   MBOX_LSIO__TRCH_RTPS, MBOX_LSIO__RTPS_TRCH, 
                                   /* server */ 0,
                                   /* client */ MASTER_ID_RTPS_CPU0);

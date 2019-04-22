@@ -1,5 +1,5 @@
-#ifndef SHMEM_LINK_H
-#define SHMEM_LINK_H
+#ifndef LINK_SHMEM_H
+#define LINK_SHMEM_H
 
 #include <stdbool.h>
 
@@ -7,7 +7,7 @@
 
 #include "link.h"
 
-struct link *shmem_link_connect(
+struct link *link_shmem_connect(
     const char* name,
     volatile void *addr_out,
     volatile void *addr_in,
@@ -17,4 +17,4 @@ struct link *shmem_link_connect(
     rtems_id tid_ack
 );
 
-#endif // SHMEM_LINK_H
+#endif // LINK_SHMEM_H

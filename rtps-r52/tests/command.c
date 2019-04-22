@@ -7,8 +7,8 @@
 #include <command.h>
 #include <hpsc-msg.h>
 #include <link.h>
+#include <link-shmem.h>
 #include <shmem.h>
-#include <shmem-link.h>
 
 #include "test.h"
 
@@ -78,11 +78,11 @@ int test_command_server()
     create_poll_task(rtems_build_name('T','C','S','A'), &stid_ack);
     create_poll_task(rtems_build_name('T','C','C','R'), &ctid_recv);
     create_poll_task(rtems_build_name('T','C','C','A'), &ctid_ack);
-    slink = shmem_link_connect("Command Test Server Link", &reg_a, &reg_b,
+    slink = link_shmem_connect("Command Test Server Link", &reg_a, &reg_b,
                                true, 1, stid_recv, stid_ack);
     if (!slink)
         return 1;
-    clink = shmem_link_connect("Command Test Client Link", &reg_b, &reg_a,
+    clink = link_shmem_connect("Command Test Client Link", &reg_b, &reg_a,
                                false, 1, ctid_recv, ctid_ack);
     if (!clink) {
         rc = 1;

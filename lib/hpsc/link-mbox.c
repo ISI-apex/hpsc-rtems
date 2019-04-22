@@ -11,7 +11,7 @@
 #include <hpsc-mbox.h>
 
 #include "link.h"
-#include "mailbox-link.h"
+#include "link-mbox.h"
 
 struct mbox_link {
     struct hpsc_mbox *mbox;
@@ -49,7 +49,7 @@ static int mbox_link_close(struct link *link) {
     return rc;
 }
 
-struct link *mbox_link_connect(const char *name, struct hpsc_mbox *mbox,
+struct link *link_mbox_connect(const char *name, struct hpsc_mbox *mbox,
                                unsigned idx_from, unsigned idx_to,
                                unsigned server, unsigned client)
 {
@@ -78,13 +78,13 @@ struct link *mbox_link_connect(const char *name, struct hpsc_mbox *mbox,
     sc = hpsc_mbox_chan_claim(mbox, idx_from, server, client, server,
                               rcv_cb, NULL, link);
     if (sc != RTEMS_SUCCESSFUL) {
-        printk("ERROR: mbox_link_connect: failed to claim chan_from\n");
+        printk("ERROR: link_mbox_connect: failed to claim chan_from\n");
         goto free_links;
     }
     sc = hpsc_mbox_chan_claim(mbox, idx_to, server, server, client,
                               NULL, link_ack, link);
     if (sc != RTEMS_SUCCESSFUL) {
-        printk("ERROR: mbox_link_connect: failed to claim chan_to\n");
+        printk("ERROR: link_mbox_connect: failed to claim chan_to\n");
         goto free_from;
     }
 

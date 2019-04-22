@@ -14,7 +14,7 @@
 // libhpsc
 #include <affinity.h>
 #include <command.h>
-#include <mailbox-link.h>
+#include <link-mbox.h>
 
 // drivers
 #include <hpsc-mbox.h>
@@ -164,7 +164,7 @@ static void init_server_links()
 #else
     struct hpsc_mbox *mbox_hpps = dev_get_mbox(DEV_ID_MBOX_HPPS);
     assert(mbox_hpps);
-    struct link *hpps_link = mbox_link_connect("HPPS_MBOX_LINK", mbox_hpps,
+    struct link *hpps_link = link_mbox_connect("HPPS_MBOX_LINK", mbox_hpps,
                     MBOX_HPPS_RTPS__HPPS_RTPS, MBOX_HPPS_RTPS__RTPS_HPPS,
                     /* server */ MASTER_ID_RTPS_CPU0,
                     /* client */ MASTER_ID_HPPS_CPU0);

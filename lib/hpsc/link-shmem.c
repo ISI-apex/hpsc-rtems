@@ -8,8 +8,8 @@
 #include <rtems/irq-extension.h>
 
 #include "link.h"
+#include "link-shmem.h"
 #include "shmem.h"
-#include "shmem-link.h"
 #include "shmem-poll.h"
 
 struct shmem_link {
@@ -108,7 +108,7 @@ free_out:
     return -1;
 }
 
-struct link *shmem_link_connect(
+struct link *link_shmem_connect(
     const char* name,
     volatile void *addr_out,
     volatile void *addr_in,

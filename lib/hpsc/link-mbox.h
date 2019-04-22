@@ -1,5 +1,5 @@
-#ifndef MAILBOX_LINK_H
-#define MAILBOX_LINK_H
+#ifndef LINK_MBOX_H
+#define LINK_MBOX_H
 
 #include <hpsc-mbox.h>
 
@@ -13,8 +13,8 @@
 //
 // To claim as server: set both server and client to non-zero ID
 // To claim as client: set server to 0 and set client to non-zero ID
-struct link *mbox_link_connect(const char *name, struct hpsc_mbox *mbox,
+struct link *link_mbox_connect(const char *name, struct hpsc_mbox *mbox,
                                unsigned idx_from, unsigned idx_to,
                                unsigned server, unsigned client);
 
-#endif // MAILBOX_LINK_H
+#endif // LINK_MBOX_H
