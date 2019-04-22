@@ -12,7 +12,7 @@
 #include "shmem.h"
 #include "shmem-poll.h"
 
-struct shmem_link {
+struct link_shmem {
     struct shmem *shmem_out;
     struct shmem *shmem_in;
     struct shmem_poll *sp_recv;
@@ -20,29 +20,29 @@ struct shmem_link {
 };
 
 
-static void shmem_link_ack(void *arg)
+static void link_shmem_ack(void *arg)
 {
     struct link *link = arg;
-    struct shmem_link *slink = link->priv;
+    struct link_shmem *slink = link->priv;
     shmem_clear_ack(slink->shmem_out);
     link_ack(arg);
 }
 
-static size_t shmem_link_write(struct link *link, void *buf, size_t sz)
+static size_t link_shmem_write(struct link *link, void *buf, size_t sz)
 {
-    struct shmem_link *slink = link->priv;
+    struct link_shmem *slink = link->priv;
     return shmem_write(slink->shmem_out, buf, sz);
 }
 
-static size_t shmem_link_read(struct link *link, void *buf, size_t sz)
+static size_t link_shmem_read(struct link *link, void *buf, size_t sz)
 {
-    struct shmem_link *slink = link->priv;
+    struct link_shmem *slink = link->priv;
     return shmem_read(slink->shmem_in, buf, sz);
 }
 
-static int shmem_link_close(struct link *link)
+static int link_shmem_close(struct link *link)
 {
-    struct shmem_link *slink = link->priv;
+    struct link_shmem *slink = link->priv;
     int rc = 0;
     rtems_status_code sc;
     sc = shmem_poll_task_destroy(slink->sp_ack);
@@ -58,8 +58,8 @@ static int shmem_link_close(struct link *link)
     return rc;
 }
 
-static int shmem_link_init(
-    struct shmem_link *slink,
+static int link_shmem_init(
+    struct link_shmem *slink,
     struct link *link,
     volatile void *addr_out,
     volatile void *addr_in,
@@ -93,7 +93,7 @@ static int shmem_link_init(
     }
     sc = shmem_poll_task_start(&slink->sp_ack, slink->shmem_out, poll_ticks,
                                HPSC_SHMEM_STATUS_BIT_ACK,
-                               tid_ack, shmem_link_ack, link);
+                               tid_ack, link_shmem_ack, link);
     if (sc != RTEMS_SUCCESSFUL) {
         printk("Failed to create ACK polling task: %s\n",
                rtems_status_text(sc));
@@ -120,7 +120,7 @@ struct link *link_shmem_connect(
     rtems_id tid_ack
 )
 {
-    struct shmem_link *slink;
+    struct link_shmem *slink;
     struct link *link;
     assert(name);
     assert(addr_out);
@@ -139,11 +139,11 @@ struct link *link_shmem_connect(
         goto free_link;
 
     link_init(link, name, slink);
-    link->write = shmem_link_write;
-    link->read = shmem_link_read;
-    link->close = shmem_link_close;
+    link->write = link_shmem_write;
+    link->read = link_shmem_read;
+    link->close = link_shmem_close;
 
-    if (shmem_link_init(slink, link, addr_out, addr_in, is_server, poll_ticks,
+    if (link_shmem_init(slink, link, addr_out, addr_in, is_server, poll_ticks,
                         tid_recv, tid_ack))
         goto free_links;
 
