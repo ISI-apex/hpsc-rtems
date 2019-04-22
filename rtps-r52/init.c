@@ -146,9 +146,9 @@ static void init_tests(void)
 
 static void init_client_links(void)
 {
-#if CONFIG_MBOX_LINK_CLIENT_TRCH
+#if CONFIG_LINK_MBOX_TRCH_CLIENT
 #if !CONFIG_MBOX_LSIO
-    #warning Ignoring CONFIG_MBOX_LINK_CLIENT_TRCH - requires CONFIG_MBOX_LSIO
+    #warning Ignoring CONFIG_LINK_MBOX_TRCH_CLIENT - requires CONFIG_MBOX_LSIO
 #else
     struct hpsc_mbox *mbox_lsio = dev_get_mbox(DEV_ID_MBOX_LSIO);
     assert(mbox_lsio);
@@ -159,14 +159,14 @@ static void init_client_links(void)
         rtems_panic(LINK_NAME__MBOX__TRCH_CLIENT);
     link_store_append(trch_link);
 #endif // CONFIG_MBOX_LSIO
-#endif // CONFIG_MBOX_LINK_CLIENT_TRCH
+#endif // CONFIG_LINK_MBOX_TRCH_CLIENT
 }
 
 static void init_server_links()
 {
-#if CONFIG_MBOX_LINK_SERVER_HPPS
+#if CONFIG_LINK_MBOX_HPPS_SERVER
 #if !CONFIG_MBOX_HPPS_RTPS
-    #warning Ignoring CONFIG_MBOX_LINK_SERVER_HPPS - requires CONFIG_MBOX_HPPS_RTPS
+    #warning Ignoring CONFIG_LINK_MBOX_HPPS_SERVER - requires CONFIG_MBOX_HPPS_RTPS
 #else
     struct hpsc_mbox *mbox_hpps = dev_get_mbox(DEV_ID_MBOX_HPPS_RTPS);
     assert(mbox_hpps);
@@ -178,7 +178,7 @@ static void init_server_links()
     // Never release the link, because we listen on it in main loop
     link_store_append(hpps_link);
 #endif // CONFIG_MBOX_HPPS_RTPS
-#endif // CONFIG_MBOX_LINK_SERVER_HPPS
+#endif // CONFIG_LINK_MBOX_HPPS_SERVER
 }
 
 static void early_tasks(void)
