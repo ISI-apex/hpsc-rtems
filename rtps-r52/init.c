@@ -15,12 +15,14 @@
 #include <affinity.h>
 #include <command.h>
 #include <link-mbox.h>
+#include <link-store.h>
 
 // drivers
 #include <hpsc-mbox.h>
 
 #include "devices.h"
 #include "gic.h"
+#include "link-names.h"
 #include "shell.h"
 #include "server.h"
 #include "shutdown.h"
@@ -136,15 +138,6 @@ static void init_tests(void)
 #endif // CONFIG_MBOX_LSIO
 #endif //TEST_MBOX_LSIO_LOOPBACK
 
-#if TEST_MBOX_LSIO_TRCH
-#if !CONFIG_MBOX_LSIO
-    #warning Ignoring TEST_MBOX_LSIO_LOOPBACK - requires CONFIG_MBOX_LSIO
-#else
-    if (test_mbox_lsio_trch())
-        rtems_panic("RTPS->TRCH mailbox");
-#endif // CONFIG_MBOX_LSIO
-#endif // TEST_MBOX_LSIO_TRCH
-
 #if TEST_SHMEM
     if (test_shmem())
         rtems_panic("shmem test");
@@ -153,7 +146,20 @@ static void init_tests(void)
 
 static void init_client_links(void)
 {
-    // placeholder
+#if CONFIG_MBOX_LINK_CLIENT_TRCH
+#if !CONFIG_MBOX_LSIO
+    #warning Ignoring CONFIG_MBOX_LINK_CLIENT_TRCH - requires CONFIG_MBOX_LSIO
+#else
+    struct hpsc_mbox *mbox_lsio = dev_get_mbox(DEV_ID_MBOX_LSIO);
+    assert(mbox_lsio);
+    struct link *trch_link = link_mbox_connect(LINK_NAME__MBOX__TRCH_CLIENT,
+        mbox_lsio, MBOX_LSIO__TRCH_RTPS, MBOX_LSIO__RTPS_TRCH, 
+        /* server */ 0, /* client */ MASTER_ID_RTPS_CPU0);
+    if (!trch_link)
+        rtems_panic(LINK_NAME__MBOX__TRCH_CLIENT);
+    link_store_append(trch_link);
+#endif // CONFIG_MBOX_LSIO
+#endif // CONFIG_MBOX_LINK_CLIENT_TRCH
 }
 
 static void init_server_links()
@@ -164,13 +170,13 @@ static void init_server_links()
 #else
     struct hpsc_mbox *mbox_hpps = dev_get_mbox(DEV_ID_MBOX_HPPS_RTPS);
     assert(mbox_hpps);
-    struct link *hpps_link = link_mbox_connect("HPPS_MBOX_LINK", mbox_hpps,
-                    MBOX_HPPS_RTPS__HPPS_RTPS, MBOX_HPPS_RTPS__RTPS_HPPS,
-                    /* server */ MASTER_ID_RTPS_CPU0,
-                    /* client */ MASTER_ID_HPPS_CPU0);
+    struct link *hpps_link = link_mbox_connect(LINK_NAME__MBOX__HPPS_SERVER,
+        mbox_hpps, MBOX_HPPS_RTPS__HPPS_RTPS, MBOX_HPPS_RTPS__RTPS_HPPS,
+        /* server */ MASTER_ID_RTPS_CPU0, /* client */ MASTER_ID_HPPS_CPU0);
     if (!hpps_link)
-        rtems_panic("HPPS link");
+        rtems_panic(LINK_NAME__MBOX__HPPS_SERVER);
     // Never release the link, because we listen on it in main loop
+    link_store_append(hpps_link);
 #endif // CONFIG_MBOX_HPPS_RTPS
 #endif // CONFIG_MBOX_LINK_SERVER_HPPS
 }
@@ -216,6 +222,15 @@ static void runtime_tests(void)
 {
     if (test_command_server())
         rtems_panic("Command server test");
+
+#if TEST_MBOX_LSIO_TRCH
+#if !CONFIG_MBOX_LSIO
+    #warning Ignoring TEST_MBOX_LSIO_LOOPBACK - requires CONFIG_MBOX_LSIO
+#else
+    if (test_mbox_lsio_trch())
+        rtems_panic("RTPS->TRCH mailbox");
+#endif // CONFIG_MBOX_LSIO
+#endif // TEST_MBOX_LSIO_TRCH
 }
 
 void *POSIX_Init(void *arg)
