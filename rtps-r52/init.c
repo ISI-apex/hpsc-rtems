@@ -52,7 +52,7 @@ static rtems_status_code init_extra_drivers(
     dev_add_mbox(DEV_ID_MBOX_LSIO, mbox_lsio);
 #endif // CONFIG_MBOX_LSIO
 
-#if CONFIG_MBOX_HPPS
+#if CONFIG_MBOX_HPPS_RTPS
     struct hpsc_mbox *mbox_hpps = NULL;
     rtems_status_code mbox_hpps_sc;
     rtems_vector_number mbox_hpps_vec_a =
@@ -66,8 +66,8 @@ static rtems_status_code init_extra_drivers(
                                    mbox_hpps_vec_a, MBOX_HPPS_RTPS__RTPS_RCV_INT,
                                    mbox_hpps_vec_b, MBOX_HPPS_RTPS__RTPS_ACK_INT);
     assert(mbox_hpps_sc == RTEMS_SUCCESSFUL);
-    dev_add_mbox(DEV_ID_MBOX_HPPS, mbox_hpps);
-#endif // CONFIG_MBOX_HPPS
+    dev_add_mbox(DEV_ID_MBOX_HPPS_RTPS, mbox_hpps);
+#endif // CONFIG_MBOX_HPPS_RTPS
 
 #if CONFIG_RTI_TIMER
     // TODO: RTITs for correct core or both cores, depending on configuration
@@ -159,10 +159,10 @@ static void init_client_links(void)
 static void init_server_links()
 {
 #if CONFIG_MBOX_LINK_SERVER_HPPS
-#if !CONFIG_MBOX_HPPS
-    #warning Ignoring CONFIG_MBOX_LINK_SERVER_HPPS - requires CONFIG_MBOX_HPPS
+#if !CONFIG_MBOX_HPPS_RTPS
+    #warning Ignoring CONFIG_MBOX_LINK_SERVER_HPPS - requires CONFIG_MBOX_HPPS_RTPS
 #else
-    struct hpsc_mbox *mbox_hpps = dev_get_mbox(DEV_ID_MBOX_HPPS);
+    struct hpsc_mbox *mbox_hpps = dev_get_mbox(DEV_ID_MBOX_HPPS_RTPS);
     assert(mbox_hpps);
     struct link *hpps_link = link_mbox_connect("HPPS_MBOX_LINK", mbox_hpps,
                     MBOX_HPPS_RTPS__HPPS_RTPS, MBOX_HPPS_RTPS__RTPS_HPPS,
@@ -171,7 +171,7 @@ static void init_server_links()
     if (!hpps_link)
         rtems_panic("HPPS link");
     // Never release the link, because we listen on it in main loop
-#endif // CONFIG_MBOX_HPPS
+#endif // CONFIG_MBOX_HPPS_RTPS
 #endif // CONFIG_MBOX_LINK_SERVER_HPPS
 }
 
