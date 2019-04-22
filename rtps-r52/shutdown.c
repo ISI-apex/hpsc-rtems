@@ -12,8 +12,8 @@
 #include <hpsc-wdt.h>
 
 // libhpsc
-#include <affinity.h>
 #include <command.h>
+#include <link-store.h>
 
 #include "devices.h"
 #include "shutdown.h"
@@ -53,10 +53,13 @@ static bool shutdown_task_visitor(rtems_tcb *tcb, void *arg)
 
 void shutdown(void)
 {
+    struct link *link;
+    const char *name;
     struct hpsc_rti_timer *rtit;
     struct hpsc_mbox *mbox;
     struct hpsc_wdt *wdt;
     rtems_status_code sc;
+    int rc;
     size_t i;
 
     // TODO: Send a message to TRCH
@@ -70,6 +73,15 @@ void shutdown(void)
     // stop running tasks
     printf("Suspending tasks...\n");
     rtems_task_iterate(shutdown_task_visitor, NULL);
+
+    // disconnect links
+    printf("Disconnecting links...\n");
+    while ((link = link_store_extract_first())) {
+        name = link->name;
+        rc = link_disconnect(link);
+        if (rc)
+            printf("Failed to disconnect link: %s\n", name);
+    }
 
     // disable timers
     printf("Disabling RTI timers...\n");
