@@ -87,14 +87,16 @@ static int shmem_link_init(
                                    tid_recv, link_recv_reply, link);
     }
     if (sc != RTEMS_SUCCESSFUL) {
-        printk("Failed to create receive polling task\n");
+        printk("Failed to create receive polling task: %s\n",
+               rtems_status_text(sc));
         goto free_all;
     }
     sc = shmem_poll_task_start(&slink->sp_ack, slink->shmem_out, poll_ticks,
                                HPSC_SHMEM_STATUS_BIT_ACK,
                                tid_ack, shmem_link_ack, link);
     if (sc != RTEMS_SUCCESSFUL) {
-        printk("Failed to create ACK polling task\n");
+        printk("Failed to create ACK polling task: %s\n",
+               rtems_status_text(sc));
         goto stop_recv_task;
     }
     return 0;
