@@ -55,6 +55,7 @@ COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 H_FILES = \
 	devices.h \
 	gic.h \
+	link-names.h \
 	shell.h \
 	server.h \
 	shutdown.h \
