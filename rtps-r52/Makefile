@@ -44,7 +44,6 @@ CSRCS = \
 	devices.c \
 	init.c \
 	server.c \
-	shell.c \
 	shutdown.c \
 	watchdog.c
 CSRCS += \
@@ -58,7 +57,6 @@ H_FILES = \
 	devices.h \
 	gic.h \
 	link-names.h \
-	shell.h \
 	server.h \
 	shutdown.h \
 	test.h \
