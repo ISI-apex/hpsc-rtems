@@ -13,6 +13,7 @@ C_PIECES= \
 	link \
 	link-mbox \
 	link-shmem \
+	link-store \
 	shmem \
 	shmem-poll
 C_FILES=$(C_PIECES:%=%.c)
@@ -29,6 +30,7 @@ H_FILES = \
 	link.h \
 	link-mbox.h \
 	link-shmem.h \
+	link-store.h \
 	shmem.h \
 	shmem-poll.h \
 
