@@ -73,7 +73,7 @@ rtems_status_code watchdog_tasks_create(void)
         printf("Create watchdog task: %u\n", cpu);
         task_name = rtems_build_name('W','D','T',cpu);
         sc = rtems_task_create(
-            task_name, 1, RTEMS_MINIMUM_STACK_SIZE * 2,
+            task_name, 1, RTEMS_MINIMUM_STACK_SIZE,
             RTEMS_DEFAULT_MODES,
             RTEMS_FLOATING_POINT | RTEMS_DEFAULT_ATTRIBUTES, &task_id
         );

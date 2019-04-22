@@ -190,7 +190,7 @@ static void early_tasks(void)
     // command queue handler task
     task_name = rtems_build_name('C','M','D','H');
     sc = rtems_task_create(
-        task_name, 1, RTEMS_MINIMUM_STACK_SIZE * 2,
+        task_name, 1, RTEMS_MINIMUM_STACK_SIZE,
         RTEMS_DEFAULT_MODES,
         RTEMS_FLOATING_POINT | RTEMS_DEFAULT_ATTRIBUTES, &task_id
     );
