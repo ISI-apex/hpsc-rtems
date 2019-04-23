@@ -71,11 +71,16 @@ Library Code
 
 Current library tools are:
 
-* `command`: A simple framework for command processing.
+* `affinity`: A simple wrapper around RTEMS CPU affinity implementation.
+* `command`: A framework for command processing.
+* `hpsc-msg`: Utility functions for constructing HPSC messages.
 * `link`: A two-way messaging channel that abstracts the exchange mechanism.
-  * `mailbox-link`: An implementation of `link` using HPSC Mailboxes.
-  * `shmem-link`: An implementation of `link` using shared memory.
-* `shmem`: A shared memory messaging interface, compatible with mailbox-style messages.
+  * `link-mbox`: An implementation of `link` using HPSC Mailboxes.
+  * `link-shmem`: An implementation of `link` using shared memory.
+  * `link-store`: A common location to open links for easy access.
+* `shmem`: A shared memory messaging interface, compatible with HPSC messages.
+  * `shmem-poll`: Tasks to poll shared memory for HPSC message statuses and
+                  issue callbacks which mimic ISRs.
 
 
 Developer Notes
@@ -84,14 +89,20 @@ Developer Notes
 A few lessons learned for getting started with RTEMS:
 
 * Building
-  * The RTEMS build system uses only `directory` and `leaf` Makefiles - mixing them is problematic.
+  * The RTEMS build system uses only `directory` and `leaf` Makefiles - mixing
+  them is problematic.
   * The template Makefiles provided by RTEMS are a good starting point.
-  They don't manage dependencies for incremental builds particularly well (e.g., on libraries, headers, and the Makefile itself) and must be extended.
+  They don't manage dependencies for incremental builds particularly well (e.g.,
+  on libraries, headers, and the Makefile itself) and must be extended.
   * See: https://devel.rtems.org/wiki/Developer/Makefile.
 * Interrupt Handling
-  * You may NOT use `printf` in an interrupt context - you will not receive an error, things just won't work!
+  * You may NOT use `printf` in an interrupt context - you will not receive an
+  error, things just won't work!
   Use `printk` instead.
-  * RTEMS documentation does not currently describe more advanced interrupt handler functionality like `rtems_interrupt_handler_install`/`rtems_interrupt_handler_remove`.
-  * See: https://docs.rtems.org/branches/master/c-user/interrupt_manager.html and refer to our existing drivers.
+  * RTEMS documentation does not currently describe more advanced interrupt
+  handler functionality like
+  `rtems_interrupt_handler_install`/`rtems_interrupt_handler_remove`.
+  * See: https://docs.rtems.org/branches/master/c-user/interrupt_manager.html
+  and refer to our existing drivers.
 
 See https://docs.rtems.org for more help.
