@@ -13,13 +13,13 @@
 #include "regops.h"
 
 
-#define REG__INTERVAL_LO       0x00
-#define REG__INTERVAL_HI       0x04
-#define REG__COUNT_LO           0x08
-#define REG__COUNT_HI           0x0c
+#define REG__INTERVAL_LO    0x00
+#define REG__INTERVAL_HI    0x04
+#define REG__COUNT_LO       0x08
+#define REG__COUNT_HI       0x0c
 
-#define REG__CMD_ARM           0x10
-#define REG__CMD_FIRE          0x14
+#define REG__CMD_ARM        0x10
+#define REG__CMD_FIRE       0x14
 
 enum cmd {
     CMD_CAPTURE = 0,
@@ -77,10 +77,8 @@ rtems_status_code hpsc_rti_timer_probe(
     printk("\tbase: %p\n", base);
     printk("\tvec: %u\n", vec);
     *tmr = malloc(sizeof(struct hpsc_rti_timer));
-    if (!*tmr) {
-        printk("RTI TMR: malloc failed\n");
+    if (!*tmr)
         return RTEMS_NO_MEMORY;
-    }
     hpsc_rti_timer_init(*tmr, name, base, vec);
     // must set vector to edge-triggered
     gic_trigger_set(vec, GIC_EDGE_TRIGGERED);
@@ -109,8 +107,7 @@ rtems_status_code hpsc_rti_timer_start(
     assert(tmr);
     DPRINTK("RTI TMR: %s: start\n", tmr->name);
     sc = rtems_interrupt_handler_install(tmr->vec, tmr->name,
-                                         RTEMS_INTERRUPT_UNIQUE,
-                                         handler, arg);
+                                         RTEMS_INTERRUPT_UNIQUE, handler, arg);
     if (sc == RTEMS_SUCCESSFUL)
         tmr->is_started = true;
     else
