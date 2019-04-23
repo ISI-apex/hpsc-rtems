@@ -11,10 +11,12 @@
 #include "hpsc-mbox-test.h"
 
 #define TEST_MSG "HPSC MBOX TEST MSG"
+#define TEST_TIMEOUT_TICKS 100
 
 struct hpsc_mbox_test {
     struct hpsc_mbox *mbox;
     unsigned instance;
+    rtems_id tid;
     int rx_rc;
     bool is_rx;
     bool is_ack;
@@ -36,6 +38,7 @@ static void cb_recv(void *arg)
     else
         ctx->rx_rc = HPSC_MBOX_TEST_CHAN_BAD_RECV;
     ctx->is_rx = true;
+    rtems_event_send(ctx->tid, RTEMS_EVENT_0);
 }
 
 static void cb_ack(void *arg)
@@ -44,16 +47,19 @@ static void cb_ack(void *arg)
     assert(ctx);
     assert(!ctx->is_ack);
     ctx->is_ack = true;
+    rtems_event_send(ctx->tid, RTEMS_EVENT_1);
 }
 
 static int test_loopback(struct hpsc_mbox_test *ctx)
 {
+    rtems_event_set events = 0;
     size_t sz = hpsc_mbox_chan_write(ctx->mbox, ctx->instance, TEST_MSG,
                                      sizeof(TEST_MSG));
     if (sz < sizeof(TEST_MSG))
         return HPSC_MBOX_TEST_CHAN_WRITE;
-    // wait a short period
-    rtems_task_wake_after(RTEMS_MILLISECONDS_TO_TICKS(10));
+    // wait for test to complete or timeout
+    rtems_event_receive(RTEMS_EVENT_0 | RTEMS_EVENT_1, RTEMS_EVENT_ALL,
+                        TEST_TIMEOUT_TICKS, &events);
     if (!ctx->is_rx)
         return HPSC_MBOX_TEST_CHAN_NO_RECV;
     if (!ctx->is_ack)
@@ -74,6 +80,7 @@ int hpsc_mbox_chan_test(
     struct hpsc_mbox_test ctx = {
         .mbox = mbox,
         .instance = instance,
+        .tid = rtems_task_self(),
         .is_rx = false,
         .rx_rc = HPSC_MBOX_TEST_CHAN_NO_RECV,
         .is_ack = false
