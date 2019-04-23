@@ -41,7 +41,7 @@ CONFIG_WDT			= 1
 # Enable/disable tests here (tests often require related configs):
 TEST_MBOX_LSIO_LOOPBACK		= 1
 TEST_MBOX_LSIO_TRCH		= 1
-TEST_RTI_TIMER			= 0 # TODO: Re-enable when RTEMS frequency fixed
+TEST_RTI_TIMER			= 1
 TEST_SHMEM			= 1
 TEST_SHMEM_TRCH			= 1
 
