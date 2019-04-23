@@ -229,16 +229,15 @@ rtems_status_code hpsc_mbox_chan_release(
 {
     struct hpsc_mbox_chan *chan;
     uint32_t val;
+    assert(mbox);
     assert(instance < HPSC_MBOX_CHANNELS);
-    chan = &mbox->chans[instance];
+
     DPRINTK("MBOX: %s: %u: release\n", mbox->info, instance);
-    val = HPSC_MBOX_INT_A(mbox->int_a.idx) |
-          HPSC_MBOX_INT_B(mbox->int_b.idx);
+    chan = &mbox->chans[instance];
+    val = HPSC_MBOX_INT_A(mbox->int_a.idx) | HPSC_MBOX_INT_B(mbox->int_b.idx);
     REGB_CLEAR32(chan->base, REG_INT_ENABLE, val);
-    if (chan->owner) {
-        // We are the OWNER, so we can release
+    if (chan->owner)
         hpsc_mbox_chan_reset(mbox, instance);
-    }
     hpsc_mbox_chan_destroy(chan);
     return RTEMS_SUCCESSFUL;
 }
@@ -254,16 +253,18 @@ size_t hpsc_mbox_chan_write(
     uint32_t *msg = buf;
     size_t len;
     size_t i;
+    assert(mbox);
     assert(instance < HPSC_MBOX_CHANNELS);
     assert(buf);
     assert(sz <= HPSC_MBOX_DATA_SIZE);
+
+    DPRINTK("MBOX: %s: %u: write\n", mbox->info, instance);
     chan = &mbox->chans[instance];
 
     len = sz / sizeof(uint32_t);
     if (sz % sizeof(uint32_t))
         len++;
 
-    DPRINTK("MBOX: %s: %u: write\n", mbox->info, instance);
     for (i = 0; i < len; ++i)
         REGB_WRITE32(chan->base, REG_DATA + (i * sizeof(uint32_t)), msg[i]);
     // zero out any remaining registers
@@ -287,16 +288,18 @@ size_t hpsc_mbox_chan_read(
     uint32_t *msg = buf;
     size_t len;
     size_t i;
+    assert(mbox);
     assert(instance < HPSC_MBOX_CHANNELS);
     assert(buf);
     // assert(sz >= HPSC_MBOX_DATA_SIZE); // not a strict requirement
+
+    DPRINTK("MBOX: %s: %u: read\n", mbox->info, instance);
     chan = &mbox->chans[instance];
 
     len = sz / sizeof(uint32_t);
     if (sz % sizeof(uint32_t))
         len++;
 
-    DPRINTK("MBOX: %s: %u: read\n", mbox->info, instance);
     for (i = 0; i < len && i < HPSC_MBOX_DATA_REGS; i++)
         msg[i] = REGB_READ32(chan->base, REG_DATA + (i * sizeof(uint32_t)));
 
@@ -396,11 +399,6 @@ static void hpsc_mbox_init(
 )
 {
     size_t i;
-    printk("\tbase: %p\n", base);
-    printk("\tirq_a: %u\n", int_a);
-    printk("\tidx_a: %u\n", int_idx_a);
-    printk("\tirq_b: %u\n", int_b);
-    printk("\tidx_b: %u\n", int_idx_b);
     mbox->info = info;
     mbox->base = base;
     mbox->int_a.mbox = mbox;
@@ -433,11 +431,15 @@ rtems_status_code hpsc_mbox_probe(
     assert(base);
 
     printk("MBOX: %s: probe\n", info);
+    printk("\tbase: %p\n", base);
+    printk("\tirq_a: %u\n", int_a);
+    printk("\tidx_a: %u\n", int_idx_a);
+    printk("\tirq_b: %u\n", int_b);
+    printk("\tidx_b: %u\n", int_idx_b);
+
     *mbox = malloc(sizeof(struct hpsc_mbox));
-    if (!*mbox) {
-        printk("hpsc_mbox_probe: malloc failed\n");
+    if (!*mbox)
         return RTEMS_NO_MEMORY;
-    }
 
     // init struct
     hpsc_mbox_init(*mbox, info, base, int_a, int_idx_a, int_b, int_idx_b);
@@ -467,8 +469,7 @@ free_mbox:
 
 rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox)
 {
-    rtems_status_code sc = RTEMS_SUCCESSFUL;
-    rtems_status_code sc_tmp;
+    rtems_status_code sc;
     size_t i;
     assert(mbox);
 
@@ -477,18 +478,13 @@ rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox)
     for (i = 0; i < RTEMS_ARRAY_SIZE(mbox->chans); i++)
         hpsc_mbox_chan_release(mbox, i);
 
-    sc_tmp = rtems_interrupt_handler_remove(mbox->int_a.n, hpsc_mbox_isr_a,
-                                            &mbox->int_a);
-    if (sc_tmp != RTEMS_SUCCESSFUL) {
-        printk("hpsc_mbox_remove: failed to uninstall interrupt handler A\n");
-        sc = sc_tmp;
-    }
-    sc_tmp = rtems_interrupt_handler_remove(mbox->int_b.n, hpsc_mbox_isr_b,
-                                            &mbox->int_b);
-    if (sc_tmp != RTEMS_SUCCESSFUL) {
-        printk("hpsc_mbox_remove: failed to uninstall interrupt handler B\n");
-        sc = sc_tmp;
-    }
+    // we can correctly assert handler removal since we installed them
+    sc = rtems_interrupt_handler_remove(mbox->int_a.n, hpsc_mbox_isr_a,
+                                        &mbox->int_a);
+    assert(sc == RTEMS_SUCCESSFUL);
+    sc = rtems_interrupt_handler_remove(mbox->int_b.n, hpsc_mbox_isr_b,
+                                        &mbox->int_b);
+    assert(sc == RTEMS_SUCCESSFUL);
     free(mbox);
     return sc;
 }
