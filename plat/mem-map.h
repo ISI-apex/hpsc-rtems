@@ -3,6 +3,30 @@
 
 // This file indicates the resource allocations in memory
 
+// Binary images with executables for RTPS
+#define RTPS_R52_DDR_LOW_ADDR               0x40000000
+#define RTPS_R52_DDR_LOW_SIZE               0x3fc00000 // excludes shm
+
+// Shared memory regions accessible to RTPS
+#define RTPS_R52_SHM_ADDR                   0x7fc00000
+#define RTPS_R52_SHM_SIZE                   0x00400000
+
+// Shared memory regions accessible to RTPS
+// TRCH client -> RTPS server
+#define RTPS_R52_SHM_ADDR__TRCH_RTPS_SEND   0x7fc00000
+#define RTPS_R52_SHM_SIZE__TRCH_RTPS_SEND   0x00008000
+#define RTPS_R52_SHM_ADDR__RTPS_TRCH_REPLY  0x7fc08000
+#define RTPS_R52_SHM_SIZE__RTPS_TRCH_REPLY  0x00008000
+// RTPS client -> TRCH server
+#define RTPS_R52_SHM_ADDR__RTPS_TRCH_SEND   0x7fc10000
+#define RTPS_R52_SHM_SIZE__RTPS_TRCH_SEND   0x00008000
+#define RTPS_R52_SHM_ADDR__TRCH_RTPS_REPLY  0x7fc18000
+#define RTPS_R52_SHM_SIZE__TRCH_RTPS_REPLY  0x00008000
+
+// Shared memory regions accessible to RTPS, reserved but not allocated
+#define RTPS_R52_SHM_ADDR__FREE             0x7fc20000
+#define RTPS_R52_DDR_SIZE__FREE             0x003e0000
+
 // Binary images with executables for HPPS
 #define HPPS_DDR_LOW_ADDR   0x80000000
 #define HPPS_DDR_LOW_SIZE   0x3fe00000 // excludes mem hidden from HPPS
