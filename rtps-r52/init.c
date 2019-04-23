@@ -15,10 +15,13 @@
 #include <affinity.h>
 #include <command.h>
 #include <link-mbox.h>
+#include <link-shmem.h>
 #include <link-store.h>
 
 // drivers
 #include <hpsc-mbox.h>
+#include <hpsc-rti-timer.h>
+#include <hpsc-wdt.h>
 
 #include "devices.h"
 #include "gic.h"
@@ -29,6 +32,7 @@
 #include "watchdog.h"
 
 #define CMD_TIMEOUT_TICKS 1000
+#define SHMEM_POLL_TICKS 10
 
 static rtems_status_code init_extra_drivers(
   rtems_device_major_number major,
@@ -151,31 +155,76 @@ static void init_client_links(void)
 #else
     struct hpsc_mbox *mbox_lsio = dev_get_mbox(DEV_ID_MBOX_LSIO);
     assert(mbox_lsio);
-    struct link *trch_link = link_mbox_connect(LINK_NAME__MBOX__TRCH_CLIENT,
+    struct link *tmc_link = link_mbox_connect(LINK_NAME__MBOX__TRCH_CLIENT,
         mbox_lsio, MBOX_LSIO__TRCH_RTPS, MBOX_LSIO__RTPS_TRCH, 
         /* server */ 0, /* client */ MASTER_ID_RTPS_CPU0);
-    if (!trch_link)
+    if (!tmc_link)
         rtems_panic(LINK_NAME__MBOX__TRCH_CLIENT);
-    link_store_append(trch_link);
+    link_store_append(tmc_link);
 #endif // CONFIG_MBOX_LSIO
 #endif // CONFIG_LINK_MBOX_TRCH_CLIENT
+
+#if CONFIG_LINK_SHMEM_TRCH_CLIENT
+    rtems_status_code tsc_sc;
+    rtems_id tsc_tid_recv;
+    rtems_id tsc_tid_ack;
+    rtems_name tsc_tn_recv = rtems_build_name('T', 'S', 'C', 'R');
+    rtems_name tsc_tn_ack = rtems_build_name('T', 'S', 'C', 'A');
+    tsc_sc = rtems_task_create(
+        tsc_tn_recv, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
+        RTEMS_DEFAULT_ATTRIBUTES, &tsc_tid_recv);
+    assert(tsc_sc == RTEMS_SUCCESSFUL);
+    tsc_sc = rtems_task_create(
+        tsc_tn_ack, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
+        RTEMS_DEFAULT_ATTRIBUTES, &tsc_tid_ack);
+    assert(tsc_sc == RTEMS_SUCCESSFUL);
+    struct link *tsc_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_CLIENT,
+        (volatile void *) RTPS_R52_SHM_ADDR__RTPS_TRCH_SEND,
+        (volatile void *) RTPS_R52_SHM_ADDR__TRCH_RTPS_REPLY,
+        /* is_server */ false, SHMEM_POLL_TICKS, tsc_tid_recv, tsc_tid_ack);
+    if (!tsc_link)
+        rtems_panic(LINK_NAME__SHMEM__TRCH_CLIENT);
+    link_store_append(tsc_link);
+#endif // CONFIG_LINK_SHMEM_TRCH_CLIENT
 }
 
 static void init_server_links()
 {
+#if CONFIG_LINK_SHMEM_TRCH_SERVER
+    rtems_status_code tss_sc;
+    rtems_id tss_tid_recv;
+    rtems_id tss_tid_ack;
+    rtems_name tss_tn_recv = rtems_build_name('T', 'S', 'S', 'R');
+    rtems_name tss_tn_ack = rtems_build_name('T', 'S', 'S', 'A');
+    tss_sc = rtems_task_create(
+        tss_tn_recv, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
+        RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_recv);
+    assert(tss_sc == RTEMS_SUCCESSFUL);
+    tss_sc = rtems_task_create(
+        tss_tn_ack, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
+        RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_ack);
+    assert(tss_sc == RTEMS_SUCCESSFUL);
+    struct link *tss_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_SERVER,
+        (volatile void *) RTPS_R52_SHM_ADDR__TRCH_RTPS_SEND,
+        (volatile void *) RTPS_R52_SHM_ADDR__RTPS_TRCH_REPLY,
+        /* is_server */ true, SHMEM_POLL_TICKS, tss_tid_recv, tss_tid_ack);
+    if (!tss_link)
+        rtems_panic(LINK_NAME__SHMEM__TRCH_SERVER);
+    link_store_append(tss_link);
+#endif // CONFIG_LINK_SHMEM_TRCH_SERVER
+
 #if CONFIG_LINK_MBOX_HPPS_SERVER
 #if !CONFIG_MBOX_HPPS_RTPS
     #warning Ignoring CONFIG_LINK_MBOX_HPPS_SERVER - requires CONFIG_MBOX_HPPS_RTPS
 #else
     struct hpsc_mbox *mbox_hpps = dev_get_mbox(DEV_ID_MBOX_HPPS_RTPS);
     assert(mbox_hpps);
-    struct link *hpps_link = link_mbox_connect(LINK_NAME__MBOX__HPPS_SERVER,
+    struct link *hms_link = link_mbox_connect(LINK_NAME__MBOX__HPPS_SERVER,
         mbox_hpps, MBOX_HPPS_RTPS__HPPS_RTPS, MBOX_HPPS_RTPS__RTPS_HPPS,
         /* server */ MASTER_ID_RTPS_CPU0, /* client */ MASTER_ID_HPPS_CPU0);
-    if (!hpps_link)
+    if (!hms_link)
         rtems_panic(LINK_NAME__MBOX__HPPS_SERVER);
-    // Never release the link, because we listen on it in main loop
-    link_store_append(hpps_link);
+    link_store_append(hms_link);
 #endif // CONFIG_MBOX_HPPS_RTPS
 #endif // CONFIG_LINK_MBOX_HPPS_SERVER
 }
@@ -245,6 +294,11 @@ static void runtime_tests(void)
         rtems_panic("RTPS->TRCH mailbox");
 #endif // CONFIG_MBOX_LSIO
 #endif // TEST_MBOX_LSIO_TRCH
+
+#if TEST_SHMEM_TRCH
+    if (test_link_shmem_trch())
+        rtems_panic("RTPS->TRCH shmem");
+#endif // TEST_SHMEM_TRCH
 }
 
 void *POSIX_Init(void *arg)

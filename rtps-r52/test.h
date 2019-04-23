@@ -9,5 +9,6 @@ int test_mbox_lsio_loopback();
 int test_mbox_lsio_trch();
 
 int test_shmem();
+int test_link_shmem_trch();
 
 #endif // TEST_H
