@@ -296,8 +296,12 @@ static void runtime_tests(void)
 #endif // TEST_MBOX_LSIO_TRCH
 
 #if TEST_SHMEM_TRCH
+#if !CONFIG_LINK_SHMEM_TRCH_CLIENT
+    #warning Ignoring TEST_SHMEM_TRCH - requires CONFIG_LINK_SHMEM_TRCH_CLIENT
+#else
     if (test_link_shmem_trch())
         rtems_panic("RTPS->TRCH shmem");
+#endif // CONFIG_LINK_SHMEM_TRCH_CLIENT
 #endif // TEST_SHMEM_TRCH
 }
 
