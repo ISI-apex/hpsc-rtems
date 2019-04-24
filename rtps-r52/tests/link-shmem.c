@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 // libhpsc
 #include <command.h>
@@ -72,7 +72,7 @@ int test_link_shmem()
     struct link *clink;
     int rc;
 
-    printf("TEST: test_shmem_link: begin\n");
+    test_begin("test_link_shmem");
 
     create_poll_task(rtems_build_name('T','C','S','R'), &stid_recv);
     create_poll_task(rtems_build_name('T','C','S','A'), &stid_ack);
@@ -90,12 +90,13 @@ int test_link_shmem()
     }
 
     rc = do_test(slink, clink);
-    printf("TEST: test_shmem_link: %s\n", rc ? "failed": "success");
 
     if (link_disconnect(clink))
         rc = 1;
 free_slink:
     if (link_disconnect(slink))
         rc = 1;
+
+    test_end("test_link_shmem", rc);
     return rc;
 }

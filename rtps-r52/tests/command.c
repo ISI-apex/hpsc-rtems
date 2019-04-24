@@ -1,6 +1,5 @@
 #include <assert.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
 // libhpsc
@@ -23,11 +22,13 @@ struct cmd_test {
 
 static size_t test_link_write(struct link *link, void *buf, size_t sz)
 {
+    struct cmd_test_link *tlink;
     assert(link);
     assert(link->priv);
     assert(buf);
     assert(sz <= HPSC_MSG_SIZE);
-    struct cmd_test_link *tlink = link->priv;
+
+    tlink = link->priv;
     memcpy(tlink->reply, buf, sz);
     tlink->reply_sz = sz;
     tlink->is_write = true;
@@ -98,8 +99,8 @@ int test_command_server()
         .close = test_link_close
     };
     int rc;
-    printf("TEST: test_command_server: begin\n");
+    test_begin("test_command_server");
     rc = do_test(&link);
-    printf("TEST: test_command_server: %s\n", rc ? "failed": "success");
+    test_end("test_command_server", rc);
     return rc;
 }

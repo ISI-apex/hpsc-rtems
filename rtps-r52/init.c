@@ -14,6 +14,7 @@
 // libhpsc
 #include <affinity.h>
 #include <command.h>
+#include <link.h>
 #include <link-mbox.h>
 #include <link-shmem.h>
 #include <link-store.h>
@@ -121,8 +122,17 @@ static rtems_status_code init_extra_drivers(
     return RTEMS_SUCCESSFUL;
 }
 
-static void init_tests(void)
+static void standalone_tests(void)
 {
+#if TEST_MBOX_LSIO_LOOPBACK
+#if !CONFIG_MBOX_LSIO
+    #warning Ignoring TEST_MBOX_LSIO_LOOPBACK - requires CONFIG_MBOX_LSIO
+#else
+    if (test_mbox_lsio_loopback())
+        rtems_panic("RTPS LSIO mbox loopback test");
+#endif // CONFIG_MBOX_LSIO
+#endif //TEST_MBOX_LSIO_LOOPBACK
+
 #if TEST_RTI_TIMER
 #if !CONFIG_RTI_TIMER
     #warning Ignoring TEST_RTI_TIMER - requires CONFIG_RTI_TIMER
@@ -132,19 +142,44 @@ static void init_tests(void)
 #endif // CONFIG_RTI_TIMER
 #endif // TEST_RTI_TIMER
 
-#if TEST_MBOX_LSIO_LOOPBACK
-#if !CONFIG_MBOX_LSIO
-    #warning Ignoring TEST_MBOX_LSIO_LOOPBACK - requires CONFIG_MBOX_LSIO
-#else
-    if (test_mbox_lsio_loopback())
-        rtems_panic("RTPS loopback mailbox");
-#endif // CONFIG_MBOX_LSIO
-#endif //TEST_MBOX_LSIO_LOOPBACK
-
 #if TEST_SHMEM
     if (test_shmem())
         rtems_panic("shmem test");
 #endif // TEST_SHMEM
+}
+
+static void runtime_tests(void)
+{
+#if TEST_COMMAND
+    if (test_command_server())
+        rtems_panic("Command server test");
+#endif // TEST_COMMAND
+
+#if TEST_LINK_SHMEM
+    if (test_link_shmem())
+        rtems_panic("Shmem link test");
+#endif // TEST_LINK_SHMEM
+}
+
+static void external_tests(void)
+{
+#if TEST_MBOX_LINK_TRCH
+#if !CONFIG_MBOX_LSIO
+    #warning Ignoring TEST_MBOX_LINK_TRCH - requires CONFIG_MBOX_LSIO
+#else
+    if (test_link_mbox_trch())
+        rtems_panic("RTPS->TRCH mailbox test");
+#endif // CONFIG_MBOX_LSIO
+#endif // TEST_MBOX_LINK_TRCH
+
+#if TEST_SHMEM_LINK_TRCH
+#if !CONFIG_LINK_SHMEM_TRCH_CLIENT
+    #warning Ignoring TEST_SHMEM_LINK_TRCH - requires CONFIG_LINK_SHMEM_TRCH_CLIENT
+#else
+    if (test_link_shmem_trch())
+        rtems_panic("RTPS->TRCH shmem test");
+#endif // CONFIG_LINK_SHMEM_TRCH_CLIENT
+#endif // TEST_SHMEM_LINK_TRCH
 }
 
 static void init_client_links(void)
@@ -280,54 +315,29 @@ static void late_tasks(void)
 #endif // CONFIG_SHELL
 }
 
-
-static void runtime_tests(void)
-{
-    if (test_command_server())
-        rtems_panic("Command server test");
-
-    if (test_link_shmem())
-        rtems_panic("Shmem link test");
-
-#if TEST_MBOX_LSIO_TRCH
-#if !CONFIG_MBOX_LSIO
-    #warning Ignoring TEST_MBOX_LSIO_LOOPBACK - requires CONFIG_MBOX_LSIO
-#else
-    if (test_mbox_lsio_trch())
-        rtems_panic("RTPS->TRCH mailbox");
-#endif // CONFIG_MBOX_LSIO
-#endif // TEST_MBOX_LSIO_TRCH
-
-#if TEST_SHMEM_TRCH
-#if !CONFIG_LINK_SHMEM_TRCH_CLIENT
-    #warning Ignoring TEST_SHMEM_TRCH - requires CONFIG_LINK_SHMEM_TRCH_CLIENT
-#else
-    if (test_link_shmem_trch())
-        rtems_panic("RTPS->TRCH shmem");
-#endif // CONFIG_LINK_SHMEM_TRCH_CLIENT
-#endif // TEST_SHMEM_TRCH
-}
-
 void *POSIX_Init(void *arg)
 {
     // device drivers already initialized
     printf("\n\nRTPS\n");
 
     // run boot tests
-    init_tests();
+    standalone_tests();
 
     // start early tasks
     early_tasks();
 
-    // initialize links - this order matters
+    // run tests that require early tasks
+    runtime_tests();
+
+    // initialize links
     init_client_links();
     init_server_links();
 
     // start basic tasks
     init_tasks();
 
-    // run tests that require basic tasks
-    runtime_tests();
+    // run tests that require external interaction
+    external_tests();
 
     // start remaining tasks
     late_tasks();

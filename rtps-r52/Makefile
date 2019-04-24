@@ -17,13 +17,19 @@ CONFIG_FLAGS = \
 	CONFIG_RTI_TIMER \
 	CONFIG_SHELL \
 	CONFIG_WDT \
-
+# Standalone tests
 CONFIG_FLAGS += \
-	TEST_RTI_TIMER \
 	TEST_MBOX_LSIO_LOOPBACK \
-	TEST_MBOX_LSIO_TRCH \
+	TEST_RTI_TIMER \
 	TEST_SHMEM \
-	TEST_SHMEM_TRCH \
+# Runtime tests
+CONFIG_FLAGS += \
+	TEST_COMMAND \
+	TEST_LINK_SHMEM \
+# External tests
+CONFIG_FLAGS += \
+	TEST_MBOX_LINK_TRCH \
+	TEST_SHMEM_LINK_TRCH \
 
 CONFIG_ARGS = $(foreach m,$(CONFIG_FLAGS),-D$(m)=$($(m)))
 
@@ -38,12 +44,17 @@ CONFIG_RTI_TIMER		= 1
 CONFIG_SHELL			= 1
 CONFIG_WDT			= 1
 
-# Enable/disable tests here (tests often require related configs):
+# Enable/disable tests here (some tests require certain CONFIG options):
+# Standalone
 TEST_MBOX_LSIO_LOOPBACK		= 1
-TEST_MBOX_LSIO_TRCH		= 1
 TEST_RTI_TIMER			= 1
 TEST_SHMEM			= 1
-TEST_SHMEM_TRCH			= 1
+# Runtime
+TEST_COMMAND			= 1
+TEST_LINK_SHMEM			= 1
+# External
+TEST_MBOX_LINK_TRCH		= 1
+TEST_SHMEM_LINK_TRCH		= 1
 
 # C source names
 CSRCS = \
@@ -54,10 +65,12 @@ CSRCS = \
 	watchdog.c
 CSRCS += \
 	tests/command.c \
+	tests/link-mbox-trch.c \
+	tests/link-shmem.c \
+	tests/link-shmem-trch.c \
 	tests/mailbox.c \
 	tests/rti-timer.c \
-	tests/shmem.c \
-	tests/link-shmem.c
+	tests/shmem.c
 COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 
 H_FILES = \

@@ -29,7 +29,7 @@ int test_cpu_rti_timers()
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
 
-    printf("TEST: test_core_rti_timer: begin\n");
+    test_begin("test_cpu_rti_timers");
 
     // store current affinity
     sc = rtems_task_get_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
@@ -54,6 +54,6 @@ int test_cpu_rti_timers()
     assert(sc == RTEMS_SUCCESSFUL);
 
     assert(count); // need to have tested at least one core's timer
-    printf("TEST: test_core_rti_timer: %s\n", rc ? "failed": "success");
+    test_end("test_cpu_rti_timers", rc);
     return (int) rc;
 }
