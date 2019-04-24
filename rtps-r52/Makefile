@@ -56,7 +56,8 @@ CSRCS += \
 	tests/command.c \
 	tests/mailbox.c \
 	tests/rti-timer.c \
-	tests/shmem.c
+	tests/shmem.c \
+	tests/link-shmem.c
 COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 
 H_FILES = \

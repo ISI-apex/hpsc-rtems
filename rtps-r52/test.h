@@ -3,6 +3,8 @@
 
 int test_command_server();
 
+int test_link_shmem();
+
 int test_cpu_rti_timers();
 
 int test_mbox_lsio_loopback();

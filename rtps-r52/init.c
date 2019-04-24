@@ -286,6 +286,9 @@ static void runtime_tests(void)
     if (test_command_server())
         rtems_panic("Command server test");
 
+    if (test_link_shmem())
+        rtems_panic("Shmem link test");
+
 #if TEST_MBOX_LSIO_TRCH
 #if !CONFIG_MBOX_LSIO
     #warning Ignoring TEST_MBOX_LSIO_LOOPBACK - requires CONFIG_MBOX_LSIO

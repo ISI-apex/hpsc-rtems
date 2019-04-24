@@ -1,101 +1,105 @@
 #include <assert.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 // libhpsc
 #include <command.h>
 #include <hpsc-msg.h>
 #include <link.h>
-#include <link-shmem.h>
-#include <shmem.h>
 
 #include "test.h"
 
-#define WTIMEOUT_TICKS 10
-#define RTIMEOUT_TICKS 10
+struct cmd_test_link {
+    bool is_write;
+    void *reply;
+    size_t reply_sz;
+};
+
+struct cmd_test {
+    struct cmd cmd;
+    cmd_status status;
+};
+
+static size_t test_link_write(struct link *link, void *buf, size_t sz)
+{
+    assert(link);
+    assert(link->priv);
+    assert(buf);
+    assert(sz <= HPSC_MSG_SIZE);
+    struct cmd_test_link *tlink = link->priv;
+    memcpy(tlink->reply, buf, sz);
+    tlink->reply_sz = sz;
+    tlink->is_write = true;
+    return sz;
+}
+static size_t test_link_read(struct link *link, void *buf, size_t sz)
+{
+    assert(0); // should never be called
+    return 0;
+}
+static int test_link_close(struct link *link)
+{
+    assert(0); // should never be called
+    return -1;
+}
 
 static void handled_cb(void *arg, cmd_status status)
 {
-    cmd_status *s = (cmd_status *)arg;
-    *s = status;
+    struct cmd_test *cmdt = arg;
+    assert(cmdt);
+    cmdt->status = status;
 }
 
-static int do_test(struct link *slink, struct link *clink)
+static int do_test(struct link *link)
 {
-    // command is sent by client and received by server
-    HPSC_MSG_DEFINE(cmd);
-    HPSC_MSG_DEFINE(reply);
-    ssize_t sz;
-    int rc = 0;
-    cmd_status status = CMD_STATUS_UNKNOWN;
+    // pretend client sent a PING to server (we can skip the actual exchange)
+    // command will be processed asynchronously and reply sent to client
+    struct cmd_test cmdt = {
+        .cmd = {
+            .msg = { PING, 0 },
+            .link = link,
+        },
+        .status = CMD_STATUS_UNKNOWN
+    };
+    struct cmd_test_link *tlink = link->priv;
+    int rc = cmd_enqueue_cb(&cmdt.cmd, handled_cb, &cmdt);
+    if (rc)
+        return rc;
 
-    cmd_handled_register_cb(handled_cb, &status);
-
-    hpsc_msg_ping(cmd, sizeof(cmd), NULL, 0);
-    sz = link_request(clink,
-                      WTIMEOUT_TICKS, cmd, sizeof(cmd),
-                      RTIMEOUT_TICKS, reply, sizeof(reply));
-    if (sz <= 0)
-        rc = 1;
-    else if (reply[0] != PONG)
+    // wait for reply
+    while (!tlink->is_write);
+    // ack the reply
+    link_ack(link);
+    // reply should be a PONG
+    if (!tlink->reply_sz || ((uint8_t *)tlink->reply)[0] != PONG)
         rc = 1;
 
     // wait for command handler to finish, o/w we prematurely destroy the link
-    while (status == CMD_STATUS_UNKNOWN);
-    cmd_handled_unregister_cb();
+    while(cmdt.status == CMD_STATUS_UNKNOWN);
 
-    return status == CMD_STATUS_SUCCESS ? rc : 1;
+    return cmdt.status == CMD_STATUS_SUCCESS ? rc : 1;
 }
 
-static void create_poll_task(rtems_name name, rtems_id *id)
-{
-    assert(id);
-    rtems_status_code sc = rtems_task_create(
-        name, 1, RTEMS_MINIMUM_STACK_SIZE,
-        RTEMS_DEFAULT_MODES,
-        RTEMS_FLOATING_POINT | RTEMS_DEFAULT_ATTRIBUTES, id
-    );
-    assert(sc == RTEMS_SUCCESSFUL);
-}
-
-// test command handler using a loopback shmem-link
+// test command handler using a dummy link implementation
 int test_command_server()
 {
-    struct hpsc_shmem_region reg_a = { 0 };
-    struct hpsc_shmem_region reg_b = { 0 };
-    rtems_id stid_recv;
-    rtems_id stid_ack;
-    rtems_id ctid_recv;
-    rtems_id ctid_ack;
-    struct link *slink;
-    struct link *clink;
+    HPSC_MSG_DEFINE(reply);
+    struct cmd_test_link tlink = {
+        .is_write = false,
+        .reply = &reply,
+        .reply_sz = 0
+    };
+    struct link link = {
+        .name = "Command Test Link",
+        .priv = &tlink,
+        .write = test_link_write,
+        .read = test_link_read,
+        .close = test_link_close
+    };
     int rc;
-
     printf("TEST: test_command_server: begin\n");
-
-    create_poll_task(rtems_build_name('T','C','S','R'), &stid_recv);
-    create_poll_task(rtems_build_name('T','C','S','A'), &stid_ack);
-    create_poll_task(rtems_build_name('T','C','C','R'), &ctid_recv);
-    create_poll_task(rtems_build_name('T','C','C','A'), &ctid_ack);
-    slink = link_shmem_connect("Command Test Server Link", &reg_a, &reg_b,
-                               true, 1, stid_recv, stid_ack);
-    if (!slink)
-        return 1;
-    clink = link_shmem_connect("Command Test Client Link", &reg_b, &reg_a,
-                               false, 1, ctid_recv, ctid_ack);
-    if (!clink) {
-        rc = 1;
-        goto free_slink;
-    }
-
-    rc = do_test(slink, clink);
+    rc = do_test(&link);
     printf("TEST: test_command_server: %s\n", rc ? "failed": "success");
-
-    if (link_disconnect(clink))
-        rc = 1;
-free_slink:
-    if (link_disconnect(slink))
-        rc = 1;
     return rc;
 }
