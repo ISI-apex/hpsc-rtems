@@ -7,16 +7,21 @@ PGM=${ARCH}/rtps-r52.exe
 # optional managers required
 MANAGERS=all
 
+# Drivers
 CONFIG_FLAGS = \
 	CONFIG_MBOX_LSIO \
 	CONFIG_MBOX_HPPS_RTPS \
+	CONFIG_RTI_TIMER \
+	CONFIG_WDT \
+# Links
+CONFIG_FLAGS += \
 	CONFIG_LINK_MBOX_TRCH_CLIENT \
 	CONFIG_LINK_MBOX_HPPS_SERVER \
 	CONFIG_LINK_SHMEM_TRCH_CLIENT \
 	CONFIG_LINK_SHMEM_TRCH_SERVER \
-	CONFIG_RTI_TIMER \
+# Additional tasks
+CONFIG_FLAGS += \
 	CONFIG_SHELL \
-	CONFIG_WDT \
 # Standalone tests
 CONFIG_FLAGS += \
 	TEST_MBOX_LSIO_LOOPBACK \
@@ -34,15 +39,18 @@ CONFIG_FLAGS += \
 CONFIG_ARGS = $(foreach m,$(CONFIG_FLAGS),-D$(m)=$($(m)))
 
 # Set build configuration here
+# Drivers
 CONFIG_MBOX_LSIO		= 1
 CONFIG_MBOX_HPPS_RTPS		= 1
+CONFIG_RTI_TIMER		= 1
+CONFIG_WDT			= 1
+# Links
 CONFIG_LINK_MBOX_TRCH_CLIENT	= 1 # send requests to TRCH
 CONFIG_LINK_MBOX_HPPS_SERVER	= 1 # listen for requests from HPPS
 CONFIG_LINK_SHMEM_TRCH_CLIENT	= 1 # send requests to TRCH
 CONFIG_LINK_SHMEM_TRCH_SERVER	= 1 # listen for requests from TRCH
-CONFIG_RTI_TIMER		= 1
+# Additional tasks
 CONFIG_SHELL			= 1
-CONFIG_WDT			= 1
 
 # Enable/disable tests here (some tests require certain CONFIG options):
 # Standalone
