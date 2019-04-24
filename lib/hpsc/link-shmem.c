@@ -45,6 +45,7 @@ static int link_shmem_close(struct link *link)
     struct link_shmem *slink = link->priv;
     int rc = 0;
     rtems_status_code sc;
+    printk("%s: close\n", link->name);
     sc = shmem_poll_task_destroy(slink->sp_ack);
     if (sc != RTEMS_SUCCESSFUL)
         rc = -1;
