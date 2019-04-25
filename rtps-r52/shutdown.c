@@ -79,6 +79,11 @@ void shutdown(void)
             printf("Failed to disconnect link: %s\n", name);
     }
 
+    // we destroyed links, so empty the command queue which references them
+    printf("Dropping pending commands...\n");
+    i = cmd_drop_all();
+    printf("Dropped: %zu\n", i);
+
     // stop running tasks
     printf("Suspending tasks...\n");
     rtems_task_iterate(shutdown_task_visitor, NULL);
