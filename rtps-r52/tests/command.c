@@ -62,8 +62,10 @@ static int do_test(rtems_id task_id)
 
     // start the command handle task
     sc = cmd_handle_task_start(task_id, cmd_test_handler, /* ticks */ 0);
-    if (sc != RTEMS_SUCCESSFUL)
+    if (sc != RTEMS_SUCCESSFUL) {
+        rtems_task_delete(task_id);
         goto unregister;
+    }
 
     // enqueue a command and wait for handler to process it
     rc = cmd_enqueue_cb(&cmdt.cmd, handled_cmd_cb, &cmdt);

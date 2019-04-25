@@ -84,6 +84,7 @@ rtems_status_code watchdog_tasks_create(void)
         sc = rtems_task_start(task_id, watchdog_task, cpu);
         if (sc != RTEMS_SUCCESSFUL) {
             printf("Failed to start watchdog task: %u\n", cpu);
+            rtems_task_delete(task_id);
             break;
         }
     }
