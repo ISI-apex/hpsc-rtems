@@ -124,6 +124,11 @@ static rtems_status_code init_extra_drivers(
 
 static void standalone_tests(void)
 {
+#if TEST_COMMAND
+    if (test_command())
+        rtems_panic("Command test");
+#endif // TEST_COMMAND
+
 #if TEST_MBOX_LSIO_LOOPBACK
 #if !CONFIG_MBOX_LSIO
     #warning Ignoring TEST_MBOX_LSIO_LOOPBACK - requires CONFIG_MBOX_LSIO
@@ -150,10 +155,10 @@ static void standalone_tests(void)
 
 static void runtime_tests(void)
 {
-#if TEST_COMMAND
+#if TEST_COMMAND_SERVER
     if (test_command_server())
         rtems_panic("Command server test");
-#endif // TEST_COMMAND
+#endif // TEST_COMMAND_SERVER
 
 #if TEST_LINK_SHMEM
     if (test_link_shmem())

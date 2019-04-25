@@ -1,106 +1,106 @@
 #include <assert.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stdlib.h>
+
+#include <rtems.h>
 
 // libhpsc
 #include <command.h>
-#include <hpsc-msg.h>
-#include <link.h>
 
 #include "test.h"
 
-struct cmd_test_link {
-    bool is_write;
-    void *reply;
-    size_t reply_sz;
-};
+#define CMD_TEST_TIMEOUT_TICKS 10
 
-struct cmd_test {
+struct cmd_test_ctx {
     struct cmd cmd;
+    rtems_id tid;
+    bool handled_cmd;
     cmd_status status;
 };
 
-static size_t test_link_write(struct link *link, void *buf, size_t sz)
+static ssize_t cmd_test_handler(struct cmd *cmd, void *reply, size_t reply_sz)
 {
-    struct cmd_test_link *tlink;
-    assert(link);
-    assert(link->priv);
-    assert(buf);
-    assert(sz <= HPSC_MSG_SIZE);
+    assert(cmd);
+    assert(reply);
+    assert(reply_sz);
+    return 0; // no reply (there's no link to reply with)
+}
 
-    tlink = link->priv;
-    memcpy(tlink->reply, buf, sz);
-    tlink->reply_sz = sz;
-    tlink->is_write = true;
-    return sz;
-}
-static size_t test_link_read(struct link *link, void *buf, size_t sz)
+static void handled_cmd_cb(void *arg, cmd_status status)
 {
-    assert(0); // should never be called
-    return 0;
-}
-static int test_link_close(struct link *link)
-{
-    assert(0); // should never be called
-    return -1;
+    struct cmd_test_ctx *cmdt = arg;
+    assert(cmdt);
+    cmdt->handled_cmd = true;
+    rtems_event_send(cmdt->tid, RTEMS_EVENT_0);
 }
 
 static void handled_cb(void *arg, cmd_status status)
 {
-    struct cmd_test *cmdt = arg;
+    struct cmd_test_ctx *cmdt = arg;
     assert(cmdt);
     cmdt->status = status;
+    rtems_event_send(cmdt->tid, RTEMS_EVENT_1);
 }
 
-static int do_test(struct link *link)
+static int do_test(rtems_id task_id)
 {
-    // pretend client sent a PING to server (we can skip the actual exchange)
-    // command will be processed asynchronously and reply sent to client
-    struct cmd_test cmdt = {
+    rtems_status_code sc;
+    rtems_event_set events = 0;
+    int rc = 1;
+    struct cmd_test_ctx cmdt = {
         .cmd = {
-            .msg = { PING, 0 },
-            .link = link,
+            .msg = { 0 },
+            .link = NULL,
         },
+        .tid = rtems_task_self(),
+        .handled_cmd = false,
         .status = CMD_STATUS_UNKNOWN
     };
-    struct cmd_test_link *tlink = link->priv;
-    int rc = cmd_enqueue_cb(&cmdt.cmd, handled_cb, &cmdt);
-    if (rc)
-        return rc;
 
-    // wait for reply
-    while (!tlink->is_write);
-    // ack the reply
-    link_ack(link);
-    // reply should be a PONG
-    if (!tlink->reply_sz || ((uint8_t *)tlink->reply)[0] != PONG)
+    // register "handled" callback
+    cmd_handled_register_cb(handled_cb, &cmdt);
+
+    // start the command handle task
+    sc = cmd_handle_task_start(task_id, cmd_test_handler, /* ticks */ 0);
+    if (sc != RTEMS_SUCCESSFUL)
+        goto unregister;
+
+    // enqueue a command and wait for handler to process it
+    rc = cmd_enqueue_cb(&cmdt.cmd, handled_cmd_cb, &cmdt);
+    if (rc)
+        goto stop_task;
+    rtems_event_receive(RTEMS_EVENT_0 | RTEMS_EVENT_1, RTEMS_EVENT_ALL,
+                        CMD_TEST_TIMEOUT_TICKS, &events);
+
+    // check results
+    if (cmdt.status != CMD_STATUS_SUCCESS || !cmdt.handled_cmd)
         rc = 1;
 
-    // wait for command handler to finish, o/w we prematurely destroy the link
-    while(cmdt.status == CMD_STATUS_UNKNOWN);
-
-    return cmdt.status == CMD_STATUS_SUCCESS ? rc : 1;
+stop_task:
+    sc = cmd_handle_task_destroy();
+    if (sc != RTEMS_SUCCESSFUL)
+        rc = 1;
+unregister:
+    cmd_handled_unregister_cb();
+    return rc;
 }
 
-// test command handler using a dummy link implementation
-int test_command_server()
+int test_command()
 {
-    HPSC_MSG_DEFINE(reply);
-    struct cmd_test_link tlink = {
-        .is_write = false,
-        .reply = &reply,
-        .reply_sz = 0
-    };
-    struct link link = {
-        .name = "Command Test Link",
-        .priv = &tlink,
-        .write = test_link_write,
-        .read = test_link_read,
-        .close = test_link_close
-    };
+    rtems_status_code sc;
+    rtems_id task_id;
+    rtems_name task_name = rtems_build_name('C','M','D','H');
     int rc;
-    test_begin("test_command_server");
-    rc = do_test(&link);
-    test_end("test_command_server", rc);
+
+    test_begin("test_command");
+    // create the command handle task
+    sc = rtems_task_create(
+        task_name, 1, RTEMS_MINIMUM_STACK_SIZE,
+        RTEMS_DEFAULT_MODES,
+        RTEMS_FLOATING_POINT | RTEMS_DEFAULT_ATTRIBUTES, &task_id
+    );
+    assert(sc == RTEMS_SUCCESSFUL);
+    rc = do_test(task_id);
+    test_end("test_command", rc);
     return rc;
 }

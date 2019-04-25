@@ -24,12 +24,13 @@ CONFIG_FLAGS += \
 	CONFIG_SHELL \
 # Standalone tests
 CONFIG_FLAGS += \
+	TEST_COMMAND \
 	TEST_MBOX_LSIO_LOOPBACK \
 	TEST_RTI_TIMER \
 	TEST_SHMEM \
 # Runtime tests
 CONFIG_FLAGS += \
-	TEST_COMMAND \
+	TEST_COMMAND_SERVER \
 	TEST_LINK_SHMEM \
 # External tests
 CONFIG_FLAGS += \
@@ -54,11 +55,12 @@ CONFIG_SHELL			= 1
 
 # Enable/disable tests here (some tests require certain CONFIG options):
 # Standalone
+TEST_COMMAND			= 1
 TEST_MBOX_LSIO_LOOPBACK		= 1
 TEST_RTI_TIMER			= 1
 TEST_SHMEM			= 1
 # Runtime
-TEST_COMMAND			= 1
+TEST_COMMAND_SERVER		= 1
 TEST_LINK_SHMEM			= 1
 # External
 TEST_MBOX_LINK_TRCH		= 1
@@ -73,6 +75,7 @@ CSRCS = \
 	watchdog.c
 CSRCS += \
 	tests/command.c \
+	tests/command-server.c \
 	tests/link-mbox-trch.c \
 	tests/link-shmem.c \
 	tests/link-shmem-trch.c \

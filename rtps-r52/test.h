@@ -11,6 +11,7 @@
  */
 
 // Standalone
+int test_command();
 int test_cpu_rti_timers();
 int test_mbox_lsio_loopback();
 int test_shmem();
