@@ -70,10 +70,6 @@ void shutdown(void)
     if (sc != RTEMS_SUCCESSFUL)
         printf("Failed to stop command handler\n");
 
-    // stop running tasks
-    printf("Suspending tasks...\n");
-    rtems_task_iterate(shutdown_task_visitor, NULL);
-
     // disconnect links
     printf("Disconnecting links...\n");
     while ((link = link_store_extract_first())) {
@@ -82,6 +78,10 @@ void shutdown(void)
         if (rc)
             printf("Failed to disconnect link: %s\n", name);
     }
+
+    // stop running tasks
+    printf("Suspending tasks...\n");
+    rtems_task_iterate(shutdown_task_visitor, NULL);
 
     // disable timers
     printf("Disabling RTI timers...\n");
