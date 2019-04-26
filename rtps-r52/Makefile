@@ -76,9 +76,8 @@ CSRCS = \
 CSRCS += \
 	tests/command.c \
 	tests/command-server.c \
-	tests/link-mbox-trch.c \
+	tests/link-external.c \
 	tests/link-shmem.c \
-	tests/link-shmem-trch.c \
 	tests/mailbox.c \
 	tests/rti-timer.c \
 	tests/shmem.c

@@ -13,21 +13,37 @@
 #define WTIMEOUT_TICKS 100
 #define RTIMEOUT_TICKS 100
 
-int test_link_shmem_trch()
+static int test_link_ping(struct link *link)
 {
     HPSC_MSG_DEFINE(arg);
     HPSC_MSG_DEFINE(reply);
     uint32_t payload = 42;
     ssize_t rc;
-    struct link *trch_link = link_store_get(LINK_NAME__SHMEM__TRCH_CLIENT);
-    assert(trch_link);
+    assert(link);
 
-    test_begin("test_link_shmem_trch");
     hpsc_msg_ping(arg, sizeof(arg), &payload, sizeof(payload));
-    rc = link_request(trch_link,
+    rc = link_request(link,
                       WTIMEOUT_TICKS, arg, sizeof(arg),
                       RTIMEOUT_TICKS, reply, sizeof(reply));
     rc = rc <= 0 ? -1 : 0;
-    test_end("test_link_shmem_trch", rc);
     return (int) rc;
+}
+
+int test_link_mbox_trch()
+{
+    int rc;
+    test_begin("test_link_mbox_trch");
+    rc = test_link_ping(link_store_get(LINK_NAME__MBOX__TRCH_CLIENT));
+    test_end("test_link_mbox_trch", rc);
+    return rc;
+}
+
+
+int test_link_shmem_trch()
+{
+    int rc;
+    test_begin("test_link_shmem_trch");
+    rc = test_link_ping(link_store_get(LINK_NAME__SHMEM__TRCH_CLIENT));
+    test_end("test_link_shmem_trch", rc);
+    return rc;
 }
