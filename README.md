@@ -16,9 +16,16 @@ The project layout is:
   This library may only depend on `libhpsc-drivers`.
   * `hpsc`: produces `libhpsc.a` containing common library routines.
   This library may only depend on `libhpsc-drivers`.
+  * `hpsc-test`: produces `libhpsc-test.a` containing tests for `libhpsc`.
+  This library may only depend on `libhpsc`.
 * `plat`: shared platform configurations to be used by applications.
 * `rtps-r52`: produces `rtps-r52.img` containing the reference/test RTEMS
   application for the R52s in the RTPS subsystem.
+
+As a general rule of thumb, libraries should be independent of the RTEMS BSP,
+HPSC platform, and application (e.g., rtps-r52) configuration.
+This includes the creation of RTEMS `tasks` -- create tasks in the application
+and pass task IDs to library routines to start/use when needed.
 
 
 Building
@@ -77,7 +84,7 @@ Current library tools are:
 * `link`: A two-way messaging channel that abstracts the exchange mechanism.
   * `link-mbox`: An implementation of `link` using HPSC Mailboxes.
   * `link-shmem`: An implementation of `link` using shared memory.
-  * `link-store`: A common location to open links for easy access.
+  * `link-store`: A common location to store open links for easy access.
 * `shmem`: A shared memory messaging interface, compatible with HPSC messages.
   * `shmem-poll`: Tasks to poll shared memory for HPSC message statuses and
                   issue callbacks which mimic ISRs.
@@ -104,5 +111,14 @@ A few lessons learned for getting started with RTEMS:
   `rtems_interrupt_handler_install`/`rtems_interrupt_handler_remove`.
   * See: https://docs.rtems.org/branches/master/c-user/interrupt_manager.html
   and refer to our existing drivers.
+* Testing
+  * Keep test routines in separate libraries when possible.
+  Applications may opt to not link against test code when unneeded.
+  * Tests should be reusable across applications with only minor configuration
+  (given as parameters).
+  * It may be reasonable to exclude test libraries from the task creation rule.
+  This couples them more tightly with the BSP and application configuration, but
+  they should still be independent of platform configuration.
+  This exclusion is strictly for convenience.
 
 See https://docs.rtems.org for more help.

@@ -74,13 +74,10 @@ CSRCS = \
 	shutdown.c \
 	watchdog.c
 CSRCS += \
-	tests/command.c \
-	tests/command-server.c \
+	tests/hpsc-test-wrappers.c \
 	tests/link-external.c \
-	tests/link-shmem.c \
 	tests/mailbox.c \
-	tests/rti-timer.c \
-	tests/shmem.c
+	tests/rti-timer.c
 COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 
 H_FILES = \
@@ -106,18 +103,21 @@ all:    ${ARCH} ${ARCH}/tests $(PGM)
 CFLAGS += \
 	$(CONFIG_ARGS) \
 	-I. -Itests -I../plat \
-	-I../lib/drivers -I../lib/drivers-selftest -I../lib/hpsc
+	-I../lib/drivers -I../lib/drivers-selftest \
+	-I../lib/hpsc -I../lib/hpsc-test
 
 LIBDRIVERS = ../lib/drivers/${ARCH}/libhpsc-drivers.a
 LIBDRIVERS_TEST = ../lib/drivers-selftest/${ARCH}/libhpsc-drivers-selftest.a
 LIBHPSC = ../lib/hpsc/${ARCH}/libhpsc.a
+LIBHPSC_TEST = ../lib/hpsc-test/${ARCH}/libhpsc-test.a
 
 LD_LIBS += \
+	$(LIBHPSC_TEST) \
 	$(LIBHPSC) \
 	$(LIBDRIVERS_TEST) \
 	$(LIBDRIVERS) \
 
-$(OBJS): $(LIBDRIVERS) $(LIBDRIVERS_TEST) $(LIBHPSC) ${ARCH} ${H_FILES} ../plat/* Makefile
+$(OBJS): $(LIBDRIVERS) $(LIBDRIVERS_TEST) $(LIBHPSC) $(LIBHPSC_TEST) ${ARCH} ${H_FILES} ../plat/* Makefile
 
 $(PGM): $(OBJS)
 	$(make-exe)

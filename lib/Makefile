@@ -5,4 +5,5 @@ include $(RTEMS_SHARE)/make/directory.cfg
 SUBDIRS = \
 	drivers \
 	drivers-selftest \
-	hpsc
+	hpsc \
+	hpsc-test

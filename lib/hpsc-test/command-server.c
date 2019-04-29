@@ -7,7 +7,7 @@
 #include <hpsc-msg.h>
 #include <link.h>
 
-#include "test.h"
+#include "hpsc-test.h"
 
 struct cmd_test_link {
     bool is_write;
@@ -83,7 +83,7 @@ static int do_test(struct link *link)
 }
 
 // test command handler using a dummy link implementation
-int test_command_server()
+int hpsc_test_command_server(void)
 {
     HPSC_MSG_DEFINE(reply);
     struct cmd_test_link tlink = {
@@ -98,9 +98,5 @@ int test_command_server()
         .read = test_link_read,
         .close = test_link_close
     };
-    int rc;
-    test_begin("test_command_server");
-    rc = do_test(&link);
-    test_end("test_command_server", rc);
-    return rc;
+    return do_test(&link);
 }

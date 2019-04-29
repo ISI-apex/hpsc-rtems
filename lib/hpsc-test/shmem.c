@@ -5,7 +5,7 @@
 // libhpsc
 #include <shmem.h>
 
-#include "test.h"
+#include "hpsc-test.h"
 
 static int do_test(struct shmem *shm)
 {
@@ -48,19 +48,17 @@ static int do_test(struct shmem *shm)
     return 0;
 }
 
-int test_shmem()
+int hpsc_test_shmem(void)
 {
     // a dummy shared memory region
     uint8_t shmem_reg[HPSC_SHMEM_REGION_SZ] = {0};
     struct shmem *shm;
     int rc;
 
-    test_begin("test_shmem");
     shm = shmem_open(&shmem_reg);
     if (!shm)
         return 1;
     rc = do_test(shm);
     shmem_close(shm);
-    test_end("test_shmem", rc);
     return rc;
 }

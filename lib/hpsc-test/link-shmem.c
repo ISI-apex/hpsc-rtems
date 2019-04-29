@@ -3,17 +3,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <rtems.h>
+
 // libhpsc
 #include <command.h>
-#include <hpsc-msg.h>
 #include <link.h>
 #include <link-shmem.h>
 #include <shmem.h>
 
-#include "test.h"
-
-#define WTIMEOUT_TICKS 10
-#define RTIMEOUT_TICKS 10
+#include "hpsc-test.h"
 
 static void handled_cb(void *arg, cmd_status status)
 {
@@ -21,30 +19,18 @@ static void handled_cb(void *arg, cmd_status status)
     *s = status;
 }
 
-static int do_test(struct link *slink, struct link *clink)
+static int do_test(struct link *slink, struct link *clink,
+                   rtems_interval wtimeout_ticks, rtems_interval rtimeout_ticks)
 {
     // command is sent by client and received by server
-    HPSC_MSG_DEFINE(cmd);
-    HPSC_MSG_DEFINE(reply);
-    ssize_t sz;
-    int rc = 0;
+    int rc;
     cmd_status status = CMD_STATUS_UNKNOWN;
 
     cmd_handled_register_cb(handled_cb, &status);
-
-    hpsc_msg_ping(cmd, sizeof(cmd), NULL, 0);
-    sz = link_request(clink,
-                      WTIMEOUT_TICKS, cmd, sizeof(cmd),
-                      RTIMEOUT_TICKS, reply, sizeof(reply));
-    if (sz <= 0)
-        rc = 1;
-    else if (reply[0] != PONG)
-        rc = 1;
-
+    rc = hpsc_test_link_ping(clink, wtimeout_ticks, rtimeout_ticks);
     // wait for command handler to finish, o/w we prematurely destroy the link
     while (status == CMD_STATUS_UNKNOWN);
     cmd_handled_unregister_cb();
-
     return status == CMD_STATUS_SUCCESS ? rc : 1;
 }
 
@@ -60,7 +46,8 @@ static void create_poll_task(rtems_name name, rtems_id *id)
 }
 
 // test link-shmem (requires command handler to be configured)
-int test_link_shmem()
+int hpsc_test_link_shmem(rtems_interval wtimeout_ticks,
+                         rtems_interval rtimeout_ticks)
 {
     struct hpsc_shmem_region reg_a = { 0 };
     struct hpsc_shmem_region reg_b = { 0 };
@@ -71,8 +58,6 @@ int test_link_shmem()
     struct link *slink;
     struct link *clink;
     int rc;
-
-    test_begin("test_link_shmem");
 
     create_poll_task(rtems_build_name('T','C','S','R'), &stid_recv);
     create_poll_task(rtems_build_name('T','C','S','A'), &stid_ack);
@@ -96,7 +81,7 @@ int test_link_shmem()
         goto free_slink;
     }
 
-    rc = do_test(slink, clink);
+    rc = do_test(slink, clink, wtimeout_ticks, rtimeout_ticks);
 
     if (link_disconnect(clink))
         rc = 1;
@@ -104,6 +89,5 @@ free_slink:
     if (link_disconnect(slink))
         rc = 1;
 
-    test_end("test_link_shmem", rc);
     return rc;
 }

@@ -7,7 +7,7 @@
 // libhpsc
 #include <command.h>
 
-#include "test.h"
+#include "hpsc-test.h"
 
 #define CMD_TEST_TIMEOUT_TICKS 10
 
@@ -87,14 +87,11 @@ unregister:
     return rc;
 }
 
-int test_command()
+int hpsc_test_command(void)
 {
     rtems_status_code sc;
     rtems_id task_id;
     rtems_name task_name = rtems_build_name('C','M','D','H');
-    int rc;
-
-    test_begin("test_command");
     // create the command handle task
     sc = rtems_task_create(
         task_name, 1, RTEMS_MINIMUM_STACK_SIZE,
@@ -102,7 +99,5 @@ int test_command()
         RTEMS_FLOATING_POINT | RTEMS_DEFAULT_ATTRIBUTES, &task_id
     );
     assert(sc == RTEMS_SUCCESSFUL);
-    rc = do_test(task_id);
-    test_end("test_command", rc);
-    return rc;
+    return do_test(task_id);
 }
