@@ -117,7 +117,7 @@ LD_LIBS += \
 	$(LIBDRIVERS_TEST) \
 	$(LIBDRIVERS) \
 
-$(OBJS): $(LIBDRIVERS) $(LIBDRIVERS_TEST) $(LIBHPSC) $(LIBHPSC_TEST) ${ARCH} ${H_FILES} ../plat/* Makefile
+$(OBJS): $(LIBDRIVERS) $(LIBDRIVERS_TEST) $(LIBHPSC) $(LIBHPSC_TEST) ${H_FILES} ../plat/* Makefile | ${ARCH} ${ARCH}/tests
 
 $(PGM): $(OBJS)
 	$(make-exe)

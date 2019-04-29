@@ -71,7 +71,7 @@ all:	${ARCH} $(SRCS) $(LIB)
 
 LIBDRIVERS = ../drivers/${ARCH}/libhpsc-drivers.a
 
-$(OBJS): $(LIBDRIVERS) ${ARCH} ${H_FILES} Makefile
+$(OBJS): $(LIBDRIVERS) ${H_FILES} Makefile | ${ARCH}
 
 $(LIB): ${OBJS}
 	$(make-library)

@@ -58,7 +58,7 @@ all:	${ARCH} $(SRCS) $(LIB)
 
 LIBHPSC = ../hpsc/${ARCH}/libhpsc.a
 
-$(OBJS): $(LIBHPSC) ${ARCH} ${H_FILES} Makefile
+$(OBJS): $(LIBHPSC) ${H_FILES} Makefile | ${ARCH}
 
 $(LIB): ${OBJS}
 	$(make-library)
