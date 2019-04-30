@@ -14,6 +14,7 @@
 // libhpsc
 #include <affinity.h>
 #include <command.h>
+#include <hpsc-cpu.h>
 #include <link.h>
 #include <link-mbox.h>
 #include <link-shmem.h>
@@ -86,13 +87,13 @@ static rtems_status_code init_extra_drivers(
     uint32_t rtit_cpu;
     rtems_vector_number rtit_vec =
         gic_irq_to_rvn(PPI_IRQ__RTI_TIMER, GIC_IRQ_TYPE_PPI);
-    dev_id_cpu_for_each(rtit_cpu) {
+    hpsc_cpu_for_each(rtit_cpu) {
         assert(rtit_cpu < RTEMS_ARRAY_SIZE(rtit_names));
         affinity_pin_self_to_cpu(rtit_cpu);
         sc = hpsc_rti_timer_probe(&rtit, rtit_names[rtit_cpu],
                                   rtit_bases[rtit_cpu], rtit_vec);
         assert(sc == RTEMS_SUCCESSFUL);
-        cpu_set_rtit(rtit);
+        hpsc_cpu_set_rtit(rtit);
     }
 #endif // CONFIG_RTI_TIMER
 
@@ -104,13 +105,13 @@ static rtems_status_code init_extra_drivers(
     uint32_t wdt_cpu;
     rtems_vector_number wdt_vec =
         gic_irq_to_rvn(PPI_IRQ__WDT, GIC_IRQ_TYPE_PPI);
-    dev_id_cpu_for_each(wdt_cpu) {
+    hpsc_cpu_for_each(wdt_cpu) {
         assert(rtit_cpu < RTEMS_ARRAY_SIZE(wdt_names));
         affinity_pin_self_to_cpu(wdt_cpu);
         sc = hpsc_wdt_probe_target(&wdt, wdt_names[wdt_cpu],
                                    wdt_bases[wdt_cpu], wdt_vec);
         assert(sc == RTEMS_SUCCESSFUL);
-        cpu_set_wdt(wdt);
+        hpsc_cpu_set_wdt(wdt);
     }
 #endif // CONFIG_WDT
 
