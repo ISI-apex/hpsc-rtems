@@ -41,83 +41,82 @@ static rtems_status_code init_extra_drivers(
   void *arg
 )
 {
+    cpu_set_t cpuset;
+    rtems_status_code sc;
+
 #if CONFIG_MBOX_LSIO
     struct hpsc_mbox *mbox_lsio = NULL;
-    rtems_status_code mbox_lsio_sc;
     rtems_vector_number mbox_lsio_vec_a =
         gic_irq_to_rvn(RTPS_IRQ__TR_MBOX_0 + MBOX_LSIO__RTPS_RCV_INT,
                        GIC_IRQ_TYPE_SPI);
     rtems_vector_number mbox_lsio_vec_b =
         gic_irq_to_rvn(RTPS_IRQ__TR_MBOX_0 + MBOX_LSIO__RTPS_ACK_INT,
                        GIC_IRQ_TYPE_SPI);
-    mbox_lsio_sc = hpsc_mbox_probe(&mbox_lsio, "TRCH-RTPS Mailbox",
-                                   MBOX_LSIO__BASE,
-                                   mbox_lsio_vec_a, MBOX_LSIO__RTPS_RCV_INT,
-                                   mbox_lsio_vec_b, MBOX_LSIO__RTPS_ACK_INT);
-    assert(mbox_lsio_sc == RTEMS_SUCCESSFUL);
+    sc = hpsc_mbox_probe(&mbox_lsio, "TRCH-RTPS Mailbox", MBOX_LSIO__BASE,
+                         mbox_lsio_vec_a, MBOX_LSIO__RTPS_RCV_INT,
+                         mbox_lsio_vec_b, MBOX_LSIO__RTPS_ACK_INT);
+    assert(sc == RTEMS_SUCCESSFUL);
     dev_add_mbox(DEV_ID_MBOX_LSIO, mbox_lsio);
 #endif // CONFIG_MBOX_LSIO
 
 #if CONFIG_MBOX_HPPS_RTPS
     struct hpsc_mbox *mbox_hpps = NULL;
-    rtems_status_code mbox_hpps_sc;
     rtems_vector_number mbox_hpps_vec_a =
         gic_irq_to_rvn(RTPS_IRQ__HR_MBOX_0 + MBOX_HPPS_RTPS__RTPS_RCV_INT,
                        GIC_IRQ_TYPE_SPI);
     rtems_vector_number mbox_hpps_vec_b =
         gic_irq_to_rvn(RTPS_IRQ__HR_MBOX_0 + MBOX_HPPS_RTPS__RTPS_ACK_INT,
                        GIC_IRQ_TYPE_SPI);
-    mbox_hpps_sc = hpsc_mbox_probe(&mbox_hpps, "HPPS-RTPS Mailbox",
-                                   MBOX_HPPS_RTPS__BASE,
-                                   mbox_hpps_vec_a, MBOX_HPPS_RTPS__RTPS_RCV_INT,
-                                   mbox_hpps_vec_b, MBOX_HPPS_RTPS__RTPS_ACK_INT);
-    assert(mbox_hpps_sc == RTEMS_SUCCESSFUL);
+    sc = hpsc_mbox_probe(&mbox_hpps, "HPPS-RTPS Mailbox", MBOX_HPPS_RTPS__BASE,
+                         mbox_hpps_vec_a, MBOX_HPPS_RTPS__RTPS_RCV_INT,
+                         mbox_hpps_vec_b, MBOX_HPPS_RTPS__RTPS_ACK_INT);
+    assert(sc == RTEMS_SUCCESSFUL);
     dev_add_mbox(DEV_ID_MBOX_HPPS_RTPS, mbox_hpps);
 #endif // CONFIG_MBOX_HPPS_RTPS
 
+    // store CPU affinity before CPU-specific operations
+    sc = rtems_task_get_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
+    assert(sc == RTEMS_SUCCESSFUL);
+
 #if CONFIG_RTI_TIMER
-    // TODO: RTITs for correct core or both cores, depending on configuration
-    struct hpsc_rti_timer *rtit0 = NULL;
-    rtems_status_code rtit0_sc;
-    cpu_set_t rtit0_cpuset;
-    rtems_vector_number rtit0_vec =
+    volatile uint32_t *rtit_bases[] =
+        { RTI_TIMER_RTPS_R52_0__RTPS_BASE, RTI_TIMER_RTPS_R52_1__RTPS_BASE };
+    static const char *rtit_names[] = { "RTPS-R52-RTIT-0", "RTPS-R52-RTIT-1" };
+    struct hpsc_rti_timer *rtit;
+    uint32_t rtit_cpu;
+    rtems_vector_number rtit_vec =
         gic_irq_to_rvn(PPI_IRQ__RTI_TIMER, GIC_IRQ_TYPE_PPI);
-    // set CPU affinity
-    rtit0_sc =
-        rtems_task_get_affinity(RTEMS_SELF, sizeof(rtit0_cpuset), &rtit0_cpuset);
-    assert(rtit0_sc == RTEMS_SUCCESSFUL);
-    affinity_pin_self_to_cpu(0);
-    rtit0_sc = hpsc_rti_timer_probe(&rtit0, "RTPS RTI TMR0",
-                                    RTI_TIMER_RTPS_R52_0__RTPS_BASE, rtit0_vec);
-    assert(rtit0_sc == RTEMS_SUCCESSFUL);
-    dev_add_rtit(DEV_ID_CPU_RTPS_R52_0, rtit0);
-    // restore CPU affinity
-    rtit0_sc =
-        rtems_task_set_affinity(RTEMS_SELF, sizeof(rtit0_cpuset), &rtit0_cpuset);
-    assert(rtit0_sc == RTEMS_SUCCESSFUL);
+    dev_id_cpu_for_each(rtit_cpu) {
+        assert(rtit_cpu < RTEMS_ARRAY_SIZE(rtit_names));
+        affinity_pin_self_to_cpu(rtit_cpu);
+        sc = hpsc_rti_timer_probe(&rtit, rtit_names[rtit_cpu],
+                                  rtit_bases[rtit_cpu], rtit_vec);
+        assert(sc == RTEMS_SUCCESSFUL);
+        cpu_set_rtit(rtit);
+    }
 #endif // CONFIG_RTI_TIMER
 
 #if CONFIG_WDT
-    // TODO: WDTs for correct core or both cores, depending on configuration
-    struct hpsc_wdt *wdt0 = NULL;
-    rtems_status_code wdt0_sc;
-    cpu_set_t wdt0_cpuset;
-    rtems_vector_number wdt0_vec =
+    volatile uint32_t *wdt_bases[] =
+        { WDT_RTPS_R52_0_RTPS_BASE, WDT_RTPS_R52_1_RTPS_BASE };
+    static const char *wdt_names[] = { "RTPS-R52-WDT-0", "RTPS-R52-WDT-1" };
+    struct hpsc_wdt *wdt;
+    uint32_t wdt_cpu;
+    rtems_vector_number wdt_vec =
         gic_irq_to_rvn(PPI_IRQ__WDT, GIC_IRQ_TYPE_PPI);
-    // set CPU affinity
-    wdt0_sc =
-        rtems_task_get_affinity(RTEMS_SELF, sizeof(wdt0_cpuset), &wdt0_cpuset);
-    assert(wdt0_sc == RTEMS_SUCCESSFUL);
-    affinity_pin_self_to_cpu(0);
-    wdt0_sc = hpsc_wdt_probe_target(&wdt0, "RTPS0", WDT_RTPS_R52_0_RTPS_BASE,
-                                    wdt0_vec);
-    assert(wdt0_sc == RTEMS_SUCCESSFUL);
-    dev_add_wdt(DEV_ID_CPU_RTPS_R52_0, wdt0);
-    // restore CPU affinity
-    wdt0_sc =
-        rtems_task_set_affinity(RTEMS_SELF, sizeof(wdt0_cpuset), &wdt0_cpuset);
-    assert(wdt0_sc == RTEMS_SUCCESSFUL);
+    dev_id_cpu_for_each(wdt_cpu) {
+        assert(rtit_cpu < RTEMS_ARRAY_SIZE(wdt_names));
+        affinity_pin_self_to_cpu(wdt_cpu);
+        sc = hpsc_wdt_probe_target(&wdt, wdt_names[wdt_cpu],
+                                   wdt_bases[wdt_cpu], wdt_vec);
+        assert(sc == RTEMS_SUCCESSFUL);
+        cpu_set_wdt(wdt);
+    }
 #endif // CONFIG_WDT
+
+    // restore CPU affinity
+    sc = rtems_task_set_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
+    assert(sc == RTEMS_SUCCESSFUL);
 
     return RTEMS_SUCCESSFUL;
 }

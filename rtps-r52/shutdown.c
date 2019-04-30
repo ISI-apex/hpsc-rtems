@@ -12,6 +12,7 @@
 #include <hpsc-wdt.h>
 
 // libhpsc
+#include <affinity.h>
 #include <command.h>
 #include <link-store.h>
 
@@ -61,6 +62,10 @@ void shutdown(void)
     rtems_status_code sc;
     int rc;
     size_t i;
+    uint32_t cpu;
+    // TODO: may not be able to bind to all CPUs if task's cpuset disallows it
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
 
     // TODO: Send a message to TRCH
 
@@ -88,16 +93,6 @@ void shutdown(void)
     printf("Suspending tasks...\n");
     rtems_task_iterate(shutdown_task_visitor, NULL);
 
-    // disable timers
-    printf("Disabling RTI timers...\n");
-    dev_id_cpu_for_each_rtit(i, rtit) {
-        if (rtit) {
-            dev_remove_rtit(i);
-            sc = hpsc_rti_timer_remove(rtit);
-            assert(sc == RTEMS_SUCCESSFUL);
-        }
-    }
-
     // shutdown mailboxes
     printf("Removing mailboxes...\n");
     dev_id_mbox_for_each(i, mbox) {
@@ -108,15 +103,36 @@ void shutdown(void)
         }
     }
 
+    // store current affinity
+    sc = rtems_task_get_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
+    assert(sc == RTEMS_SUCCESSFUL);
+
+    // disable timers
+    printf("Disabling RTI timers...\n");
+    dev_id_cpu_for_each(cpu) {
+        affinity_pin_self_to_cpu(cpu);
+        rtit = cpu_get_rtit();
+        if (rtit) {
+            cpu_set_rtit(NULL);
+            sc = hpsc_rti_timer_remove(rtit);
+            assert(sc == RTEMS_SUCCESSFUL);
+        }
+    }
+
     // stop kicking watchdogs
     printf("Removing watchdogs...\n");
-    dev_id_cpu_for_each_wdt(i, wdt) {
+    dev_id_cpu_for_each(cpu) {
+        affinity_pin_self_to_cpu(cpu);
+        wdt = cpu_get_wdt();
         if (wdt) {
-            dev_remove_wdt(i);
+            cpu_set_wdt(NULL);
             sc = hpsc_wdt_remove(wdt);
             assert(sc == RTEMS_SUCCESSFUL);
         }
     }
+
+    sc = rtems_task_set_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
+    assert(sc == RTEMS_SUCCESSFUL);
 
     // RTEMS should enter an infinite loop until TRCH resets us
     printf("Exiting application...\n");

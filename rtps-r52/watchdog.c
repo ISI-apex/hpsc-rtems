@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <time.h>
 
@@ -31,18 +32,20 @@ static rtems_task watchdog_task(rtems_task_argument arg)
 {
     rtems_interval ticks = RTEMS_MICROSECONDS_TO_TICKS(WDT_KICK_INTERVAL_US);
     unsigned cpu = (unsigned) arg;
-    struct hpsc_wdt *wdt = dev_get_wdt(cpu);
-    assert(wdt);
+    struct hpsc_wdt *wdt;
 
     // must run from the WDT's CPU
     affinity_pin_self_to_cpu(cpu);
+
+    wdt = cpu_get_wdt();
+    assert(wdt);
 
     // once enabled, the WDT can't be stopped
     hpsc_wdt_enable(wdt, watchdog_timeout_isr, wdt);
 
     while (1) {
         // get WDT every time, in case it's removed (still a race condition)
-        wdt = dev_get_wdt(cpu);
+        wdt = cpu_get_wdt();
         if (wdt)
             hpsc_wdt_kick(wdt);
         else
@@ -62,14 +65,8 @@ rtems_status_code watchdog_tasks_create(void)
     rtems_name task_name;
     rtems_status_code sc = RTEMS_SUCCESSFUL;
     unsigned cpu;
-    unsigned count = 0;
 
     dev_id_cpu_for_each(cpu) {
-        if (!dev_get_wdt(cpu)) {
-            printf("No WDT found for CPU: %u\n", cpu);
-            continue;
-        }
-        count++;
         printf("Create watchdog task: %u\n", cpu);
         task_name = rtems_build_name('W','D','T',cpu);
         sc = rtems_task_create(
@@ -89,6 +86,5 @@ rtems_status_code watchdog_tasks_create(void)
         }
     }
 
-    assert(count); // we should have at least one WDT
     return sc;
 }
