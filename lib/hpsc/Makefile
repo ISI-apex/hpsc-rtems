@@ -9,6 +9,7 @@ LIB=${ARCH}/${LIBNAME}
 C_PIECES= \
 	affinity \
 	command \
+	hpsc-cpu \
 	hpsc-msg \
 	link \
 	link-mbox \
@@ -26,6 +27,7 @@ CC_O_FILES=$(CC_PIECES:%=${ARCH}/%.o)
 H_FILES = \
 	affinity.h \
 	command.h \
+	hpsc-cpu.h \
 	hpsc-msg.h \
 	link.h \
 	link-mbox.h \
