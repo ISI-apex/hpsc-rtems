@@ -1,8 +1,7 @@
 #include <assert.h>
-#include <stdint.h>
 #include <stdio.h>
-#include <time.h>
 
+#include <rtems.h>
 #include <rtems/bspIo.h>
 
 // driver
@@ -30,6 +29,7 @@ static void watchdog_timeout_isr(void *arg)
 
 static rtems_task watchdog_task(rtems_task_argument arg)
 {
+    rtems_status_code sc;
     rtems_interval ticks = RTEMS_MICROSECONDS_TO_TICKS(WDT_KICK_INTERVAL_US);
     unsigned cpu = (unsigned) arg;
     struct hpsc_wdt *wdt;
@@ -37,20 +37,16 @@ static rtems_task watchdog_task(rtems_task_argument arg)
     // must run from the WDT's CPU
     affinity_pin_self_to_cpu(cpu);
 
+    // get the WDT driver handle
     wdt = dev_cpu_get_wdt();
     assert(wdt);
 
     // once enabled, the WDT can't be stopped
-    hpsc_wdt_enable(wdt, watchdog_timeout_isr, wdt);
+    sc = hpsc_wdt_enable(wdt, watchdog_timeout_isr, wdt);
+    assert(sc == RTEMS_SUCCESSFUL);
 
     while (1) {
-        // get WDT every time, in case it's removed (still a race condition)
-        wdt = dev_cpu_get_wdt();
-        if (wdt)
-            hpsc_wdt_kick(wdt);
-        else
-            // not much we can do except to keep trying
-            printf("watchdog_task: no WDT device found for cpu: %u\n", cpu);
+        hpsc_wdt_kick(wdt);
 #if 1 // TODO: remove this after frequency is fixed in RTEMS
         rtems_task_wake_after(ticks / 8);
 #else
