@@ -15,6 +15,7 @@
 #include <affinity.h>
 #include <command.h>
 #include <devices.h>
+#include <link.h>
 #include <link-store.h>
 
 #include "shutdown.h"
@@ -43,7 +44,7 @@ static bool shutdown_task_visitor(rtems_tcb *tcb, void *arg)
     // don't stop ourself
     if (rtems_task_self() == id) // RTEMS_SELF doesn't work here
         return false;
-    printf("Deleting task: %u\n", rtems_capture_task_name(tcb));
+    printf("Suspending task: %u\n", rtems_capture_task_name(tcb));
     // deleting tasks causes a crash, so just suspend them instead
     if (rtems_task_is_suspended(id) == RTEMS_SUCCESSFUL) {
         sc = rtems_task_suspend(id);
@@ -75,6 +76,8 @@ void shutdown(void)
     if (sc != RTEMS_SUCCESSFUL)
         printf("Failed to stop command handler\n");
 
+    // NOTE: stop any other tasks with handles on links before continuing
+
     // disconnect links
     printf("Disconnecting links...\n");
     while ((link = link_store_extract_first())) {
@@ -84,7 +87,10 @@ void shutdown(void)
             printf("Failed to disconnect link: %s\n", name);
     }
 
-    // we destroyed links, so empty the command queue which references them
+    // Empty the command queue which may now have stale link references.
+    // This is done _after_ destroying links because links may have received and
+    // enqueued messages after we stopped the command handler task, and we can't
+    // destroy the links _before_ stopping the command handler task.
     printf("Dropping pending commands...\n");
     i = cmd_drop_all();
     printf("Dropped: %zu\n", i);
@@ -103,12 +109,11 @@ void shutdown(void)
         }
     }
 
-    // store current affinity
-    sc = rtems_task_get_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
-    assert(sc == RTEMS_SUCCESSFUL);
+    // From here on we change our CPU affinity, but we don't really need to
+    // save/restore it since we're shutting down...
 
     // disable timers
-    printf("Disabling RTI timers...\n");
+    printf("Removing RTI timers...\n");
     dev_cpu_for_each(cpu) {
         affinity_pin_self_to_cpu(cpu);
         rtit = dev_cpu_get_rtit();
@@ -130,9 +135,6 @@ void shutdown(void)
             assert(sc == RTEMS_SUCCESSFUL);
         }
     }
-
-    sc = rtems_task_set_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
-    assert(sc == RTEMS_SUCCESSFUL);
 
     // RTEMS should enter an infinite loop until TRCH resets us
     printf("Exiting application...\n");
