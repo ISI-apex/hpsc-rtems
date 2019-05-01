@@ -10,7 +10,6 @@ C_PIECES= \
 	affinity \
 	command \
 	devices \
-	hpsc-cpu \
 	hpsc-msg \
 	link \
 	link-mbox \
@@ -29,7 +28,6 @@ H_FILES = \
 	affinity.h \
 	command.h \
 	devices.h \
-	hpsc-cpu.h \
 	hpsc-msg.h \
 	link.h \
 	link-mbox.h \

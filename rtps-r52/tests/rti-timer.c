@@ -13,7 +13,7 @@
 
 // libhpsc
 #include <affinity.h>
-#include <hpsc-cpu.h>
+#include <devices.h>
 
 // plat
 #include <hwinfo.h>
@@ -36,10 +36,10 @@ int test_cpu_rti_timers()
     assert(sc == RTEMS_SUCCESSFUL);
     printf("Saving CPU affinity count: %d\n", CPU_COUNT(&cpuset));
 
-    hpsc_cpu_for_each(id) {
+    dev_cpu_for_each(id) {
         // must first bind to the correct CPU
         affinity_pin_self_to_cpu(id);
-        tmr = hpsc_cpu_get_rtit();
+        tmr = dev_cpu_get_rtit();
         assert(tmr);
         printf("Setting CPU affinity to CPU: %"PRIu32"\n", id);
         rc = hpsc_rti_timer_test_device(tmr, RTI_MAX_COUNT);

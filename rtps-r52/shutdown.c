@@ -15,7 +15,6 @@
 #include <affinity.h>
 #include <command.h>
 #include <devices.h>
-#include <hpsc-cpu.h>
 #include <link-store.h>
 
 #include "shutdown.h"
@@ -110,11 +109,11 @@ void shutdown(void)
 
     // disable timers
     printf("Disabling RTI timers...\n");
-    hpsc_cpu_for_each(cpu) {
+    dev_cpu_for_each(cpu) {
         affinity_pin_self_to_cpu(cpu);
-        rtit = hpsc_cpu_get_rtit();
+        rtit = dev_cpu_get_rtit();
         if (rtit) {
-            hpsc_cpu_set_rtit(NULL);
+            dev_cpu_set_rtit(NULL);
             sc = hpsc_rti_timer_remove(rtit);
             assert(sc == RTEMS_SUCCESSFUL);
         }
@@ -122,11 +121,11 @@ void shutdown(void)
 
     // stop kicking watchdogs
     printf("Removing watchdogs...\n");
-    hpsc_cpu_for_each(cpu) {
+    dev_cpu_for_each(cpu) {
         affinity_pin_self_to_cpu(cpu);
-        wdt = hpsc_cpu_get_wdt();
+        wdt = dev_cpu_get_wdt();
         if (wdt) {
-            hpsc_cpu_set_wdt(NULL);
+            dev_cpu_set_wdt(NULL);
             sc = hpsc_wdt_remove(wdt);
             assert(sc == RTEMS_SUCCESSFUL);
         }
