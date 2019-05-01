@@ -80,6 +80,7 @@ Current library tools are:
 
 * `affinity`: A simple wrapper around RTEMS CPU affinity implementation.
 * `command`: A framework for command processing.
+* `devices`: A common location to store dynamic devices for easy access.
 * `hpsc-msg`: Utility functions for constructing HPSC messages.
 * `link`: A two-way messaging channel that abstracts the exchange mechanism.
   * `link-mbox`: An implementation of `link` using HPSC Mailboxes.
