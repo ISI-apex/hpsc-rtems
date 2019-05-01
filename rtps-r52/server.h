@@ -1,7 +1,8 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include <stdlib.h>
+#include <stdint.h>
+#include <unistd.h>
 
 // libhpsc
 #include <command.h>

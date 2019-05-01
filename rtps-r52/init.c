@@ -1,15 +1,16 @@
 #include <assert.h>
 #include <sched.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include <rtems.h>
 #include <rtems/shell.h>
 
-// plat
-#include <hwinfo.h>
-#include <mailbox-map.h>
-#include <mem-map.h>
+// drivers
+#include <hpsc-mbox.h>
+#include <hpsc-rti-timer.h>
+#include <hpsc-wdt.h>
 
 // libhpsc
 #include <affinity.h>
@@ -20,10 +21,10 @@
 #include <link-shmem.h>
 #include <link-store.h>
 
-// drivers
-#include <hpsc-mbox.h>
-#include <hpsc-rti-timer.h>
-#include <hpsc-wdt.h>
+// plat
+#include <hwinfo.h>
+#include <mailbox-map.h>
+#include <mem-map.h>
 
 #include "gic.h"
 #include "link-names.h"

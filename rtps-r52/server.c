@@ -1,14 +1,13 @@
-#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 
 // libhpsc
 #include <command.h>
-#include <server.h>
+
+#include "server.h"
 
 ssize_t server_process(struct cmd *cmd, void *reply, size_t reply_sz)
 {
-    assert(reply_sz <= HPSC_MSG_SIZE);
     switch (cmd->msg[0]) {
         case NOP:
             // do nothing and reply nothing command
