@@ -94,9 +94,8 @@ int hpsc_test_command(void)
     rtems_name task_name = rtems_build_name('C','M','D','H');
     // create the command handle task
     sc = rtems_task_create(
-        task_name, 1, RTEMS_MINIMUM_STACK_SIZE,
-        RTEMS_DEFAULT_MODES,
-        RTEMS_FLOATING_POINT | RTEMS_DEFAULT_ATTRIBUTES, &task_id
+        task_name, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
+        RTEMS_DEFAULT_ATTRIBUTES, &task_id
     );
     assert(sc == RTEMS_SUCCESSFUL);
     return do_test(task_id);

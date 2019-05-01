@@ -211,11 +211,13 @@ static void init_client_links(void)
     rtems_name tsc_tn_ack = rtems_build_name('T', 'S', 'C', 'A');
     tsc_sc = rtems_task_create(
         tsc_tn_recv, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
-        RTEMS_DEFAULT_ATTRIBUTES, &tsc_tid_recv);
+        RTEMS_DEFAULT_ATTRIBUTES, &tsc_tid_recv
+    );
     assert(tsc_sc == RTEMS_SUCCESSFUL);
     tsc_sc = rtems_task_create(
         tsc_tn_ack, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
-        RTEMS_DEFAULT_ATTRIBUTES, &tsc_tid_ack);
+        RTEMS_DEFAULT_ATTRIBUTES, &tsc_tid_ack
+    );
     assert(tsc_sc == RTEMS_SUCCESSFUL);
     struct link *tsc_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_CLIENT,
         (volatile void *) RTPS_R52_SHM_ADDR__RTPS_TRCH_SEND,
@@ -237,11 +239,13 @@ static void init_server_links()
     rtems_name tss_tn_ack = rtems_build_name('T', 'S', 'S', 'A');
     tss_sc = rtems_task_create(
         tss_tn_recv, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
-        RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_recv);
+        RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_recv
+    );
     assert(tss_sc == RTEMS_SUCCESSFUL);
     tss_sc = rtems_task_create(
         tss_tn_ack, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
-        RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_ack);
+        RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_ack
+    );
     assert(tss_sc == RTEMS_SUCCESSFUL);
     struct link *tss_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_SERVER,
         (volatile void *) RTPS_R52_SHM_ADDR__TRCH_RTPS_SEND,
@@ -277,9 +281,8 @@ static void early_tasks(void)
     // command queue handler task
     task_name = rtems_build_name('C','M','D','H');
     sc = rtems_task_create(
-        task_name, 1, RTEMS_MINIMUM_STACK_SIZE,
-        RTEMS_DEFAULT_MODES,
-        RTEMS_FLOATING_POINT | RTEMS_DEFAULT_ATTRIBUTES, &task_id
+        task_name, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
+        RTEMS_DEFAULT_ATTRIBUTES, &task_id
     );
     if (sc != RTEMS_SUCCESSFUL) 
         rtems_panic("command handler task create");

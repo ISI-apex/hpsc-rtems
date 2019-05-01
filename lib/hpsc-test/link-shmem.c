@@ -38,9 +38,8 @@ static void create_poll_task(rtems_name name, rtems_id *id)
 {
     assert(id);
     rtems_status_code sc = rtems_task_create(
-        name, 1, RTEMS_MINIMUM_STACK_SIZE,
-        RTEMS_DEFAULT_MODES,
-        RTEMS_FLOATING_POINT | RTEMS_DEFAULT_ATTRIBUTES, id
+        name, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
+        RTEMS_DEFAULT_ATTRIBUTES, id
     );
     assert(sc == RTEMS_SUCCESSFUL);
 }
