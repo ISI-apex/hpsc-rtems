@@ -55,7 +55,7 @@ static rtems_task watchdog_task(rtems_task_argument arg)
     }
 }
 
-rtems_status_code watchdog_tasks_create(void)
+rtems_status_code watchdog_tasks_create(rtems_task_priority priority)
 {
     rtems_id task_id;
     rtems_name task_name;
@@ -66,7 +66,7 @@ rtems_status_code watchdog_tasks_create(void)
         printf("Create watchdog task: %u\n", cpu);
         task_name = rtems_build_name('W','D','T',cpu);
         sc = rtems_task_create(
-            task_name, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
+            task_name, priority, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
             RTEMS_DEFAULT_ATTRIBUTES, &task_id
         );
         if (sc != RTEMS_SUCCESSFUL) {
