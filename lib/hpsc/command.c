@@ -258,7 +258,8 @@ rtems_status_code cmd_handle_task_destroy(void)
     if (cmd_handler.running) {
         sc = rtems_event_send(cmd_handler.tid, RTEMS_EVENT_1);
         if (sc == RTEMS_SUCCESSFUL) {
-            while (cmd_handler.running); // wait for task to finish
+            while (cmd_handler.running) // wait for task to finish
+                rtems_task_wake_after(RTEMS_YIELD_PROCESSOR);
             cmd_handler_set(RTEMS_ID_NONE, NULL, 0, false);
         }
     }

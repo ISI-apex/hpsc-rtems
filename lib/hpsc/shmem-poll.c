@@ -97,7 +97,8 @@ rtems_status_code shmem_poll_task_destroy(struct shmem_poll *sp)
     sc = rtems_event_send(sp->tid, RTEMS_EVENT_0);
     if (sc == RTEMS_SUCCESSFUL) {
         assert(sp->tid != rtems_task_self());
-        while (sp->running); // wait for task to complete
+        while (sp->running) // wait for task to complete
+            rtems_task_wake_after(RTEMS_YIELD_PROCESSOR);
         free(sp);
     }
     return sc;
