@@ -3,7 +3,8 @@
 
 #include <stdlib.h>
 
-#include "command.h"
+// libhpsc
+#include <command.h>
 
 // Compatible with cmd_handler_t function
 ssize_t server_process(struct cmd *cmd, void *reply, size_t reply_sz);
