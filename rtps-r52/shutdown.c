@@ -14,10 +14,10 @@
 // libhpsc
 #include <affinity.h>
 #include <command.h>
+#include <devices.h>
 #include <hpsc-cpu.h>
 #include <link-store.h>
 
-#include "devices.h"
 #include "shutdown.h"
 
 

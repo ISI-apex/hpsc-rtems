@@ -14,6 +14,7 @@
 // libhpsc
 #include <affinity.h>
 #include <command.h>
+#include <devices.h>
 #include <hpsc-cpu.h>
 #include <link.h>
 #include <link-mbox.h>
@@ -25,7 +26,6 @@
 #include <hpsc-rti-timer.h>
 #include <hpsc-wdt.h>
 
-#include "devices.h"
 #include "gic.h"
 #include "link-names.h"
 #include "server.h"

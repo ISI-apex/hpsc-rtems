@@ -68,7 +68,6 @@ TEST_SHMEM_LINK_TRCH		= 1
 
 # C source names
 CSRCS = \
-	devices.c \
 	init.c \
 	server.c \
 	shutdown.c \
@@ -81,7 +80,6 @@ CSRCS += \
 COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 
 H_FILES = \
-	devices.h \
 	gic.h \
 	link-names.h \
 	server.h \

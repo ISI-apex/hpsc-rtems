@@ -9,7 +9,9 @@
 // drivers-selftest
 #include <hpsc-mbox-test.h>
 
-#include "devices.h"
+// libhpsc
+#include <devices.h>
+
 #include "test.h"
 
 #define WTIMEOUT_TICKS 10

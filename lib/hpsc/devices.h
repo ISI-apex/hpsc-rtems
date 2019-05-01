@@ -3,8 +3,6 @@
 
 #include <hpsc-mbox.h>
 
-// It would be nice to keep mailbox device tracking more dynamic, but without
-// advanced data structures readily available, we'll settle for a static count
 typedef enum {
     DEV_ID_MBOX_LSIO = 0,
     DEV_ID_MBOX_HPPS_TRCH,
