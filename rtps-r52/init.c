@@ -57,7 +57,7 @@ static rtems_status_code init_extra_drivers(
                          mbox_lsio_vec_a, MBOX_LSIO__RTPS_RCV_INT,
                          mbox_lsio_vec_b, MBOX_LSIO__RTPS_ACK_INT);
     assert(sc == RTEMS_SUCCESSFUL);
-    dev_add_mbox(DEV_ID_MBOX_LSIO, mbox_lsio);
+    dev_set_mbox(DEV_ID_MBOX_LSIO, mbox_lsio);
 #endif // CONFIG_MBOX_LSIO
 
 #if CONFIG_MBOX_HPPS_RTPS
@@ -72,7 +72,7 @@ static rtems_status_code init_extra_drivers(
                          mbox_hpps_vec_a, MBOX_HPPS_RTPS__RTPS_RCV_INT,
                          mbox_hpps_vec_b, MBOX_HPPS_RTPS__RTPS_ACK_INT);
     assert(sc == RTEMS_SUCCESSFUL);
-    dev_add_mbox(DEV_ID_MBOX_HPPS_RTPS, mbox_hpps);
+    dev_set_mbox(DEV_ID_MBOX_HPPS_RTPS, mbox_hpps);
 #endif // CONFIG_MBOX_HPPS_RTPS
 
     // store CPU affinity before CPU-specific operations

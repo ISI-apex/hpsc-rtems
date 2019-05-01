@@ -98,7 +98,7 @@ void shutdown(void)
     printf("Removing mailboxes...\n");
     dev_id_mbox_for_each(i, mbox) {
         if (mbox) {
-            dev_remove_mbox(i);
+            dev_set_mbox(i, NULL);
             sc = hpsc_mbox_remove(mbox);
             assert(sc == RTEMS_SUCCESSFUL);
         }
