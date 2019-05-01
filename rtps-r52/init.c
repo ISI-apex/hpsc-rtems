@@ -35,6 +35,12 @@
 #define CMD_TIMEOUT_TICKS 1000
 #define SHMEM_POLL_TICKS 10
 
+// lower values are higher priority, in range 1-255
+#define TASK_PRI_WDT 1
+#define TASK_PRI_SHMEM_POLL_TRCH 10
+#define TASK_PRI_CMDH 20
+#define TASK_PRI_SHELL 100
+
 static rtems_status_code init_extra_drivers(
   rtems_device_major_number major,
   rtems_device_minor_number minor,
@@ -210,13 +216,13 @@ static void init_client_links(void)
     rtems_name tsc_tn_recv = rtems_build_name('T', 'S', 'C', 'R');
     rtems_name tsc_tn_ack = rtems_build_name('T', 'S', 'C', 'A');
     tsc_sc = rtems_task_create(
-        tsc_tn_recv, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
-        RTEMS_DEFAULT_ATTRIBUTES, &tsc_tid_recv
+        tsc_tn_recv, TASK_PRI_SHMEM_POLL_TRCH, RTEMS_MINIMUM_STACK_SIZE,
+        RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &tsc_tid_recv
     );
     assert(tsc_sc == RTEMS_SUCCESSFUL);
     tsc_sc = rtems_task_create(
-        tsc_tn_ack, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
-        RTEMS_DEFAULT_ATTRIBUTES, &tsc_tid_ack
+        tsc_tn_ack, TASK_PRI_SHMEM_POLL_TRCH, RTEMS_MINIMUM_STACK_SIZE,
+        RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &tsc_tid_ack
     );
     assert(tsc_sc == RTEMS_SUCCESSFUL);
     struct link *tsc_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_CLIENT,
@@ -238,13 +244,13 @@ static void init_server_links()
     rtems_name tss_tn_recv = rtems_build_name('T', 'S', 'S', 'R');
     rtems_name tss_tn_ack = rtems_build_name('T', 'S', 'S', 'A');
     tss_sc = rtems_task_create(
-        tss_tn_recv, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
-        RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_recv
+        tss_tn_recv, TASK_PRI_SHMEM_POLL_TRCH, RTEMS_MINIMUM_STACK_SIZE,
+        RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_recv
     );
     assert(tss_sc == RTEMS_SUCCESSFUL);
     tss_sc = rtems_task_create(
-        tss_tn_ack, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
-        RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_ack
+        tss_tn_ack, TASK_PRI_SHMEM_POLL_TRCH, RTEMS_MINIMUM_STACK_SIZE,
+        RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_ack
     );
     assert(tss_sc == RTEMS_SUCCESSFUL);
     struct link *tss_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_SERVER,
@@ -281,8 +287,8 @@ static void early_tasks(void)
     // command queue handler task
     task_name = rtems_build_name('C','M','D','H');
     sc = rtems_task_create(
-        task_name, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
-        RTEMS_DEFAULT_ATTRIBUTES, &task_id
+        task_name, TASK_PRI_CMDH, RTEMS_MINIMUM_STACK_SIZE,
+        RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &task_id
     );
     if (sc != RTEMS_SUCCESSFUL) 
         rtems_panic("command handler task create");
@@ -294,7 +300,7 @@ static void early_tasks(void)
 static void init_tasks(void)
 {
 #if CONFIG_WDT
-    if (watchdog_tasks_create(1) != RTEMS_SUCCESSFUL)
+    if (watchdog_tasks_create(TASK_PRI_WDT) != RTEMS_SUCCESSFUL)
         rtems_panic("watchdogs");
 #endif // CONFIG_WDT
 }
@@ -309,7 +315,7 @@ static void late_tasks(void)
     sc_shell = rtems_shell_init(
         "SHLL",                       /* task name */
         RTEMS_MINIMUM_STACK_SIZE * 4, /* task stack size */
-        100,                          /* task priority */
+        TASK_PRI_SHELL,               /* task priority */
         "/dev/console",               /* device name */
         /* device is currently ignored by the shell if it is not a pty */
         false,                        /* run forever */
