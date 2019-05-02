@@ -18,6 +18,9 @@ struct cmd_test_ctx {
     cmd_status status;
 };
 
+#define TEST_EVENT_CMD_CB RTEMS_EVENT_0
+#define TEST_EVENT_CB     RTEMS_EVENT_1
+
 static ssize_t cmd_test_handler(struct cmd *cmd, void *reply, size_t reply_sz)
 {
     assert(cmd);
@@ -31,7 +34,7 @@ static void handled_cmd_cb(void *arg, cmd_status status)
     struct cmd_test_ctx *cmdt = arg;
     assert(cmdt);
     cmdt->handled_cmd = true;
-    rtems_event_send(cmdt->tid, RTEMS_EVENT_0);
+    rtems_event_send(cmdt->tid, TEST_EVENT_CMD_CB);
 }
 
 static void handled_cb(void *arg, cmd_status status)
@@ -39,7 +42,7 @@ static void handled_cb(void *arg, cmd_status status)
     struct cmd_test_ctx *cmdt = arg;
     assert(cmdt);
     cmdt->status = status;
-    rtems_event_send(cmdt->tid, RTEMS_EVENT_1);
+    rtems_event_send(cmdt->tid, TEST_EVENT_CB);
 }
 
 static int do_test(rtems_id task_id)
@@ -71,7 +74,7 @@ static int do_test(rtems_id task_id)
     rc = cmd_enqueue_cb(&cmdt.cmd, handled_cmd_cb, &cmdt);
     if (rc)
         goto stop_task;
-    rtems_event_receive(RTEMS_EVENT_0 | RTEMS_EVENT_1, RTEMS_EVENT_ALL,
+    rtems_event_receive(TEST_EVENT_CMD_CB | TEST_EVENT_CB, RTEMS_EVENT_ALL,
                         CMD_TEST_TIMEOUT_TICKS, &events);
 
     // check results
