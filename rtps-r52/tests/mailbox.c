@@ -14,9 +14,6 @@
 
 #include "test.h"
 
-#define WTIMEOUT_TICKS 10
-#define RTIMEOUT_TICKS 10
-
 int test_mbox_lsio_loopback()
 {
     enum hpsc_mbox_test_rc rc;
