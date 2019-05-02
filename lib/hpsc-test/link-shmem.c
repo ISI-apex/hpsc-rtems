@@ -60,7 +60,8 @@ int hpsc_test_link_shmem(rtems_interval wtimeout_ticks,
 
     create_poll_task(rtems_build_name('T','C','S','R'), &stid_recv);
     create_poll_task(rtems_build_name('T','C','S','A'), &stid_ack);
-    slink = link_shmem_connect("Shmem Link Test Server", &reg_a, &reg_b,
+    slink = link_shmem_connect("Shmem Link Test Server",
+                               (uintptr_t) &reg_a, (uintptr_t) &reg_b,
                                true, 1, stid_recv, stid_ack);
     if (!slink) {
         // manually cleanup resources for tasks that may not have been started
@@ -70,7 +71,8 @@ int hpsc_test_link_shmem(rtems_interval wtimeout_ticks,
     }
     create_poll_task(rtems_build_name('T','C','C','R'), &ctid_recv);
     create_poll_task(rtems_build_name('T','C','C','A'), &ctid_ack);
-    clink = link_shmem_connect("Shmem Link Test Client", &reg_b, &reg_a,
+    clink = link_shmem_connect("Shmem Link Test Client",
+                               (uintptr_t) &reg_b, (uintptr_t) &reg_a,
                                false, 1, ctid_recv, ctid_ack);
     if (!clink) {
         rc = 1;

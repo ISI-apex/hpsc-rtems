@@ -22,7 +22,7 @@ struct shmem;
 /**
  * Open a shared memory region.
  */
-struct shmem *shmem_open(volatile void *addr);
+struct shmem *shmem_open(uintptr_t addr);
 
 /**
  * Close a shared memory region.

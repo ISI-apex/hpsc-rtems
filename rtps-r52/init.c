@@ -233,8 +233,7 @@ static void init_client_links(void)
     );
     assert(tsc_sc == RTEMS_SUCCESSFUL);
     struct link *tsc_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_CLIENT,
-        (volatile void *) RTPS_R52_SHM_ADDR__RTPS_TRCH_SEND,
-        (volatile void *) RTPS_R52_SHM_ADDR__TRCH_RTPS_REPLY,
+        RTPS_R52_SHM_ADDR__RTPS_TRCH_SEND, RTPS_R52_SHM_ADDR__TRCH_RTPS_REPLY,
         /* is_server */ false, SHMEM_POLL_TICKS, tsc_tid_recv, tsc_tid_ack);
     if (!tsc_link)
         rtems_panic(LINK_NAME__SHMEM__TRCH_CLIENT);
@@ -261,8 +260,7 @@ static void init_server_links()
     );
     assert(tss_sc == RTEMS_SUCCESSFUL);
     struct link *tss_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_SERVER,
-        (volatile void *) RTPS_R52_SHM_ADDR__TRCH_RTPS_SEND,
-        (volatile void *) RTPS_R52_SHM_ADDR__RTPS_TRCH_REPLY,
+        RTPS_R52_SHM_ADDR__TRCH_RTPS_SEND, RTPS_R52_SHM_ADDR__RTPS_TRCH_REPLY,
         /* is_server */ true, SHMEM_POLL_TICKS, tss_tid_recv, tss_tid_ack);
     if (!tss_link)
         rtems_panic(LINK_NAME__SHMEM__TRCH_SERVER);

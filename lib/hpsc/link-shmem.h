@@ -2,6 +2,7 @@
 #define LINK_SHMEM_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <rtems.h>
 
@@ -9,8 +10,8 @@
 
 struct link *link_shmem_connect(
     const char* name,
-    volatile void *addr_out,
-    volatile void *addr_in,
+    uintptr_t addr_out,
+    uintptr_t addr_in,
     bool is_server,
     rtems_interval poll_ticks,
     rtems_id tid_recv,

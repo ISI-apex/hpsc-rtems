@@ -55,7 +55,7 @@ int hpsc_test_shmem(void)
     struct shmem *shm;
     int rc;
 
-    shm = shmem_open(&shmem_reg);
+    shm = shmem_open((uintptr_t) &shmem_reg);
     if (!shm)
         return 1;
     rc = do_test(shm);

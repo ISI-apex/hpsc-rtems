@@ -62,8 +62,8 @@ static int link_shmem_close(struct link *link)
 static int link_shmem_init(
     struct link_shmem *slink,
     struct link *link,
-    volatile void *addr_out,
-    volatile void *addr_in,
+    uintptr_t addr_out,
+    uintptr_t addr_in,
     bool is_server,
     rtems_interval poll_ticks,
     rtems_id tid_recv,
@@ -113,8 +113,8 @@ free_out:
 
 struct link *link_shmem_connect(
     const char* name,
-    volatile void *addr_out,
-    volatile void *addr_in,
+    uintptr_t addr_out,
+    uintptr_t addr_in,
     bool is_server,
     rtems_interval poll_ticks,
     rtems_id tid_recv,
