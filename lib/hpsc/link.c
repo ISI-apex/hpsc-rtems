@@ -8,6 +8,9 @@
 #include "command.h"
 #include "link.h"
 
+#define LINK_EVENT_ACK  RTEMS_EVENT_0
+#define LINK_EVENT_RECV RTEMS_EVENT_1
+
 size_t link_send(struct link *link, void *buf, size_t sz)
 {
     link->rctx.tx_acked = false;
@@ -29,8 +32,8 @@ static size_t _link_request_send(struct link *link, void *buf, size_t sz,
     rc = link_send(link, buf, sz);
     if (rc) {
         printk("%s: request: waiting for ACK...\n", link->name);
-        rtems_event_receive(RTEMS_EVENT_0, RTEMS_EVENT_ANY, ticks, &events);
-        if (events & RTEMS_EVENT_0) {
+        rtems_event_receive(LINK_EVENT_ACK, RTEMS_EVENT_ANY, ticks, &events);
+        if (events & LINK_EVENT_ACK) {
             printk("%s: request: ACK received\n", link->name);
             assert(link->rctx.tx_acked);
         } else {
@@ -48,8 +51,8 @@ static size_t _link_request_recv(struct link *link, rtems_interval ticks)
     size_t rc;
 
     printk("%s: request: waiting for reply...\n", link->name);
-    rtems_event_receive(RTEMS_EVENT_1, RTEMS_EVENT_ANY, ticks, &events);
-    if (events & RTEMS_EVENT_1) {
+    rtems_event_receive(LINK_EVENT_RECV, RTEMS_EVENT_ANY, ticks, &events);
+    if (events & LINK_EVENT_RECV) {
         printk("%s: request: reply received\n", link->name);
         rc = link->rctx.reply_sz_read;
         assert(rc);
@@ -122,7 +125,7 @@ void link_recv_reply(void *arg)
     link->rctx.reply_sz_read = link->read(link, link->rctx.reply,
                                           link->rctx.reply_sz);
     if (link->rctx.tid_requester != RTEMS_ID_NONE) {
-        sc = rtems_event_send(link->rctx.tid_requester, RTEMS_EVENT_1);
+        sc = rtems_event_send(link->rctx.tid_requester, LINK_EVENT_RECV);
         if (sc != RTEMS_SUCCESSFUL)
             // there was a race with reply timeout and clearing tid_requester
             rtems_panic("%s: recv_reply: failed to send reply to listening task",
@@ -137,7 +140,7 @@ void link_ack(void *arg)
     printk("%s: ACK\n", link->name);
     link->rctx.tx_acked = true;
     if (link->rctx.tid_requester != RTEMS_ID_NONE) {
-        sc = rtems_event_send(link->rctx.tid_requester, RTEMS_EVENT_0);
+        sc = rtems_event_send(link->rctx.tid_requester, LINK_EVENT_ACK);
         if (sc != RTEMS_SUCCESSFUL)
             // there was a race with send timeout and clearing tid_requester
             rtems_panic("%s: ACK: failed to send ACK to listening task",

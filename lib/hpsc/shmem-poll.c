@@ -10,6 +10,8 @@
 #include "shmem.h"
 #include "shmem-poll.h"
 
+#define SHM_EVENT_EXIT RTEMS_EVENT_0
+
 struct shmem_poll {
     struct shmem *shm;
     rtems_interval poll_ticks;
@@ -28,9 +30,9 @@ static rtems_task shm_poll_task(rtems_task_argument arg)
     // polling for a change in status
     while (1) {
         events = 0;
-        rtems_event_receive(RTEMS_EVENT_0, RTEMS_EVENT_ANY, sp->poll_ticks,
+        rtems_event_receive(SHM_EVENT_EXIT, RTEMS_EVENT_ANY, sp->poll_ticks,
                             &events);
-        if (events & RTEMS_EVENT_0)
+        if (events & SHM_EVENT_EXIT)
             break; // we've been ordered to exit
         status = shmem_get_status(sp->shm);
         status &= sp->status_mask;
@@ -94,7 +96,7 @@ rtems_status_code shmem_poll_task_destroy(struct shmem_poll *sp)
 {
     rtems_status_code sc;
     assert(sp);
-    sc = rtems_event_send(sp->tid, RTEMS_EVENT_0);
+    sc = rtems_event_send(sp->tid, SHM_EVENT_EXIT);
     if (sc == RTEMS_SUCCESSFUL) {
         assert(sp->tid != rtems_task_self());
         while (sp->running) // wait for task to complete

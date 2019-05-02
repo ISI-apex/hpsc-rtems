@@ -13,6 +13,9 @@
 
 #define CMDQ_LEN 4
 
+#define CMD_EVENT_NEW  RTEMS_EVENT_0
+#define CMD_EVENT_EXIT RTEMS_EVENT_1
+
 struct cmd_handled_ctx {
     cmd_handled_t *cb;
     void *cb_arg;
@@ -158,7 +161,7 @@ int cmd_enqueue_cb(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
     rc = cmd_enqueue_cb_unsafe(cmd, cb, cb_arg);
     rtems_interrupt_lock_release(&q.lock, &lock_context);
     if (!rc && cmd_handler.tid != RTEMS_ID_NONE)
-        rc = rtems_event_send(cmd_handler.tid, RTEMS_EVENT_0) != RTEMS_SUCCESSFUL;
+        rc = rtems_event_send(cmd_handler.tid, CMD_EVENT_NEW) != RTEMS_SUCCESSFUL;
     return rc;
 }
 
@@ -209,11 +212,9 @@ static rtems_task cmd_handle_task(rtems_task_argument ignored)
         printk("[%zu] Waiting for command...\n", i);
         i += cmd_flush();
         events = 0;
-        // RTEMS_EVENT_0: process a command
-        // RTEMS_EVENT_1: exit handler task
-        rtems_event_receive(RTEMS_EVENT_0 | RTEMS_EVENT_1, RTEMS_EVENT_ANY,
+        rtems_event_receive(CMD_EVENT_NEW | CMD_EVENT_EXIT, RTEMS_EVENT_ANY,
                             RTEMS_NO_TIMEOUT, &events);
-        if (events & RTEMS_EVENT_1)
+        if (events & CMD_EVENT_EXIT)
             // any queued events won't be processed until handler is restarted
             break;
     }
@@ -248,7 +249,7 @@ rtems_status_code cmd_handle_task_destroy(void)
 {
     rtems_status_code sc = RTEMS_NOT_DEFINED;
     if (cmd_handler.running) {
-        sc = rtems_event_send(cmd_handler.tid, RTEMS_EVENT_1);
+        sc = rtems_event_send(cmd_handler.tid, CMD_EVENT_EXIT);
         if (sc == RTEMS_SUCCESSFUL) {
             while (cmd_handler.running) // wait for task to finish
                 rtems_task_wake_after(RTEMS_YIELD_PROCESSOR);

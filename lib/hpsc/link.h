@@ -7,7 +7,6 @@
 #include <rtems.h>
 
 struct link_request_ctx {
-    // listens for: RTEMS_EVENT_0 (ACK), RTEMS_EVENT_1 (reply)
     rtems_id tid_requester;
     bool tx_acked;
     uint32_t *reply;
