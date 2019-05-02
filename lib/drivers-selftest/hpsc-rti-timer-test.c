@@ -22,6 +22,8 @@
 #define TEST_EVENTS_INTERVAL_NS 100000000 // 100 ms
 #define TEST_EVENTS_INTERVAL_US (TEST_EVENTS_INTERVAL_NS / 1000)
 
+#define TEST_EVENT_INTR RTEMS_EVENT_0
+
 struct rtit_test_ctx {
     struct hpsc_rti_timer *tmr;
     unsigned events;
@@ -35,7 +37,7 @@ static void handle_event(void *arg)
     ctx->events++;
     printk("RTI TMR test: events -> %u\n", ctx->events);
     if (ctx->events == TEST_EVENTS_NUM)
-        rtems_event_send(ctx->tid, RTEMS_EVENT_0);
+        rtems_event_send(ctx->tid, TEST_EVENT_INTR);
 }
 
 static int do_test_advance(struct rtit_test_ctx *ctx)
@@ -72,7 +74,7 @@ static int do_test_events(struct rtit_test_ctx *ctx)
     // Empirically (in emulation), timeout usually occurs before final ISR
     // Offset extra half interval (best chance of success within skew tolerance)
     ticks += RTEMS_MICROSECONDS_TO_TICKS(TEST_EVENTS_INTERVAL_US / 2);
-    rtems_event_receive(RTEMS_EVENT_0, RTEMS_EVENT_ALL, ticks, &evset);
+    rtems_event_receive(TEST_EVENT_INTR, RTEMS_EVENT_ALL, ticks, &evset);
 
     if (ctx->events < TEST_EVENTS_NUM - TEST_EVENTS_NUM_SKEW ||
         ctx->events > TEST_EVENTS_NUM + TEST_EVENTS_NUM_SKEW) {
