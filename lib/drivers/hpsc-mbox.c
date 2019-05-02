@@ -103,7 +103,7 @@ static void hpsc_mbox_chan_destroy(struct hpsc_mbox_chan *chan)
     chan->active = false;
 }
 
-void hpsc_mbox_chan_config_read(
+static void hpsc_mbox_chan_config_read(
     struct hpsc_mbox *mbox,
     unsigned instance,
     uint32_t *owner,
@@ -125,7 +125,7 @@ void hpsc_mbox_chan_config_read(
         *dest = (val & REG_CONFIG__DEST__MASK) >> REG_CONFIG__DEST__SHIFT;
 }
 
-rtems_status_code hpsc_mbox_chan_config_write(
+static rtems_status_code hpsc_mbox_chan_config_write(
     struct hpsc_mbox *mbox,
     unsigned instance,
     uint32_t owner,
@@ -154,7 +154,7 @@ rtems_status_code hpsc_mbox_chan_config_write(
     return RTEMS_SUCCESSFUL;
 }
 
-void hpsc_mbox_chan_reset(struct hpsc_mbox *mbox, unsigned instance)
+static void hpsc_mbox_chan_reset(struct hpsc_mbox *mbox, unsigned instance)
 {
     assert(mbox);
     assert(instance < HPSC_MBOX_CHANNELS);
