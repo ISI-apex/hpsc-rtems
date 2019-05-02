@@ -4,7 +4,7 @@
 #include <rtems.h>
 #include <rtems/shell.h>
 
-void shutdown(void);
+RTEMS_NO_RETURN void shutdown(void);
 
 extern rtems_shell_cmd_t shutdown_rtps_r52_command;
 

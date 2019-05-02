@@ -53,7 +53,7 @@ static bool shutdown_task_visitor(rtems_tcb *tcb, void *arg)
     return false;
 }
 
-void shutdown(void)
+RTEMS_NO_RETURN void shutdown(void)
 {
     struct link *link;
     const char *name;
