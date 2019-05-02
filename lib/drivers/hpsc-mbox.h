@@ -22,7 +22,7 @@ struct hpsc_mbox;
 rtems_status_code hpsc_mbox_probe(
     struct hpsc_mbox **mbox,
     const char *info,
-    volatile void *base,
+    uintptr_t base,
     rtems_vector_number int_a,
     unsigned int_idx_a,
     rtems_vector_number int_b,

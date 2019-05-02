@@ -1,8 +1,8 @@
 #define DEBUG 0
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
 
 #include <rtems.h>
@@ -48,7 +48,7 @@ struct hpsc_mbox_chan_irq_info {
 struct hpsc_mbox_chan {
     // static fields
     struct hpsc_mbox *mbox;
-    volatile uint32_t *base;
+    uintptr_t base;
     unsigned instance;
     // dynamic fields
     struct hpsc_mbox_chan_irq_info int_a;
@@ -68,7 +68,7 @@ struct hpsc_mbox_irq_info {
 struct hpsc_mbox {
     struct hpsc_mbox_chan chans[HPSC_MBOX_CHANNELS];
     const char *info;
-    volatile void *base;
+    uintptr_t base;
     struct hpsc_mbox_irq_info int_a;
     struct hpsc_mbox_irq_info int_b;
 };
@@ -79,8 +79,7 @@ static void hpsc_mbox_chan_init(struct hpsc_mbox_chan *chan,
                                 rtems_interrupt_handler cb_b,
                                 void *cb_arg)
 {
-    chan->base = (volatile uint32_t *)((uint8_t *)chan->mbox->base +
-                             chan->instance * HPSC_MBOX_INSTANCE_REGION);
+    chan->base = chan->mbox->base + chan->instance * HPSC_MBOX_INSTANCE_REGION;
     chan->int_a.cb = cb_a;
     chan->int_a.arg = cb_arg;
     chan->int_b.cb = cb_b;
@@ -391,7 +390,7 @@ static void hpsc_mbox_isr_b(void *arg)
 static void hpsc_mbox_init(
     struct hpsc_mbox *mbox,
     const char *info,
-    volatile void *base,
+    uintptr_t base,
     rtems_vector_number int_a,
     unsigned int_idx_a,
     rtems_vector_number int_b,
@@ -418,7 +417,7 @@ static void hpsc_mbox_init(
 rtems_status_code hpsc_mbox_probe(
     struct hpsc_mbox **mbox,
     const char *info,
-    volatile void *base,
+    uintptr_t base,
     rtems_vector_number int_a,
     unsigned int_idx_a,
     rtems_vector_number int_b,
@@ -431,7 +430,7 @@ rtems_status_code hpsc_mbox_probe(
     assert(base);
 
     printk("MBOX: %s: probe\n", info);
-    printk("\tbase: %p\n", base);
+    printk("\tbase: 0x%"PRIxPTR"\n", base);
     printk("\tirq_a: %u\n", int_a);
     printk("\tidx_a: %u\n", int_idx_a);
     printk("\tirq_b: %u\n", int_b);

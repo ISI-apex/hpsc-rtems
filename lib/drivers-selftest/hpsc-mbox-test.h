@@ -29,7 +29,7 @@ int hpsc_mbox_chan_test(
 );
 
 int hpsc_mbox_test(
-    volatile void *base,
+    uintptr_t base,
     rtems_vector_number int_a,
     unsigned int_idx_a,
     rtems_vector_number int_b,

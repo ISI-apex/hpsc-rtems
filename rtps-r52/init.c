@@ -59,7 +59,8 @@ static rtems_status_code init_extra_drivers(
     rtems_vector_number mbox_lsio_vec_b =
         gic_irq_to_rvn(RTPS_IRQ__TR_MBOX_0 + MBOX_LSIO__RTPS_ACK_INT,
                        GIC_IRQ_TYPE_SPI);
-    sc = hpsc_mbox_probe(&mbox_lsio, "TRCH-RTPS Mailbox", MBOX_LSIO__BASE,
+    sc = hpsc_mbox_probe(&mbox_lsio, "TRCH-RTPS Mailbox",
+                         (uintptr_t) MBOX_LSIO__BASE,
                          mbox_lsio_vec_a, MBOX_LSIO__RTPS_RCV_INT,
                          mbox_lsio_vec_b, MBOX_LSIO__RTPS_ACK_INT);
     assert(sc == RTEMS_SUCCESSFUL);
@@ -74,7 +75,8 @@ static rtems_status_code init_extra_drivers(
     rtems_vector_number mbox_hpps_vec_b =
         gic_irq_to_rvn(RTPS_IRQ__HR_MBOX_0 + MBOX_HPPS_RTPS__RTPS_ACK_INT,
                        GIC_IRQ_TYPE_SPI);
-    sc = hpsc_mbox_probe(&mbox_hpps, "HPPS-RTPS Mailbox", MBOX_HPPS_RTPS__BASE,
+    sc = hpsc_mbox_probe(&mbox_hpps, "HPPS-RTPS Mailbox",
+                         (uintptr_t) MBOX_HPPS_RTPS__BASE,
                          mbox_hpps_vec_a, MBOX_HPPS_RTPS__RTPS_RCV_INT,
                          mbox_hpps_vec_b, MBOX_HPPS_RTPS__RTPS_ACK_INT);
     assert(sc == RTEMS_SUCCESSFUL);
@@ -86,8 +88,10 @@ static rtems_status_code init_extra_drivers(
     assert(sc == RTEMS_SUCCESSFUL);
 
 #if CONFIG_RTI_TIMER
-    volatile uint32_t *rtit_bases[] =
-        { RTI_TIMER_RTPS_R52_0__RTPS_BASE, RTI_TIMER_RTPS_R52_1__RTPS_BASE };
+    uintptr_t rtit_bases[] = {
+        (uintptr_t) RTI_TIMER_RTPS_R52_0__RTPS_BASE,
+        (uintptr_t) RTI_TIMER_RTPS_R52_1__RTPS_BASE
+    };
     static const char *rtit_names[] = { "RTPS-R52-RTIT-0", "RTPS-R52-RTIT-1" };
     struct hpsc_rti_timer *rtit;
     uint32_t rtit_cpu;
@@ -104,8 +108,10 @@ static rtems_status_code init_extra_drivers(
 #endif // CONFIG_RTI_TIMER
 
 #if CONFIG_WDT
-    volatile uint32_t *wdt_bases[] =
-        { WDT_RTPS_R52_0_RTPS_BASE, WDT_RTPS_R52_1_RTPS_BASE };
+    uintptr_t wdt_bases[] = {
+        (uintptr_t) WDT_RTPS_R52_0_RTPS_BASE,
+        (uintptr_t) WDT_RTPS_R52_1_RTPS_BASE
+    };
     static const char *wdt_names[] = { "RTPS-R52-WDT-0", "RTPS-R52-WDT-1" };
     struct hpsc_wdt *wdt;
     uint32_t wdt_cpu;

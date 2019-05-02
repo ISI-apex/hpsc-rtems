@@ -20,7 +20,7 @@ struct hpsc_wdt;
 rtems_status_code hpsc_wdt_probe_monitor(
     struct hpsc_wdt **wdt,
     const char *name,
-    volatile uint32_t *base,
+    uintptr_t base,
     rtems_vector_number intr_vec,
     uint32_t clk_freq_hz,
     unsigned max_div
@@ -29,7 +29,7 @@ rtems_status_code hpsc_wdt_probe_monitor(
 rtems_status_code hpsc_wdt_probe_target(
     struct hpsc_wdt **wdt,
     const char *name,
-    volatile uint32_t *base,
+    uintptr_t base,
     rtems_vector_number intr_vec
 );
 

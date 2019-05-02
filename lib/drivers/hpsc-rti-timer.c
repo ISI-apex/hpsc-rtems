@@ -1,7 +1,7 @@
 #define DEBUG 0
 
 #include <assert.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <stdlib.h>
 
 #include <rtems.h>
@@ -39,7 +39,7 @@ static const struct cmd_code cmd_codes[] = {
 };
 
 struct hpsc_rti_timer {
-    volatile uint32_t *base;
+    uintptr_t base;
     const char *name;
     rtems_vector_number vec;
     bool is_started;
@@ -57,7 +57,7 @@ static void exec_cmd(struct hpsc_rti_timer *tmr, enum cmd cmd)
 static void hpsc_rti_timer_init(
     struct hpsc_rti_timer *tmr,
     const char *name,
-    volatile uint32_t *base,
+    uintptr_t base,
     rtems_vector_number vec)
 {
     tmr->base = base;
@@ -69,12 +69,12 @@ static void hpsc_rti_timer_init(
 rtems_status_code hpsc_rti_timer_probe(
     struct hpsc_rti_timer **tmr,
     const char *name,
-    volatile uint32_t *base,
+    uintptr_t base,
     rtems_vector_number vec
 )
 {
     printk("RTI TMR: %s: probe\n", name);
-    printk("\tbase: %p\n", base);
+    printk("\tbase: 0x%"PRIxPTR"\n", base);
     printk("\tvec: %u\n", vec);
     *tmr = malloc(sizeof(struct hpsc_rti_timer));
     if (!*tmr)

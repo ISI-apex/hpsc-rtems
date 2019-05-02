@@ -17,7 +17,7 @@ struct hpsc_rti_timer;
 rtems_status_code hpsc_rti_timer_probe(
     struct hpsc_rti_timer **tmr,
     const char *name,
-    volatile uint32_t *base,
+    uintptr_t base,
     rtems_vector_number vec
 );
 

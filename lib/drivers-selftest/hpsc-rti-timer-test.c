@@ -121,7 +121,7 @@ int hpsc_rti_timer_test_device(struct hpsc_rti_timer *tmr,
 }
 
 int hpsc_rti_timer_test(
-    volatile uint32_t *base,
+    uintptr_t base,
     rtems_vector_number vec,
     uint64_t reset_interval_ns
 )

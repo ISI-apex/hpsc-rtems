@@ -1,8 +1,8 @@
 #define DEBUG 0
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
 
 #include <rtems.h>
@@ -86,7 +86,7 @@ static const struct cmd_code cmd_codes[] = {
 };
 
 struct hpsc_wdt {
-    volatile uint32_t *base; 
+    uintptr_t base; 
     const char *name;
     rtems_vector_number vec;
     unsigned num_stages;
@@ -122,14 +122,14 @@ static void exec_stage_cmd(struct hpsc_wdt *wdt, enum stage_cmd scmd,
 static void hpsc_wdt_init(
     struct hpsc_wdt *wdt,
     const char *name,
-    volatile uint32_t *base,
+    uintptr_t base,
     rtems_vector_number intr_vec,
     bool monitor,
     uint32_t clk_freq_hz,
     unsigned max_div
 )
 {
-    printk("WDT: %s: create base %p\n", name, base);
+    printk("WDT: %s: create base 0x%"PRIxPTR"\n", name, base);
     wdt->base = base;
     wdt->name = name;
     wdt->monitor = false;
@@ -145,7 +145,7 @@ static void hpsc_wdt_init(
 static rtems_status_code hpsc_wdt_probe(
     struct hpsc_wdt **wdt,
     const char *name,
-    volatile uint32_t *base,
+    uintptr_t base,
     rtems_vector_number intr_vec,
     bool monitor,
     uint32_t clk_freq_hz,
@@ -162,7 +162,7 @@ static rtems_status_code hpsc_wdt_probe(
 rtems_status_code hpsc_wdt_probe_monitor(
     struct hpsc_wdt **wdt,
     const char *name,
-    volatile uint32_t *base,
+    uintptr_t base,
     rtems_vector_number intr_vec,
     uint32_t clk_freq_hz,
     unsigned max_div
@@ -175,7 +175,7 @@ rtems_status_code hpsc_wdt_probe_monitor(
 rtems_status_code hpsc_wdt_probe_target(
     struct hpsc_wdt **wdt,
     const char *name,
-    volatile uint32_t *base,
+    uintptr_t base,
     rtems_vector_number intr_vec
 )
 {
