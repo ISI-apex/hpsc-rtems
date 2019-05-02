@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include <rtems.h>
+
 #include "debug.h"
 
 #define REG_WRITE32(reg, val) reg_write32(#reg, (volatile uint32_t *)(reg), val)
@@ -29,36 +31,36 @@
 #define REGB_READ64(base, reg) \
         reg_read64(#reg, (volatile uint64_t *)((volatile uint8_t *)(base) + (reg)))
 
-static inline void reg_write32(const char *name, volatile uint32_t *addr, uint32_t val)
+RTEMS_INLINE_ROUTINE void reg_write32(const char *name, volatile uint32_t *addr, uint32_t val)
 {
     DPRINTK("%32s: %p <- %x\n", name, addr, val);
     *addr = val;
 }
-static inline void reg_write64(const char *name, volatile uint64_t *addr, uint64_t val)
+RTEMS_INLINE_ROUTINE void reg_write64(const char *name, volatile uint64_t *addr, uint64_t val)
 {
     DPRINTK("%32s: %p <- %08x%08x\n", name, addr,
            (uint32_t)(val >> 32), (uint32_t)val);
     *addr = val;
 }
-static inline uint32_t reg_read32(const char *name, volatile uint32_t *addr)
+RTEMS_INLINE_ROUTINE uint32_t reg_read32(const char *name, volatile uint32_t *addr)
 {
     uint32_t val = *addr;
     DPRINTK("%32s: %p -> %x\n", name, addr, val);
     return val;
 }
-static inline uint64_t reg_read64(const char *name, volatile uint64_t *addr)
+RTEMS_INLINE_ROUTINE uint64_t reg_read64(const char *name, volatile uint64_t *addr)
 {
     uint64_t val = *addr;
     DPRINTK("%32s: %p -> %08x%08x\n", name, addr,
            (uint32_t)(val >> 32), (uint32_t)val);
     return val;
 }
-static inline void reg_set32(const char *name, volatile uint32_t *addr, uint32_t val)
+RTEMS_INLINE_ROUTINE void reg_set32(const char *name, volatile uint32_t *addr, uint32_t val)
 {
     DPRINTK("%32s: %p |= %x\n", name, addr, val);
     *addr |= val;
 }
-static inline void reg_clear32(const char *name, volatile uint32_t *addr, uint32_t val)
+RTEMS_INLINE_ROUTINE void reg_clear32(const char *name, volatile uint32_t *addr, uint32_t val)
 {
     DPRINTK("%32s: %p &= ~%x\n", name, addr, val);
     *addr &= ~val;
