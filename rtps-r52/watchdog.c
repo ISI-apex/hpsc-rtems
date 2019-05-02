@@ -15,7 +15,7 @@
 
 // TODO: get this interval dynamically (e.g., from device tree)
 // The WDT has a 1 second first stage timeout by default
-#define WDT_KICK_INTERVAL_US 500000
+#define WDT_KICK_INTERAL_TICKS RTEMS_MICROSECONDS_TO_TICKS(500000)
 
 
 static void watchdog_timeout_isr(void *arg)
@@ -30,7 +30,6 @@ static void watchdog_timeout_isr(void *arg)
 static rtems_task watchdog_task(rtems_task_argument arg)
 {
     rtems_status_code sc;
-    rtems_interval ticks = RTEMS_MICROSECONDS_TO_TICKS(WDT_KICK_INTERVAL_US);
     unsigned cpu = (unsigned) arg;
     struct hpsc_wdt *wdt;
 
@@ -48,9 +47,9 @@ static rtems_task watchdog_task(rtems_task_argument arg)
     while (1) {
         hpsc_wdt_kick(wdt);
 #if 1 // TODO: remove this after frequency is fixed in RTEMS
-        rtems_task_wake_after(ticks / 8);
+        rtems_task_wake_after(WDT_KICK_INTERAL_TICKS / 8);
 #else
-        rtems_task_wake_after(ticks);
+        rtems_task_wake_after(WDT_KICK_INTERAL_TICKS);
 #endif
     }
 }

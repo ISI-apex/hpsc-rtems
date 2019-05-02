@@ -43,9 +43,9 @@
 #define TASK_PRI_SHELL 100
 
 static rtems_status_code init_extra_drivers(
-  rtems_device_major_number major,
-  rtems_device_minor_number minor,
-  void *arg
+    rtems_device_major_number major,
+    rtems_device_minor_number minor,
+    void *arg
 )
 {
     cpu_set_t cpuset;

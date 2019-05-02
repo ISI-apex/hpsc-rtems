@@ -61,14 +61,8 @@ RTEMS_NO_RETURN void shutdown(void)
     struct hpsc_mbox *mbox;
     struct hpsc_wdt *wdt;
     rtems_status_code sc;
-    int rc;
     size_t i;
     uint32_t cpu;
-    // TODO: may not be able to bind to all CPUs if task's cpuset disallows it
-    cpu_set_t cpuset;
-    CPU_ZERO(&cpuset);
-
-    // TODO: Send a message to TRCH
 
     // try to stop gracefully
     printf("Stopping command handler...\n");
@@ -82,8 +76,7 @@ RTEMS_NO_RETURN void shutdown(void)
     printf("Disconnecting links...\n");
     while ((link = link_store_extract_first())) {
         name = link->name;
-        rc = link_disconnect(link);
-        if (rc)
+        if (link_disconnect(link))
             printf("Failed to disconnect link: %s\n", name);
     }
 
@@ -111,6 +104,7 @@ RTEMS_NO_RETURN void shutdown(void)
 
     // From here on we change our CPU affinity, but we don't really need to
     // save/restore it since we're shutting down...
+    // TODO: may not be able to bind to all CPUs if task's cpuset disallows it
 
     // disable timers
     printf("Removing RTI timers...\n");
