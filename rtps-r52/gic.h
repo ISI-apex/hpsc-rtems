@@ -17,7 +17,7 @@ typedef enum {
  * Translate internal IRQ values to those that RTEMS requires.
  * Actual interrupt enable/disable managed by RTEMS interrupt manager.
  */
-static inline rtems_vector_number gic_irq_to_rvn(
+RTEMS_INLINE_ROUTINE rtems_vector_number gic_irq_to_rvn(
     unsigned irq,
     gic_irq_type_t type
 )

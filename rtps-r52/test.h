@@ -3,6 +3,8 @@
 
 #include <stdio.h>
 
+#include <rtems.h>
+
 /*
  * There are three test classes:
  * 1) Standalone: only require drivers or library under test
@@ -26,12 +28,12 @@ int test_link_shmem_trch();
 
 // test utilities
 
-static inline void test_begin(const char *name)
+RTEMS_INLINE_ROUTINE void test_begin(const char *name)
 {
     printf("TEST: %s: begin\n", name);
 }
 
-static inline void test_end(const char *name, int rc)
+RTEMS_INLINE_ROUTINE void test_end(const char *name, int rc)
 {
     printf("TEST: %s: %s\n", name, rc ? "failed": "success");
 }
