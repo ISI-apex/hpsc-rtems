@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -33,12 +32,14 @@ struct cmdq_item {
 
 struct cmdq {
     struct cmdq_item q[CMDQ_LEN];
-    pthread_spinlock_t lock; // no init is necessary
+    rtems_interrupt_lock lock;
     size_t head;
     size_t tail;
 };
 
-static struct cmdq cmdq = { 0 };
+static struct cmdq cmdq = {
+    .lock = RTEMS_INTERRUPT_LOCK_INITIALIZER("Command Queue")
+};
 
 static struct cmd_handler_ctx cmd_handler = {
     .tid = RTEMS_ID_NONE,
@@ -53,18 +54,6 @@ static struct cmd_handled_ctx cmd_handled = {
     .cb_arg = NULL
 };
 
-
-static void lock(pthread_spinlock_t *lock)
-{
-    int err = pthread_spin_lock(lock);
-    assert(!err);
-}
-
-static void unlock(pthread_spinlock_t *lock)
-{
-    int err = pthread_spin_unlock(lock);
-    assert(!err);
-}
 
 static size_t cmdq_size_unsafe(void)
 {
@@ -164,9 +153,10 @@ void cmd_handled_unregister_cb(void)
 int cmd_enqueue_cb(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
 {
     int rc;
-    lock(&cmdq.lock);
+    rtems_interrupt_lock_context lock_context;
+    rtems_interrupt_lock_acquire(&q.lock, &lock_context);
     rc = cmd_enqueue_cb_unsafe(cmd, cb, cb_arg);
-    unlock(&cmdq.lock);
+    rtems_interrupt_lock_release(&q.lock, &lock_context);
     if (!rc && cmd_handler.tid != RTEMS_ID_NONE)
         rc = rtems_event_send(cmd_handler.tid, RTEMS_EVENT_0) != RTEMS_SUCCESSFUL;
     return rc;
@@ -180,9 +170,10 @@ int cmd_enqueue(struct cmd *cmd)
 static int cmd_dequeue(struct cmd *cmd, cmd_handled_t **cb, void **cb_arg)
 {
     int rc;
-    lock(&cmdq.lock);
+    rtems_interrupt_lock_context lock_context;
+    rtems_interrupt_lock_acquire(&q.lock, &lock_context);
     rc = cmd_dequeue_unsafe(cmd, cb, cb_arg);
-    unlock(&cmdq.lock);
+    rtems_interrupt_lock_release(&q.lock, &lock_context);
     return rc;
 }
 
@@ -202,10 +193,11 @@ static size_t cmd_flush(void)
 size_t cmd_drop_all(void)
 {
     size_t qsize;
-    lock(&cmdq.lock);
+    rtems_interrupt_lock_context lock_context;
+    rtems_interrupt_lock_acquire(&q.lock, &lock_context);
     qsize = cmdq_size_unsafe();
     cmdq.tail = cmdq.head;
-    unlock(&cmdq.lock);
+    rtems_interrupt_lock_release(&q.lock, &lock_context);
     return qsize;
 }
 
