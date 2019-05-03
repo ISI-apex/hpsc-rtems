@@ -33,36 +33,36 @@
 
 RTEMS_INLINE_ROUTINE void reg_write32(const char *name, volatile uint32_t *addr, uint32_t val)
 {
-    DPRINTK("%32s: %p <- %x\n", name, addr, val);
+    DPRINTK("%32s: %p <- %x\n", name, RTEMS_DEVOLATILE(void *, addr), val);
     *addr = val;
 }
 RTEMS_INLINE_ROUTINE void reg_write64(const char *name, volatile uint64_t *addr, uint64_t val)
 {
-    DPRINTK("%32s: %p <- %08x%08x\n", name, addr,
+    DPRINTK("%32s: %p <- %08x%08x\n", name, RTEMS_DEVOLATILE(void *, addr),
            (uint32_t)(val >> 32), (uint32_t)val);
     *addr = val;
 }
 RTEMS_INLINE_ROUTINE uint32_t reg_read32(const char *name, volatile uint32_t *addr)
 {
     uint32_t val = *addr;
-    DPRINTK("%32s: %p -> %x\n", name, addr, val);
+    DPRINTK("%32s: %p -> %x\n", name, RTEMS_DEVOLATILE(void *, addr), val);
     return val;
 }
 RTEMS_INLINE_ROUTINE uint64_t reg_read64(const char *name, volatile uint64_t *addr)
 {
     uint64_t val = *addr;
-    DPRINTK("%32s: %p -> %08x%08x\n", name, addr,
+    DPRINTK("%32s: %p -> %08x%08x\n", name, RTEMS_DEVOLATILE(void *, addr),
            (uint32_t)(val >> 32), (uint32_t)val);
     return val;
 }
 RTEMS_INLINE_ROUTINE void reg_set32(const char *name, volatile uint32_t *addr, uint32_t val)
 {
-    DPRINTK("%32s: %p |= %x\n", name, addr, val);
+    DPRINTK("%32s: %p |= %x\n", name, RTEMS_DEVOLATILE(void *, addr), val);
     *addr |= val;
 }
 RTEMS_INLINE_ROUTINE void reg_clear32(const char *name, volatile uint32_t *addr, uint32_t val)
 {
-    DPRINTK("%32s: %p &= ~%x\n", name, addr, val);
+    DPRINTK("%32s: %p &= ~%x\n", name, RTEMS_DEVOLATILE(void *, addr), val);
     *addr &= ~val;
 }
 
