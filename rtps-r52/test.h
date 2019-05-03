@@ -13,18 +13,18 @@
  */
 
 // Standalone
-int test_command();
-int test_cpu_rti_timers();
-int test_mbox_lsio_loopback();
-int test_shmem();
+int test_command(void);
+int test_cpu_rti_timers(void);
+int test_mbox_lsio_loopback(void);
+int test_shmem(void);
 
 // Local runtime
-int test_command_server();
-int test_link_shmem();
+int test_command_server(void);
+int test_link_shmem(void);
 
 // Externally dependent
-int test_link_mbox_trch();
-int test_link_shmem_trch();
+int test_link_mbox_trch(void);
+int test_link_shmem_trch(void);
 
 // test utilities
 

@@ -16,7 +16,7 @@
 #define WTIMEOUT_TICKS 100
 #define RTIMEOUT_TICKS 100
 
-int test_link_mbox_trch()
+int test_link_mbox_trch(void)
 {
     int rc;
     test_begin("test_link_mbox_trch");
@@ -27,7 +27,7 @@ int test_link_mbox_trch()
 }
 
 
-int test_link_shmem_trch()
+int test_link_shmem_trch(void)
 {
     int rc;
     test_begin("test_link_shmem_trch");

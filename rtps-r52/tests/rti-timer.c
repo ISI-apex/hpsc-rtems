@@ -20,7 +20,7 @@
 
 #include "test.h"
 
-int test_cpu_rti_timers()
+int test_cpu_rti_timers(void)
 {
     struct hpsc_rti_timer *tmr;
     uint32_t id;

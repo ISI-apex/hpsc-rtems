@@ -241,7 +241,7 @@ static void init_client_links(void)
 #endif // CONFIG_LINK_SHMEM_TRCH_CLIENT
 }
 
-static void init_server_links()
+static void init_server_links(void)
 {
 #if CONFIG_LINK_SHMEM_TRCH_SERVER
     rtems_status_code tss_sc;

@@ -14,7 +14,7 @@
 
 #include "test.h"
 
-int test_mbox_lsio_loopback()
+int test_mbox_lsio_loopback(void)
 {
     enum hpsc_mbox_test_rc rc;
     struct hpsc_mbox *mbox_lsio = dev_get_mbox(DEV_ID_MBOX_LSIO);

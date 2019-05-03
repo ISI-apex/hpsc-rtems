@@ -5,7 +5,7 @@
 
 #include "test.h"
 
-int test_command()
+int test_command(void)
 {
     int rc;
     test_begin("test_command");
@@ -14,7 +14,7 @@ int test_command()
     return rc;
 }
 
-int test_shmem()
+int test_shmem(void)
 {
     int rc;
     test_begin("test_shmem");
@@ -23,7 +23,7 @@ int test_shmem()
     return rc;
 }
 
-int test_command_server()
+int test_command_server(void)
 {
     int rc;
     test_begin("test_command_server");
@@ -31,7 +31,7 @@ int test_command_server()
     test_end("test_command_server", rc);
     return rc;
 }
-int test_link_shmem()
+int test_link_shmem(void)
 {
     int rc;
     rtems_interval wtimeout_ticks = 10;
