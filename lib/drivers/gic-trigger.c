@@ -6,7 +6,7 @@
 #include "gic-trigger.h"
 
 // #define ARM_GIC_REDIST ((volatile gic_redist *) BSP_ARM_GIC_REDIST_BASE)
-#define ARM_GIC_SGI_PPI (((volatile gic_sgi_ppi *) ((char*)BSP_ARM_GIC_REDIST_BASE + (1 << 16))))
+#define ARM_GIC_SGI_PPI (((volatile gic_sgi_ppi *) ((uintptr_t)BSP_ARM_GIC_REDIST_BASE + (1 << 16))))
 
 #define GIC_TRIGGER_BIT(vec) (2 * (vec % 16) + 1)
 
