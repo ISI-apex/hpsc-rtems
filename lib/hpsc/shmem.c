@@ -42,7 +42,7 @@ void shmem_close(struct shmem *s)
     free(s);
 }
 
-size_t shmem_write(struct shmem *s, void *msg, size_t sz)
+size_t shmem_write(struct shmem *s, const void *msg, size_t sz)
 {
     volatile struct hpsc_shmem_region *shm = SHMEM_TO_REGION(s);
     size_t sz_rem = HPSC_MSG_SIZE - sz;

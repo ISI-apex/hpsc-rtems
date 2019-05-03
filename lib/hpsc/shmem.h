@@ -34,7 +34,7 @@ void shmem_close(struct shmem *s);
  * Automatically sets the NEW status bit.
  * Returns the number of bytes written
  */
-size_t shmem_write(struct shmem *s, void *msg, size_t sz);
+size_t shmem_write(struct shmem *s, const void *msg, size_t sz);
 
 /**
  * Read data from the shared memory region.
