@@ -16,7 +16,8 @@ C_PIECES= \
 	link-shmem \
 	link-store \
 	shmem \
-	shmem-poll
+	shmem-poll \
+	watchdog-cpu
 C_FILES=$(C_PIECES:%=%.c)
 C_O_FILES=$(C_FILES:%.c=${ARCH}/%.o)
 
@@ -35,6 +36,7 @@ H_FILES = \
 	link-store.h \
 	shmem.h \
 	shmem-poll.h \
+	watchdog-cpu.h \
 
 # Assembly source names, if any, go here -- minus the .S
 S_PIECES=
