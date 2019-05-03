@@ -19,6 +19,7 @@
 #include <link-store.h>
 
 #include "shutdown.h"
+#include "watchdog.h"
 
 
 static int shutdown_rtps_r52(int argc RTEMS_UNUSED, char *argv[] RTEMS_UNUSED)
@@ -88,7 +89,11 @@ RTEMS_NO_RETURN void shutdown(void)
     i = cmd_drop_all();
     printf("Dropped: %zu\n", i);
 
-    // stop running tasks
+    // stop kicking watchdogs
+    printf("Stopping watchdog tasks...\n");
+    watchdog_tasks_destroy();
+
+    // suspend any remaining tasks
     printf("Suspending tasks...\n");
     rtems_task_iterate(shutdown_task_visitor, NULL);
 
