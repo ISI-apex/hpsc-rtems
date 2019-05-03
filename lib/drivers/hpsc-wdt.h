@@ -17,6 +17,11 @@ struct hpsc_wdt;
 // board (but not of the IP block), i.e. what would be defined by the device
 // tree node, hence they are not hardcoded in the driver. To divide the
 // frequency, you would change the argument to hpsc_wdt_configure, not here.
+
+/**
+ * Initialize a WDT IP block from a monitoring CPU.
+ * May not be called from an interrupt context.
+ */
 rtems_status_code hpsc_wdt_probe_monitor(
     struct hpsc_wdt **wdt,
     const char *name,
@@ -26,6 +31,10 @@ rtems_status_code hpsc_wdt_probe_monitor(
     unsigned max_div
 );
 
+/**
+ * Initialize a WDT IP block from the target CPU.
+ * May not be called from an interrupt context.
+ */
 rtems_status_code hpsc_wdt_probe_target(
     struct hpsc_wdt **wdt,
     const char *name,
@@ -33,35 +42,65 @@ rtems_status_code hpsc_wdt_probe_target(
     rtems_vector_number intr_vec
 );
 
+/**
+ * Teardown a WDT IP block
+ * May not be called from an interrupt context.
+ */
 rtems_status_code hpsc_wdt_remove(struct hpsc_wdt *wdt);
 
-int hpsc_wdt_configure(
+/**
+ * Configure a WDT.
+ */
+rtems_status_code hpsc_wdt_configure(
     struct hpsc_wdt *wdt,
     unsigned freq,
     unsigned num_stages,
     uint64_t *timeouts
 );
 
+/**
+ * Read a WDT count.
+ */
 uint64_t hpsc_wdt_count(struct hpsc_wdt *wdt, unsigned stage);
 
+/**
+ * Read a WDT timeout.
+ */
 uint64_t hpsc_wdt_timeout(struct hpsc_wdt *wdt, unsigned stage);
 
+/**
+ * Clear a WDT timeout.
+ */
 void hpsc_wdt_timeout_clear(struct hpsc_wdt *wdt, unsigned stage);
 
+/**
+ * Check if WDT is enabled.
+ */
 bool hpsc_wdt_is_enabled(struct hpsc_wdt *wdt);
 
+/**
+ * Enable a WDT.
+ * May not be called from an interrupt context.
+ */
 rtems_status_code hpsc_wdt_enable(
     struct hpsc_wdt *wdt,
     rtems_interrupt_handler cb,
     void *cb_arg
 );
 
+/**
+ * Disable a WDT.
+ * May not be called from an interrupt context.
+ */
 rtems_status_code hpsc_wdt_disable(
     struct hpsc_wdt *wdt,
     rtems_interrupt_handler cb,
     void *cb_arg
 );
 
+/**
+ * Kick a WDT.
+ */
 void hpsc_wdt_kick(struct hpsc_wdt *wdt);
 
 #endif // HPSC_WDT_H

@@ -182,7 +182,7 @@ rtems_status_code hpsc_wdt_probe_target(
     return hpsc_wdt_probe(wdt, name, base, intr_vec, false, 0, 0);
 }
 
-int hpsc_wdt_configure(
+rtems_status_code hpsc_wdt_configure(
     struct hpsc_wdt *wdt,
     unsigned freq,
     unsigned num_stages,
@@ -192,16 +192,17 @@ int hpsc_wdt_configure(
     unsigned stage;
     assert(wdt);
     assert(wdt->monitor);
-    assert(!hpsc_wdt_is_enabled(wdt)); // not strict requirement, but for sanity
+    if (hpsc_wdt_is_enabled(wdt)) // not strict requirement, but for sanity
+        return RTEMS_RESOURCE_IN_USE;
     if (num_stages > MAX_STAGES) {
         printk("ERROR: WDT: more stages than supported: %u >= %u\n",
                num_stages, MAX_STAGES);
-        return 1;
+        return RTEMS_TOO_MANY;
     }
     if (!(freq <= wdt->clk_freq_hz && wdt->clk_freq_hz % freq == 0)) {
         printk("ERROR: WDT: freq is larger than or not a divisor of clk freq: %u > %u\n",
                freq, wdt->clk_freq_hz);
-        return 1;
+        return RTEMS_INVALID_NUMBER;
     }
     for (stage = 0; stage < num_stages; ++stage) {
         if (timeouts[stage] & (~0ULL << wdt->counter_width)) {
@@ -209,7 +210,7 @@ int hpsc_wdt_configure(
                    stage, wdt->counter_width,
                    (uint32_t)(timeouts[stage] >> 32),
                    (uint32_t)(timeouts[stage] & 0xffffffff));
-            return 2;
+            return RTEMS_INVALID_SIZE;
         }
     }
 
@@ -221,7 +222,7 @@ int hpsc_wdt_configure(
     if (div > wdt->max_div) {
         printk("ERROR: WDT: divider too large: %u > %u\n",
                div, wdt->max_div);
-        return 1;
+        return RTEMS_INVALID_NUMBER;
     }
 
     printk("WDT: %s: set divider to %u\n", wdt->name, div);
@@ -234,15 +235,15 @@ int hpsc_wdt_configure(
         REGB_WRITE64(wdt->base, STAGE_REG(REG__TERMINAL, stage), timeouts[stage]);
         exec_stage_cmd(wdt, SCMD_LOAD, stage);
     }
-    return 0;
+    return RTEMS_SUCCESSFUL;
 }
 
 rtems_status_code hpsc_wdt_remove(struct hpsc_wdt *wdt)
 {
     assert(wdt);
     printk("WDT: %s: destroy\n", wdt->name);
-    if (wdt->monitor)
-        assert(!hpsc_wdt_is_enabled(wdt));
+    if (wdt->monitor && hpsc_wdt_is_enabled(wdt))
+        return RTEMS_RESOURCE_IN_USE;
     free(wdt);
     return RTEMS_SUCCESSFUL;
 }
