@@ -45,11 +45,15 @@ struct hpsc_mbox_chan_irq_info {
     void *arg;
 };
 
+// Locking enforces that a channel is not claimed/released during an ISR while
+// its status is being determined or its callback executed (on event match).
+// Users must therefore synchronize channel claim/release to avoid deadlocks.
 struct hpsc_mbox_chan {
     // static fields
     struct hpsc_mbox *mbox;
     uintptr_t base;
     unsigned instance;
+    rtems_interrupt_lock lock;
     // dynamic fields
     struct hpsc_mbox_chan_irq_info int_a;
     struct hpsc_mbox_chan_irq_info int_b;
@@ -177,15 +181,23 @@ rtems_status_code hpsc_mbox_chan_claim(
     uint32_t src_hw;
     uint32_t dest_hw;
     struct hpsc_mbox_chan *chan;
+    rtems_interrupt_lock_context lock_context;
     rtems_status_code sc;
     assert(mbox);
     assert(instance < HPSC_MBOX_CHANNELS);
 
-    // NOTE: we don't verify that channels aren't already claimed
     DPRINTK("MBOX: %s: %u: claim\n", mbox->info, instance);
-    chan = &mbox->chans[instance];
-    hpsc_mbox_chan_init(chan, owner, src, dest, cb_a, cb_b, cb_arg);
+    if (rtems_interrupt_is_in_progress())
+        return RTEMS_CALLED_FROM_ISR;
 
+    rtems_interrupt_lock_acquire(&chan->lock, &lock_context);
+    chan = &mbox->chans[instance];
+    if (chan->active) {
+        sc = RTEMS_RESOURCE_IN_USE;
+        goto cleanup;
+    }
+
+    hpsc_mbox_chan_init(chan, owner, src, dest, cb_a, cb_b, cb_arg);
     if (chan->owner) {
         sc = hpsc_mbox_chan_config_write(mbox, instance, owner, src, dest);
         if (sc != RTEMS_SUCCESSFUL)
@@ -207,7 +219,6 @@ rtems_status_code hpsc_mbox_chan_claim(
             goto cleanup;
         }
     }
-
     if (chan->int_a.cb)
         val |= HPSC_MBOX_INT_A(chan->mbox->int_a.idx);
     if (chan->int_b.cb)
@@ -215,9 +226,11 @@ rtems_status_code hpsc_mbox_chan_claim(
     DPRINTK("MBOX: %s: %u: enable interrupts\n", mbox->info, instance);
     REGB_SET32(chan->base, REG_INT_ENABLE, val);
 
+    rtems_interrupt_lock_release(&chan->lock, &lock_context);
     return RTEMS_SUCCESSFUL;
 cleanup:
     hpsc_mbox_chan_destroy(chan);
+    rtems_interrupt_lock_release(&chan->lock, &lock_context);
     return sc;
 }
 
@@ -227,17 +240,23 @@ rtems_status_code hpsc_mbox_chan_release(
 )
 {
     struct hpsc_mbox_chan *chan;
+    rtems_interrupt_lock_context lock_context;
     uint32_t val;
     assert(mbox);
     assert(instance < HPSC_MBOX_CHANNELS);
 
     DPRINTK("MBOX: %s: %u: release\n", mbox->info, instance);
+    if (rtems_interrupt_is_in_progress())
+        return RTEMS_CALLED_FROM_ISR;
+
     chan = &mbox->chans[instance];
+    rtems_interrupt_lock_acquire(&chan->lock, &lock_context);
     val = HPSC_MBOX_INT_A(mbox->int_a.idx) | HPSC_MBOX_INT_B(mbox->int_b.idx);
     REGB_CLEAR32(chan->base, REG_INT_ENABLE, val);
     if (chan->owner)
         hpsc_mbox_chan_reset(mbox, instance);
     hpsc_mbox_chan_destroy(chan);
+    rtems_interrupt_lock_release(&chan->lock, &lock_context);
     return RTEMS_SUCCESSFUL;
 }
 
@@ -356,16 +375,20 @@ static void hpsc_mbox_isr(struct hpsc_mbox *mbox, unsigned event,
                           void (*cb)(struct hpsc_mbox_chan *))
 {
     struct hpsc_mbox_chan *chan;
+    rtems_interrupt_lock_context lock_context;
     size_t i;
     bool handled = false;
     assert(mbox);
     assert(cb);
     for (i = 0; i < HPSC_MBOX_CHANNELS; ++i) {
         chan = &mbox->chans[i];
+        rtems_interrupt_lock_acquire_isr(&chan->lock, &lock_context);
         if (!hpsc_mbox_chan_is_subscribed(chan, event, interrupt))
-            continue;
+            goto cont;
         handled = true;
         cb(chan);
+cont:
+        rtems_interrupt_lock_release_isr(&chan->lock, &lock_context);
    }
    assert(handled);
 }
@@ -409,6 +432,7 @@ static void hpsc_mbox_init(
     for (i = 0; i < RTEMS_ARRAY_SIZE(mbox->chans); i++) {
         mbox->chans[i].mbox = mbox;
         mbox->chans[i].instance = i;
+        rtems_interrupt_lock_initialize(&mbox->chans[i].lock, NULL);
         mbox->chans[i].active = false;
         // other fields set when channel is claimed, cleared on release
     }

@@ -11,13 +11,18 @@
 
 #define HPSC_MBOX_CHANNELS 32
 
+// Users must synchronize channel claims and releases between tasks/threads.
+// E.g., if a higher priority task preempts a lower priority task, and both are
+// opening or closing the same channel, the tasks may deadlock.
+
 /**
  * A mailbox device (IP block instance)
  */
 struct hpsc_mbox;
 
 /**
- * Initialize a mailbox IP block
+ * Initialize a mailbox IP block.
+ * May not be called from an interrupt context.
  */
 rtems_status_code hpsc_mbox_probe(
     struct hpsc_mbox **mbox,
@@ -30,12 +35,14 @@ rtems_status_code hpsc_mbox_probe(
 );
 
 /**
- * Teardown a mailbox IP block
+ * Teardown a mailbox IP block.
+ * May not be called from an interrupt context.
  */
 rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox);
 
 /**
  * Claim a mailbox channel
+ * May not be called from an interrupt context.
  */
 rtems_status_code hpsc_mbox_chan_claim(
     struct hpsc_mbox *mbox,
@@ -50,6 +57,7 @@ rtems_status_code hpsc_mbox_chan_claim(
 
 /**
  * Release a mailbox channel
+ * May not be called from an interrupt context.
  */
 rtems_status_code hpsc_mbox_chan_release(
     struct hpsc_mbox *mbox,
