@@ -3,6 +3,8 @@
 
 #include <rtems.h>
 
+#include "affinity.h"
+
 rtems_status_code affinity_pin_to_cpu(rtems_id task_id, int cpu)
 {
     rtems_status_code sc;

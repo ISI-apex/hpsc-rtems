@@ -7,6 +7,7 @@
 #include <rtems/thread.h>
 
 #include "link.h"
+#include "link-store.h"
 
 struct link_store_node {
     rtems_chain_node node; // must be at the top of the struct to cast
