@@ -70,7 +70,7 @@ rtems_status_code hpsc_mbox_chan_release(
 size_t hpsc_mbox_chan_write(
     struct hpsc_mbox *mbox,
     unsigned instance,
-    void *buf,
+    const void *buf,
     size_t sz
 );
 

@@ -263,12 +263,12 @@ rtems_status_code hpsc_mbox_chan_release(
 size_t hpsc_mbox_chan_write(
     struct hpsc_mbox *mbox,
     unsigned instance,
-    void *buf,
+    const void *buf,
     size_t sz
 )
 {
     struct hpsc_mbox_chan *chan;
-    uint32_t *msg = buf;
+    const uint32_t *msg = buf;
     size_t len;
     size_t i;
     assert(mbox);
