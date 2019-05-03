@@ -21,6 +21,8 @@ The project layout is:
 * `plat`: shared platform configurations to be used by applications.
 * `rtps-r52`: produces `rtps-r52.img` containing the reference/test RTEMS
   application for the R52s in the RTPS subsystem.
+* `trch`: placeholder for a future reference/test RTEMS application for the TMR
+  M4Fs in the TRCH subsystem.
 
 As a general rule of thumb, libraries should be independent of the RTEMS BSP,
 HPSC platform, and application (e.g., rtps-r52) configuration.
@@ -89,6 +91,7 @@ Current library tools are:
 * `shmem`: A shared memory messaging interface, compatible with HPSC messages.
   * `shmem-poll`: Tasks to poll shared memory for HPSC message statuses and
                   issue callbacks which mimic ISRs.
+* `watchdog-cpu`: A common watchdog kicker task.
 
 
 Developer Notes
