@@ -12,7 +12,8 @@
 struct hpsc_rti_timer;
 
 /**
- * Initialize a RTI Timer IP block
+ * Initialize a RTI Timer IP block.
+ * May not be called from an interrupt context.
  */
 rtems_status_code hpsc_rti_timer_probe(
     struct hpsc_rti_timer **tmr,
@@ -22,12 +23,14 @@ rtems_status_code hpsc_rti_timer_probe(
 );
 
 /**
- * Teardown a RTI Timer IP block
+ * Teardown a RTI Timer IP block.
+ * May not be called from an interrupt context.
  */
 rtems_status_code hpsc_rti_timer_remove(struct hpsc_rti_timer *tmr);
 
 /**
- * Start a RTI Timer
+ * Start a RTI Timer.
+ * May not be called from an interrupt context.
  */
 rtems_status_code hpsc_rti_timer_start(
     struct hpsc_rti_timer *tmr,
@@ -36,7 +39,8 @@ rtems_status_code hpsc_rti_timer_start(
 );
 
 /**
- * Stop a RTI Timer
+ * Stop a RTI Timer.
+ * May not be called from an interrupt context.
  */
 rtems_status_code hpsc_rti_timer_stop(
     struct hpsc_rti_timer *tmr,
@@ -45,12 +49,12 @@ rtems_status_code hpsc_rti_timer_stop(
 );
 
 /**
- * Read a RTI Timer
+ * Read a RTI Timer.
  */
 uint64_t hpsc_rti_timer_capture(struct hpsc_rti_timer *tmr);
 
 /**
- * Configure a RTI Timer interval
+ * Configure a RTI Timer interval.
  */
 void hpsc_rti_timer_configure(struct hpsc_rti_timer *tmr, uint64_t interval);
 
