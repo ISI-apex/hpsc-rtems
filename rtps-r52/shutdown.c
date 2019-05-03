@@ -35,7 +35,10 @@ rtems_shell_cmd_t shutdown_rtps_r52_command = {
     "hpsc-rtps-r52",                           /* topic */
     shutdown_rtps_r52,                         /* command */
     NULL,                                      /* alias */
-    NULL                                       /* next */
+    NULL,                                      /* next */
+    0,                                         /* mode */
+    0,                                         /* uid */
+    0                                          /* gid */
 };
 
 static bool shutdown_task_visitor(rtems_tcb *tcb, void *arg)
