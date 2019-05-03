@@ -9,7 +9,7 @@
 
 static int do_test(struct shmem *shm)
 {
-    char *msg = "Test Message";
+    const char *msg = "Test Message";
     char buf[HPSC_SHMEM_REGION_SZ] = {0};
     size_t sz;
     uint32_t status = shmem_get_status(shm);
