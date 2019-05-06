@@ -7,7 +7,7 @@
 
 #include <rtems.h>
 #include <rtems/bspIo.h>
-#include <bsp/irq-generic.h>
+#include <rtems/irq-extension.h>
 
 #include "bit.h"
 #include "debug.h"
