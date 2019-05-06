@@ -305,8 +305,7 @@ static void early_tasks(void)
 static void init_tasks(void)
 {
 #if CONFIG_WDT
-    if (watchdog_tasks_create(TASK_PRI_WDT) != RTEMS_SUCCESSFUL)
-        rtems_panic("watchdogs");
+    watchdog_tasks_create(TASK_PRI_WDT);
 #endif // CONFIG_WDT
 }
 

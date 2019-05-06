@@ -33,7 +33,7 @@ static void watchdog_timeout_isr(void *arg)
     // TODO: the WDT task failed to kick - maybe initiate a graceful shutdown
 }
 
-static rtems_status_code watchdog_task_create(
+static void watchdog_task_create(
     rtems_task_priority priority,
     struct hpsc_wdt *wdt,
     uint32_t cpu
@@ -49,75 +49,59 @@ static rtems_status_code watchdog_task_create(
         task_name, priority, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
         RTEMS_DEFAULT_ATTRIBUTES, &task_id
     );
-    if (sc != RTEMS_SUCCESSFUL) {
-        printf("Failed to create watchdog task: %"PRIu32"\n", cpu);
-        return sc;
-    }
+    assert(sc == RTEMS_SUCCESSFUL);
     // pin watchdog task to its CPU
-    affinity_pin_to_cpu(task_id, cpu);
+    sc = affinity_pin_to_cpu(task_id, cpu);
+    assert(sc == RTEMS_SUCCESSFUL);
     sc = watchdog_cpu_task_start(wdt, task_id, WDT_KICK_INTERAL_TICKS,
                                  watchdog_timeout_isr, wdt);
-    if (sc != RTEMS_SUCCESSFUL) {
-        printf("Failed to start watchdog task: %"PRIu32"\n", cpu);
-        rtems_task_delete(task_id);
-    }
-    return sc;
+    assert(sc == RTEMS_SUCCESSFUL);
 }
 
-rtems_status_code watchdog_tasks_create(rtems_task_priority priority)
+void watchdog_tasks_create(rtems_task_priority priority)
 {
     cpu_set_t cpuset;
-    rtems_status_code sc_aff;
-    rtems_status_code sc = RTEMS_SUCCESSFUL;
+    rtems_status_code sc;
     struct hpsc_wdt *wdt;
     uint32_t cpu;
 
     // store CPU affinity before CPU-specific operations
-    sc_aff = rtems_task_get_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
-    assert(sc_aff == RTEMS_SUCCESSFUL);
+    sc = rtems_task_get_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
+    assert(sc == RTEMS_SUCCESSFUL);
 
     dev_cpu_for_each(cpu) {
-        printf("Create watchdog task: %"PRIu32"\n", cpu);
+        printf("Watchdog task: start: %"PRIu32"\n", cpu);
         // pin so we can get device handle
         affinity_pin_self_to_cpu(cpu);
         wdt = dev_cpu_get_wdt();
         assert(wdt);
-        sc = watchdog_task_create(priority, wdt, cpu);
-        if (sc != RTEMS_SUCCESSFUL)
-            break;
+        watchdog_task_create(priority, wdt, cpu);
     }
 
     // restore CPU affinity
-    sc_aff = rtems_task_set_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
-    assert(sc_aff == RTEMS_SUCCESSFUL);
-
-    return sc;
+    sc = rtems_task_set_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
+    assert(sc == RTEMS_SUCCESSFUL);
 }
 
-rtems_status_code watchdog_tasks_destroy(void)
+void watchdog_tasks_destroy(void)
 {
-    rtems_status_code sc = RTEMS_SUCCESSFUL;
     cpu_set_t cpuset;
-    rtems_status_code sc_aff;
+    rtems_status_code sc;
     uint32_t cpu;
 
     // store CPU affinity before CPU-specific operations
-    sc_aff = rtems_task_get_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
-    assert(sc_aff == RTEMS_SUCCESSFUL);
+    sc = rtems_task_get_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
+    assert(sc == RTEMS_SUCCESSFUL);
 
     dev_cpu_for_each(cpu) {
-        printf("Stop watchdog task: %"PRIu32"\n", cpu);
+        printf("Watchdog task: stop: %"PRIu32"\n", cpu);
         affinity_pin_self_to_cpu(cpu);
         sc = watchdog_cpu_task_stop();
-        if (sc != RTEMS_SUCCESSFUL) {
-            printf("Failed to stop watchdog task: %"PRIu32"\n", cpu);
-            break;
-        }
+        // RTEMS_NOT_DEFINED means no task was running
+        assert(sc == RTEMS_NOT_DEFINED || sc == RTEMS_SUCCESSFUL);
     }
 
     // restore CPU affinity
-    sc_aff = rtems_task_set_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
-    assert(sc_aff == RTEMS_SUCCESSFUL);
-
-    return sc;
+    sc = rtems_task_set_affinity(RTEMS_SELF, sizeof(cpuset), &cpuset);
+    assert(sc == RTEMS_SUCCESSFUL);
 }
