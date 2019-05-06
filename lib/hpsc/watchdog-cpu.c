@@ -15,6 +15,8 @@ struct watchdog_task_ctx {
     struct hpsc_wdt *wdt;
     rtems_id tid;
     rtems_interval ticks;
+    rtems_interrupt_handler cb;
+    void *cb_arg;
     bool running;
 };
 
@@ -50,6 +52,7 @@ rtems_status_code watchdog_cpu_task_start(
 {
     struct watchdog_task_ctx *ctx;
     rtems_status_code sc;
+    rtems_status_code sc_tmp;
     assert(wdt);
     assert(task_id != RTEMS_ID_NONE);
     assert(cb);
@@ -61,14 +64,21 @@ rtems_status_code watchdog_cpu_task_start(
     ctx->wdt = wdt;
     ctx->tid = task_id;
     ctx->ticks = ticks;
+    ctx->cb = cb;
+    ctx->cb_arg = cb_arg;
     ctx->running = true;
 
+    // first install the ISR, then enable
+    sc = hpsc_wdt_handler_install(wdt, cb, cb_arg);
+    assert(sc == RTEMS_SUCCESSFUL);
     // once enabled, the WDT can't be stopped
-    sc = hpsc_wdt_enable(wdt, cb, cb_arg);
-    if (sc == RTEMS_SUCCESSFUL) 
-        sc = rtems_task_start(task_id, watchdog_task, (rtems_task_argument)ctx);
-    if (sc != RTEMS_SUCCESSFUL)
+    hpsc_wdt_enable(wdt);
+    sc = rtems_task_start(task_id, watchdog_task, (rtems_task_argument)ctx);
+    if (sc != RTEMS_SUCCESSFUL) {
+        sc_tmp = hpsc_wdt_handler_remove(wdt, cb, cb_arg);
+        assert(sc_tmp == RTEMS_SUCCESSFUL);
         ctx->running = false;
+    }
 
     return sc;
 }
@@ -82,6 +92,9 @@ rtems_status_code watchdog_cpu_task_stop(void)
     assert(ctx);
 
     if (ctx->running) {
+        // we can't actually disable the WDT, only remove our ISR
+        sc = hpsc_wdt_handler_remove(ctx->wdt, ctx->cb, ctx->cb_arg);
+        assert(sc == RTEMS_SUCCESSFUL);
         sc = rtems_event_send(ctx->tid, WDT_TASK_EXIT);
         if (sc == RTEMS_SUCCESSFUL) {
             while (ctx->running) // wait for task to finish

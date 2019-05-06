@@ -79,24 +79,34 @@ void hpsc_wdt_timeout_clear(struct hpsc_wdt *wdt, unsigned stage);
 bool hpsc_wdt_is_enabled(struct hpsc_wdt *wdt);
 
 /**
- * Enable a WDT.
+ * Register a WDT ISR (does not affect WDT enabled/disabled state).
  * May not be called from an interrupt context.
  */
-rtems_status_code hpsc_wdt_enable(
+rtems_status_code hpsc_wdt_handler_install(
     struct hpsc_wdt *wdt,
     rtems_interrupt_handler cb,
     void *cb_arg
 );
 
 /**
- * Disable a WDT.
+ * Unregister a WDT ISR (does not affect WDT enabled/disabled state).
  * May not be called from an interrupt context.
  */
-rtems_status_code hpsc_wdt_disable(
+rtems_status_code hpsc_wdt_handler_remove(
     struct hpsc_wdt *wdt,
     rtems_interrupt_handler cb,
     void *cb_arg
 );
+
+/**
+ * Enable a WDT.
+ */
+void hpsc_wdt_enable(struct hpsc_wdt *wdt);
+
+/**
+ * Disable a WDT (may only be disabled by a monitor).
+ */
+void hpsc_wdt_disable(struct hpsc_wdt *wdt);
 
 /**
  * Kick a WDT.

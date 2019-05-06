@@ -285,36 +285,42 @@ bool hpsc_wdt_is_enabled(struct hpsc_wdt *wdt)
     return enabled;
 }
 
-rtems_status_code hpsc_wdt_enable(
+rtems_status_code hpsc_wdt_handler_install(
     struct hpsc_wdt *wdt,
     rtems_interrupt_handler cb,
     void *cb_arg
 )
 {
-    rtems_status_code sc;
     assert(wdt);
-    printk("WDT: %s: enable\n", wdt->name);
-    sc = rtems_interrupt_handler_install(wdt->vec, wdt->name, 
-                                         RTEMS_INTERRUPT_UNIQUE, cb, cb_arg);
-    if (sc == RTEMS_SUCCESSFUL)
-        REGB_SET32(wdt->base, REG__CONFIG, REG__CONFIG__EN);
-    return sc;
+    printk("WDT: %s: install ISR\n", wdt->name);
+    return rtems_interrupt_handler_install(wdt->vec, wdt->name, 
+                                           RTEMS_INTERRUPT_UNIQUE, cb, cb_arg);
 }
 
-rtems_status_code hpsc_wdt_disable(
+rtems_status_code hpsc_wdt_handler_remove(
     struct hpsc_wdt *wdt,
     rtems_interrupt_handler cb,
     void *cb_arg
 )
 {
-    rtems_status_code sc;
+    assert(wdt);
+    printk("WDT: %s: remove ISR\n", wdt->name);
+    return rtems_interrupt_handler_remove(wdt->vec, cb, cb_arg);
+}
+
+void hpsc_wdt_enable(struct hpsc_wdt *wdt)
+{
+    assert(wdt);
+    printk("WDT: %s: enable\n", wdt->name);
+    REGB_SET32(wdt->base, REG__CONFIG, REG__CONFIG__EN);
+}
+
+void hpsc_wdt_disable(struct hpsc_wdt *wdt)
+{
     assert(wdt);
     assert(wdt->monitor);
     printk("WDT: %s: disable\n", wdt->name);
-    sc = rtems_interrupt_handler_remove(wdt->vec, cb, cb_arg);
-    if (sc == RTEMS_SUCCESSFUL)
-        exec_global_cmd(wdt, CMD_DISABLE);
-    return sc;
+    exec_global_cmd(wdt, CMD_DISABLE);
 }
 
 void hpsc_wdt_kick(struct hpsc_wdt *wdt)
