@@ -21,8 +21,7 @@ struct hpsc_mbox_test {
     unsigned instance;
     rtems_id tid;
     int rx_rc;
-    bool is_rx;
-    bool is_ack;
+    int ack_rc;
 };
 
 static void cb_recv(void *arg)
@@ -32,15 +31,16 @@ static void cb_recv(void *arg)
     struct hpsc_mbox_test *ctx = (struct hpsc_mbox_test *)arg;
     assert(ctx);
     assert(ctx->mbox);
-    assert(!ctx->is_rx);
-
-    sz = hpsc_mbox_chan_read(ctx->mbox, ctx->instance, buf, sizeof(buf));
-    if (sz == HPSC_MBOX_DATA_SIZE)
-        ctx->rx_rc = strncmp((const char *)buf, TEST_MSG, sizeof(buf)) ?
-            HPSC_MBOX_TEST_CHAN_BAD_RECV : HPSC_MBOX_TEST_SUCCESS;
-    else
-        ctx->rx_rc = HPSC_MBOX_TEST_CHAN_BAD_RECV;
-    ctx->is_rx = true;
+    if (ctx->rx_rc == HPSC_MBOX_TEST_CHAN_NO_RECV) {
+        sz = hpsc_mbox_chan_read(ctx->mbox, ctx->instance, buf, sizeof(buf));
+        if (sz == HPSC_MBOX_DATA_SIZE)
+            ctx->rx_rc = strncmp((const char *)buf, TEST_MSG, sizeof(buf)) ?
+                HPSC_MBOX_TEST_CHAN_BAD_RECV : HPSC_MBOX_TEST_SUCCESS;
+        else
+            ctx->rx_rc = HPSC_MBOX_TEST_CHAN_BAD_RECV;
+    } else {
+        ctx->rx_rc = HPSC_MBOX_TEST_CHAN_MULTIPLE_RECV;
+    }
     rtems_event_send(ctx->tid, MBOX_EVENT_RECV);
 }
 
@@ -48,8 +48,10 @@ static void cb_ack(void *arg)
 {
     struct hpsc_mbox_test *ctx = (struct hpsc_mbox_test *)arg;
     assert(ctx);
-    assert(!ctx->is_ack);
-    ctx->is_ack = true;
+    if (ctx->ack_rc == HPSC_MBOX_TEST_CHAN_NO_ACK)
+        ctx->ack_rc = HPSC_MBOX_TEST_SUCCESS;
+    else
+        ctx->ack_rc = HPSC_MBOX_TEST_CHAN_MULTIPLE_ACK;
     rtems_event_send(ctx->tid, MBOX_EVENT_ACK);
 }
 
@@ -63,10 +65,10 @@ static int test_loopback(struct hpsc_mbox_test *ctx)
     // wait for test to complete or timeout
     rtems_event_receive(MBOX_EVENT_RECV | MBOX_EVENT_ACK, RTEMS_EVENT_ALL,
                         TEST_TIMEOUT_TICKS, &events);
-    if (!ctx->is_rx)
-        return HPSC_MBOX_TEST_CHAN_NO_RECV;
-    if (!ctx->is_ack)
-        return HPSC_MBOX_TEST_CHAN_NO_ACK;
+    if (ctx->rx_rc != HPSC_MBOX_TEST_SUCCESS)
+        return ctx->rx_rc;
+    if (ctx->ack_rc != HPSC_MBOX_TEST_SUCCESS)
+        return ctx->ack_rc;
     return HPSC_MBOX_TEST_SUCCESS;
 }
 
@@ -84,9 +86,8 @@ int hpsc_mbox_chan_test(
         .mbox = mbox,
         .instance = instance,
         .tid = rtems_task_self(),
-        .is_rx = false,
         .rx_rc = HPSC_MBOX_TEST_CHAN_NO_RECV,
-        .is_ack = false
+        .ack_rc = HPSC_MBOX_TEST_CHAN_NO_ACK
     };
     sc = hpsc_mbox_chan_claim(mbox, instance, owner, src, dest, cb_recv, cb_ack,
                               &ctx);
