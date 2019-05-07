@@ -235,9 +235,10 @@ rtems_status_code cmd_handle_task_start(rtems_id task_id, cmd_handler_t cb,
                                         rtems_interval timeout_ticks)
 {
     rtems_status_code sc;
-    assert(!cmd_handler.running);
     assert(task_id != RTEMS_ID_NONE);
     assert(cb);
+    if (cmd_handler.running)
+        return RTEMS_UNSATISFIED;
     cmd_handler_set(task_id, cb, timeout_ticks, true);
     sc = rtems_task_start(cmd_handler.tid, cmd_handle_task, 1);
     if (sc != RTEMS_SUCCESSFUL)
