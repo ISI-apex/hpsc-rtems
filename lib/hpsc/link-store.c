@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,7 +26,9 @@ static struct link_store_node *link_store_node_get(const char *name)
          !rtems_chain_is_tail(&lchain, node);
          node = rtems_chain_next(node)) {
         snode = (struct link_store_node *)node;
-        if (!strcmp(name, snode->link->name))
+        if ((name && !snode->link->name) || (!name && snode->link->name))
+            continue;
+        if ((!name && !snode->link->name) || !strcmp(name, snode->link->name))
             return snode;
     }
     return NULL;
@@ -34,6 +37,7 @@ static struct link_store_node *link_store_node_get(const char *name)
 rtems_status_code link_store_append(struct link *link)
 {
     struct link_store_node *snode;
+    assert(link);
     snode = malloc(sizeof(struct link_store_node));
     if (!snode)
         return RTEMS_NO_MEMORY;
