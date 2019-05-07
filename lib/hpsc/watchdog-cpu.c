@@ -52,7 +52,7 @@ rtems_status_code watchdog_cpu_task_start(
 {
     struct watchdog_task_ctx *ctx;
     rtems_status_code sc;
-    rtems_status_code sc_tmp;
+    rtems_status_code sc_tmp RTEMS_UNUSED;
     assert(wdt);
     assert(task_id != RTEMS_ID_NONE);
     assert(cb);
@@ -76,6 +76,7 @@ rtems_status_code watchdog_cpu_task_start(
     sc = rtems_task_start(task_id, watchdog_task, (rtems_task_argument)ctx);
     if (sc != RTEMS_SUCCESSFUL) {
         sc_tmp = hpsc_wdt_handler_remove(wdt, cb, cb_arg);
+        // we installed the handler, so we can safely assert its removal
         assert(sc_tmp == RTEMS_SUCCESSFUL);
         ctx->running = false;
     }
@@ -94,6 +95,7 @@ rtems_status_code watchdog_cpu_task_stop(void)
     if (ctx->running) {
         // we can't actually disable the WDT, only remove our ISR
         sc = hpsc_wdt_handler_remove(ctx->wdt, ctx->cb, ctx->cb_arg);
+        // we installed the handler, so we can safely assert its removal
         assert(sc == RTEMS_SUCCESSFUL);
         sc = rtems_event_send(ctx->tid, WDT_TASK_EXIT);
         if (sc == RTEMS_SUCCESSFUL) {
