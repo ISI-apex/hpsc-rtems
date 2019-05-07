@@ -57,8 +57,13 @@ struct link *link_mbox_connect(const char *name, struct hpsc_mbox *mbox,
     struct link *link;
     rtems_status_code sc;
     rtems_interrupt_handler rcv_cb = server ? link_recv_cmd : link_recv_reply;
+    assert(name);
 
     printk("%s: connect\n", name);
+    printk("\tidx_from = %u\n", idx_from);
+    printk("\tidx_to   = %u\n", idx_to);
+    printk("\tserver   = 0x%x\n", server);
+    printk("\tclient   = 0x%x\n", client);
     link = malloc(sizeof(*link));
     if (!link)
         return NULL;

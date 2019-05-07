@@ -128,9 +128,9 @@ struct link *link_shmem_connect(
     assert(addr_in);
 
     printk("%s: connect\n", name);
-    printk("\taddr_out = 0x%"PRIXPTR"\n", (uintptr_t) addr_out);
-    printk("\taddr_in  = 0x%"PRIXPTR"\n", (uintptr_t) addr_in);
-    printk("\tpoll_ticks  = %u\n", poll_ticks);
+    printk("\taddr_out   = 0x%"PRIxPTR"\n", (uintptr_t) addr_out);
+    printk("\taddr_in    = 0x%"PRIxPTR"\n", (uintptr_t) addr_in);
+    printk("\tpoll_ticks = %u\n", poll_ticks);
 
     link = malloc(sizeof(*link));
     if (!link)
