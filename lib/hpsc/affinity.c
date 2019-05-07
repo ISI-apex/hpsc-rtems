@@ -20,7 +20,7 @@ rtems_status_code affinity_pin_to_cpu(rtems_id task_id, int cpu)
 
 void affinity_pin_self_to_cpu(int cpu)
 {
-    rtems_status_code sc = affinity_pin_to_cpu(RTEMS_SELF, cpu);
+    rtems_status_code sc RTEMS_UNUSED = affinity_pin_to_cpu(RTEMS_SELF, cpu);
     assert(sc != RTEMS_INVALID_ID); // invalid task id (but we used RTEMS_SELF)
     assert(sc == RTEMS_SUCCESSFUL);
 }
