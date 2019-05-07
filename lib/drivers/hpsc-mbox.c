@@ -389,8 +389,10 @@ static void hpsc_mbox_isr(struct hpsc_mbox *mbox, unsigned event,
         cb(chan);
 cont:
         rtems_interrupt_lock_release_isr(&chan->lock, &lock_context);
-   }
-   assert(handled);
+    }
+    if (!handled)
+        printk("MBOX: %s: WARN: no matching event for interrupt", mbox->info);
+    assert(handled); // probably not worth forcing a runtime panic over
 }
 
 static void hpsc_mbox_isr_a(void *arg)
