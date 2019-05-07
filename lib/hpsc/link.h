@@ -46,7 +46,7 @@ size_t link_request_send(struct link *link, void *buf, size_t sz,
 /**
  * Send a message and wait for a reply.
  * Use RTEMS_NO_TIMEOUT for tick parameters to wait forever.
- * Returns -1 on send failure or timeout, 0 on read timeout, or number of bytes
+ * Returns -1 on send failure or timeout, -2 on read timeout, or number of bytes
  * read.
  */
 ssize_t link_request(struct link *link,

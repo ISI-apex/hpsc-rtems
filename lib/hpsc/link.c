@@ -55,10 +55,9 @@ static size_t _link_request_recv(struct link *link, rtems_interval ticks)
     if (events & LINK_EVENT_RECV) {
         printk("%s: request: reply received\n", link->name);
         rc = link->rctx.reply_sz_read;
-        assert(rc);
     } else {
         printk("%s: request: timed out waiting for reply...\n", link->name);
-        rc = 0;
+        rc = -2;
     }
     link->rctx.tid_requester = RTEMS_ID_NONE;
     return rc;
