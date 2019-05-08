@@ -54,12 +54,11 @@ rtems_status_code watchdog_cpu_task_start(
     rtems_status_code sc;
     rtems_status_code sc_tmp RTEMS_UNUSED;
     assert(wdt);
-    assert(task_id != RTEMS_ID_NONE);
-    assert(cb);
 
     ctx = PER_CPU_WATCHDOG_TASK_CTX;
     assert(ctx);
-    assert(!ctx->running);
+    if (ctx->running)
+        return RTEMS_UNSATISFIED;
 
     ctx->wdt = wdt;
     ctx->tid = task_id;
@@ -70,7 +69,9 @@ rtems_status_code watchdog_cpu_task_start(
 
     // first install the ISR, then enable
     sc = hpsc_wdt_handler_install(wdt, cb, cb_arg);
-    assert(sc == RTEMS_SUCCESSFUL);
+    if (sc != RTEMS_SUCCESSFUL)
+        goto fail;
+
     // once enabled, the WDT can't be stopped
     hpsc_wdt_enable(wdt);
     sc = rtems_task_start(task_id, watchdog_task, (rtems_task_argument)ctx);
@@ -78,9 +79,12 @@ rtems_status_code watchdog_cpu_task_start(
         sc_tmp = hpsc_wdt_handler_remove(wdt, cb, cb_arg);
         // we installed the handler, so we can safely assert its removal
         assert(sc_tmp == RTEMS_SUCCESSFUL);
-        ctx->running = false;
+        goto fail;
     }
 
+    return sc;
+fail:
+    ctx->running = false;
     return sc;
 }
 
