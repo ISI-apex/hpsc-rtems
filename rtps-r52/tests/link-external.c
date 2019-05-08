@@ -1,10 +1,4 @@
-#include <assert.h>
-#include <stdint.h>
-#include <unistd.h>
-
 // libhpsc
-#include <hpsc-msg.h>
-#include <link.h>
 #include <link-store.h>
 
 // libhpsc-test
@@ -25,7 +19,6 @@ int test_link_mbox_trch(void)
     test_end("test_link_mbox_trch", rc);
     return rc;
 }
-
 
 int test_link_shmem_trch(void)
 {

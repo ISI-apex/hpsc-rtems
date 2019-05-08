@@ -1,5 +1,3 @@
-#include <rtems.h>
-
 // libhpsc-test
 #include <hpsc-test.h>
 
@@ -31,13 +29,14 @@ int test_command_server(void)
     test_end("test_command_server", rc);
     return rc;
 }
+
+#define SHMEM_WTIMEOUT_TICKS 10
+#define SHMEM_RTIMEOUT_TICKS 10
 int test_link_shmem(void)
 {
     int rc;
-    rtems_interval wtimeout_ticks = 10;
-    rtems_interval rtimeout_ticks = 10;
     test_begin("test_link_shmem");
-    rc = hpsc_test_link_shmem(wtimeout_ticks, rtimeout_ticks);
+    rc = hpsc_test_link_shmem(SHMEM_WTIMEOUT_TICKS, SHMEM_RTIMEOUT_TICKS);
     test_end("test_link_shmem", rc);
     return rc;
 }

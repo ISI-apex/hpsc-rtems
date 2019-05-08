@@ -25,7 +25,7 @@ int test_cpu_rti_timers(void)
     struct hpsc_rti_timer *tmr;
     uint32_t id;
     enum hpsc_rti_timer_test_rc rc = 0;
-    rtems_status_code sc;
+    rtems_status_code sc RTEMS_UNUSED;
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
 
