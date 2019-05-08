@@ -41,7 +41,8 @@ static void create_poll_task(rtems_name name, rtems_id *id)
         name, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
         RTEMS_DEFAULT_ATTRIBUTES, id
     );
-    assert(sc == RTEMS_SUCCESSFUL);
+    if (sc != RTEMS_SUCCESSFUL)
+        rtems_panic("create_poll_task: %s", rtems_status_text(sc));
 }
 
 // test link-shmem (requires command handler to be configured)

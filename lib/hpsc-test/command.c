@@ -100,6 +100,7 @@ int hpsc_test_command(void)
         task_name, 1, RTEMS_MINIMUM_STACK_SIZE, RTEMS_DEFAULT_MODES,
         RTEMS_DEFAULT_ATTRIBUTES, &task_id
     );
-    assert(sc == RTEMS_SUCCESSFUL);
+    if (sc != RTEMS_SUCCESSFUL)
+        rtems_panic("hpsc_test_command: %s", rtems_status_text(sc));
     return do_test(task_id);
 }
