@@ -4,4 +4,5 @@ include $(RTEMS_SHARE)/make/directory.cfg
 
 SUBDIRS = \
 	lib \
+	plat \
 	rtps-r52
