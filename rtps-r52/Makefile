@@ -39,32 +39,8 @@ CONFIG_FLAGS += \
 
 CONFIG_ARGS = $(foreach m,$(CONFIG_FLAGS),-D$(m)=$($(m)))
 
-# Set build configuration here
-# Drivers
-CONFIG_MBOX_LSIO		= 1
-CONFIG_MBOX_HPPS_RTPS		= 1
-CONFIG_RTI_TIMER		= 1
-CONFIG_WDT			= 1
-# Links
-CONFIG_LINK_MBOX_TRCH_CLIENT	= 1 # send requests to TRCH
-CONFIG_LINK_MBOX_HPPS_SERVER	= 1 # listen for requests from HPPS
-CONFIG_LINK_SHMEM_TRCH_CLIENT	= 1 # send requests to TRCH
-CONFIG_LINK_SHMEM_TRCH_SERVER	= 1 # listen for requests from TRCH
-# Additional tasks
-CONFIG_SHELL			= 1
-
-# Enable/disable tests here (some tests require certain CONFIG options):
-# Standalone
-TEST_COMMAND			= 1
-TEST_MBOX_LSIO_LOOPBACK		= 1
-TEST_RTI_TIMER			= 1
-TEST_SHMEM			= 1
-# Runtime
-TEST_COMMAND_SERVER		= 1
-TEST_LINK_SHMEM			= 1
-# External
-TEST_MBOX_LINK_TRCH		= 1
-TEST_SHMEM_LINK_TRCH		= 1
+include Makefile.defconfig
+include Makefile.config
 
 # C source names
 CSRCS = \
@@ -115,7 +91,12 @@ LD_LIBS += \
 	$(LIBDRIVERS_TEST) \
 	$(LIBDRIVERS) \
 
-$(OBJS): $(LIBDRIVERS) $(LIBDRIVERS_TEST) $(LIBHPSC) $(LIBHPSC_TEST) ${H_FILES} ../plat/* Makefile | ${ARCH} ${ARCH}/tests
+# Empty config means all settings come from defconfig
+Makefile.config:
+	touch $@
+
+$(OBJS): $(LIBDRIVERS) $(LIBDRIVERS_TEST) $(LIBHPSC) $(LIBHPSC_TEST) ${H_FILES} \
+	 ../plat/* Makefile Makefile.defconfig Makefile.config | ${ARCH} ${ARCH}/tests
 
 $(PGM): $(OBJS)
 	$(make-exe)
