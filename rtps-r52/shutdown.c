@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -44,16 +45,15 @@ rtems_shell_cmd_t shutdown_rtps_r52_command = {
 static bool shutdown_task_visitor(rtems_tcb *tcb, void *arg)
 {
     rtems_id id = rtems_capture_task_id(tcb);
-    rtems_status_code sc;
+    rtems_status_code sc RTEMS_UNUSED;
     // don't stop ourself
     if (rtems_task_self() == id) // RTEMS_SELF doesn't work here
         return false;
     printf("Suspending task: %u\n", rtems_capture_task_name(tcb));
     // deleting tasks causes a crash, so just suspend them instead
-    if (rtems_task_is_suspended(id) == RTEMS_SUCCESSFUL) {
-        sc = rtems_task_suspend(id);
-        assert(sc == RTEMS_SUCCESSFUL);
-    }
+    sc = rtems_task_suspend(id);
+    // only other option is RTEMS_INVALID_ID, which should never happen
+    assert(sc == RTEMS_SUCCESSFUL || sc == RTEMS_ALREADY_SUSPENDED);
     return false;
 }
 
@@ -106,7 +106,8 @@ RTEMS_NO_RETURN void shutdown(void)
         if (mbox) {
             dev_set_mbox(i, NULL);
             sc = hpsc_mbox_remove(mbox);
-            assert(sc == RTEMS_SUCCESSFUL);
+            if (sc != RTEMS_SUCCESSFUL)
+                rtems_panic("shutdown: hpsc_mbox_remove");
         }
     }
 
@@ -122,7 +123,8 @@ RTEMS_NO_RETURN void shutdown(void)
         if (rtit) {
             dev_cpu_set_rtit(NULL);
             sc = hpsc_rti_timer_remove(rtit);
-            assert(sc == RTEMS_SUCCESSFUL);
+            if (sc != RTEMS_SUCCESSFUL)
+                rtems_panic("shutdown: hpsc_rti_timer_remove");
         }
     }
 
@@ -134,7 +136,8 @@ RTEMS_NO_RETURN void shutdown(void)
         if (wdt) {
             dev_cpu_set_wdt(NULL);
             sc = hpsc_wdt_remove(wdt);
-            assert(sc == RTEMS_SUCCESSFUL);
+            if (sc != RTEMS_SUCCESSFUL)
+                rtems_panic("shutdown: hpsc_wdt_remove");
         }
     }
 
