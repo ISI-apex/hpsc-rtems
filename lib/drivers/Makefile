@@ -68,7 +68,7 @@ $(LIB): ${OBJS}
 
 # Install the library, appending _g or _p as appropriate.
 # for include files, just use $(INSTALL_CHANGE)
-H_INSTALL_DIR = $(addprefix ${PROJECT_INCLUDE}/,$(basename $(LIBNAME)))
+H_INSTALL_DIR = $(addprefix ${PROJECT_INCLUDE}/,$(subst lib,,$(basename $(LIBNAME))))
 install:  all
 	$(INSTALL_VARIANT) ${INSTLIBFLAGS} ${LIB} ${PROJECT_RELEASE}/lib
 	$(INSTALL_CHANGE) ${INSTDIRFLAGS} ${H_INSTALL_DIR}
