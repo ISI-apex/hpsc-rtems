@@ -208,6 +208,8 @@ static void external_tests(void)
 
 static void init_client_links(void)
 {
+    rtems_status_code sc RTEMS_UNUSED;
+
 #if CONFIG_LINK_MBOX_TRCH_CLIENT
 #if !CONFIG_MBOX_LSIO
     #warning Ignoring CONFIG_LINK_MBOX_TRCH_CLIENT - requires CONFIG_MBOX_LSIO
@@ -224,21 +226,20 @@ static void init_client_links(void)
 #endif // CONFIG_LINK_MBOX_TRCH_CLIENT
 
 #if CONFIG_LINK_SHMEM_TRCH_CLIENT
-    rtems_status_code tsc_sc;
     rtems_id tsc_tid_recv;
     rtems_id tsc_tid_ack;
     rtems_name tsc_tn_recv = rtems_build_name('T', 'S', 'C', 'R');
     rtems_name tsc_tn_ack = rtems_build_name('T', 'S', 'C', 'A');
-    tsc_sc = rtems_task_create(
+    sc = rtems_task_create(
         tsc_tn_recv, TASK_PRI_SHMEM_POLL_TRCH, RTEMS_MINIMUM_STACK_SIZE,
         RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &tsc_tid_recv
     );
-    assert(tsc_sc == RTEMS_SUCCESSFUL);
-    tsc_sc = rtems_task_create(
+    assert(sc == RTEMS_SUCCESSFUL);
+    sc = rtems_task_create(
         tsc_tn_ack, TASK_PRI_SHMEM_POLL_TRCH, RTEMS_MINIMUM_STACK_SIZE,
         RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &tsc_tid_ack
     );
-    assert(tsc_sc == RTEMS_SUCCESSFUL);
+    assert(sc == RTEMS_SUCCESSFUL);
     struct link *tsc_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_CLIENT,
         RTPS_R52_SHM_ADDR__RTPS_TRCH_SEND, RTPS_R52_SHM_ADDR__TRCH_RTPS_REPLY,
         /* is_server */ false, SHMEM_POLL_TICKS, tsc_tid_recv, tsc_tid_ack);
@@ -250,22 +251,23 @@ static void init_client_links(void)
 
 static void init_server_links(void)
 {
+    rtems_status_code sc RTEMS_UNUSED;
+
 #if CONFIG_LINK_SHMEM_TRCH_SERVER
-    rtems_status_code tss_sc;
     rtems_id tss_tid_recv;
     rtems_id tss_tid_ack;
     rtems_name tss_tn_recv = rtems_build_name('T', 'S', 'S', 'R');
     rtems_name tss_tn_ack = rtems_build_name('T', 'S', 'S', 'A');
-    tss_sc = rtems_task_create(
+    sc = rtems_task_create(
         tss_tn_recv, TASK_PRI_SHMEM_POLL_TRCH, RTEMS_MINIMUM_STACK_SIZE,
         RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_recv
     );
-    assert(tss_sc == RTEMS_SUCCESSFUL);
-    tss_sc = rtems_task_create(
+    assert(sc == RTEMS_SUCCESSFUL);
+    sc = rtems_task_create(
         tss_tn_ack, TASK_PRI_SHMEM_POLL_TRCH, RTEMS_MINIMUM_STACK_SIZE,
         RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_ack
     );
-    assert(tss_sc == RTEMS_SUCCESSFUL);
+    assert(sc == RTEMS_SUCCESSFUL);
     struct link *tss_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_SERVER,
         RTPS_R52_SHM_ADDR__TRCH_RTPS_SEND, RTPS_R52_SHM_ADDR__RTPS_TRCH_REPLY,
         /* is_server */ true, SHMEM_POLL_TICKS, tss_tid_recv, tss_tid_ack);
@@ -302,8 +304,7 @@ static void early_tasks(void)
         task_name, TASK_PRI_CMDH, RTEMS_MINIMUM_STACK_SIZE,
         RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &task_id
     );
-    if (sc != RTEMS_SUCCESSFUL) 
-        rtems_panic("command handler task create");
+    assert(sc == RTEMS_SUCCESSFUL);
     sc = cmd_handle_task_start(task_id, server_process, CMD_TIMEOUT_TICKS);
     if (sc != RTEMS_SUCCESSFUL)
         rtems_panic("command handler task start");
@@ -318,12 +319,13 @@ static void init_tasks(void)
 
 static void late_tasks(void)
 {
+    rtems_status_code sc;
+
 #if CONFIG_SHELL
-    rtems_status_code sc_shell;
     printf(" =========================\n");
     printf(" Starting shell\n");
     printf(" =========================\n");
-    sc_shell = rtems_shell_init(
+    sc = rtems_shell_init(
         "SHLL",                       /* task name */
         RTEMS_MINIMUM_STACK_SIZE * 4, /* task stack size */
         TASK_PRI_SHELL,               /* task priority */
@@ -334,7 +336,7 @@ static void late_tasks(void)
         NULL                          /* login check function,
                                          use NULL to disable a login check */
     );
-    if (sc_shell != RTEMS_SUCCESSFUL)
+    if (sc != RTEMS_SUCCESSFUL)
         rtems_panic("shell");
 #endif // CONFIG_SHELL
 }
