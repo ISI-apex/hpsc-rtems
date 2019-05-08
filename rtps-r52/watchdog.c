@@ -55,14 +55,14 @@ static void watchdog_task_create(
     assert(sc == RTEMS_SUCCESSFUL);
     sc = watchdog_cpu_task_start(wdt, task_id, WDT_KICK_INTERAL_TICKS,
                                  watchdog_timeout_isr, wdt);
-    assert(sc == RTEMS_SUCCESSFUL);
+    if (sc != RTEMS_SUCCESSFUL)
+        rtems_panic("watchdog_task_create: watchdog_cpu_task_start");
 }
 
 void watchdog_tasks_create(rtems_task_priority priority)
 {
     cpu_set_t cpuset;
-    rtems_status_code sc;
-    struct hpsc_wdt *wdt;
+    rtems_status_code sc RTEMS_UNUSED;
     uint32_t cpu;
 
     // store CPU affinity before CPU-specific operations
@@ -73,9 +73,7 @@ void watchdog_tasks_create(rtems_task_priority priority)
         printf("Watchdog task: start: %"PRIu32"\n", cpu);
         // pin so we can get device handle
         affinity_pin_self_to_cpu(cpu);
-        wdt = dev_cpu_get_wdt();
-        assert(wdt);
-        watchdog_task_create(priority, wdt, cpu);
+        watchdog_task_create(priority, dev_cpu_get_wdt(), cpu);
     }
 
     // restore CPU affinity
@@ -86,7 +84,7 @@ void watchdog_tasks_create(rtems_task_priority priority)
 void watchdog_tasks_destroy(void)
 {
     cpu_set_t cpuset;
-    rtems_status_code sc;
+    rtems_status_code sc RTEMS_UNUSED;
     uint32_t cpu;
 
     // store CPU affinity before CPU-specific operations
@@ -98,7 +96,8 @@ void watchdog_tasks_destroy(void)
         affinity_pin_self_to_cpu(cpu);
         sc = watchdog_cpu_task_stop();
         // RTEMS_NOT_DEFINED means no task was running
-        assert(sc == RTEMS_NOT_DEFINED || sc == RTEMS_SUCCESSFUL);
+        if (sc != RTEMS_SUCCESSFUL && sc != RTEMS_NOT_DEFINED)
+            rtems_panic("watchdog_tasks_destroy: watchdog_cpu_task_stop");
     }
 
     // restore CPU affinity
