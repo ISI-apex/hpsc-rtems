@@ -42,6 +42,9 @@
 #define TASK_PRI_CMDH 20
 #define TASK_PRI_SHELL 100
 
+#define NAME_MBOX_TRCH "TRCH-RTPS Mailbox"
+#define NAME_MBOX_HPPS "HPPS-RTPS Mailbox"
+
 static rtems_status_code init_extra_drivers(
     rtems_device_major_number major,
     rtems_device_minor_number minor,
@@ -59,11 +62,12 @@ static rtems_status_code init_extra_drivers(
     rtems_vector_number mbox_lsio_vec_b =
         gic_irq_to_rvn(RTPS_IRQ__TR_MBOX_0 + MBOX_LSIO__RTPS_ACK_INT,
                        GIC_IRQ_TYPE_SPI);
-    sc = hpsc_mbox_probe(&mbox_lsio, "TRCH-RTPS Mailbox",
+    sc = hpsc_mbox_probe(&mbox_lsio, NAME_MBOX_TRCH,
                          (uintptr_t) MBOX_LSIO__BASE,
                          mbox_lsio_vec_a, MBOX_LSIO__RTPS_RCV_INT,
                          mbox_lsio_vec_b, MBOX_LSIO__RTPS_ACK_INT);
-    assert(sc == RTEMS_SUCCESSFUL);
+    if (sc != RTEMS_SUCCESSFUL)
+        rtems_panic(NAME_MBOX_TRCH);
     dev_set_mbox(DEV_ID_MBOX_LSIO, mbox_lsio);
 #endif // CONFIG_MBOX_LSIO
 
@@ -75,11 +79,12 @@ static rtems_status_code init_extra_drivers(
     rtems_vector_number mbox_hpps_vec_b =
         gic_irq_to_rvn(RTPS_IRQ__HR_MBOX_0 + MBOX_HPPS_RTPS__RTPS_ACK_INT,
                        GIC_IRQ_TYPE_SPI);
-    sc = hpsc_mbox_probe(&mbox_hpps, "HPPS-RTPS Mailbox",
+    sc = hpsc_mbox_probe(&mbox_hpps, NAME_MBOX_HPPS,
                          (uintptr_t) MBOX_HPPS_RTPS__BASE,
                          mbox_hpps_vec_a, MBOX_HPPS_RTPS__RTPS_RCV_INT,
                          mbox_hpps_vec_b, MBOX_HPPS_RTPS__RTPS_ACK_INT);
-    assert(sc == RTEMS_SUCCESSFUL);
+    if (sc != RTEMS_SUCCESSFUL)
+        rtems_panic(NAME_MBOX_HPPS);
     dev_set_mbox(DEV_ID_MBOX_HPPS_RTPS, mbox_hpps);
 #endif // CONFIG_MBOX_HPPS_RTPS
 
@@ -102,7 +107,8 @@ static rtems_status_code init_extra_drivers(
         affinity_pin_self_to_cpu(rtit_cpu);
         sc = hpsc_rti_timer_probe(&rtit, rtit_names[rtit_cpu],
                                   rtit_bases[rtit_cpu], rtit_vec);
-        assert(sc == RTEMS_SUCCESSFUL);
+        if (sc != RTEMS_SUCCESSFUL)
+            rtems_panic("%s", rtit_names[rtit_cpu]);
         dev_cpu_set_rtit(rtit);
     }
 #endif // CONFIG_RTI_TIMER
@@ -122,7 +128,8 @@ static rtems_status_code init_extra_drivers(
         affinity_pin_self_to_cpu(wdt_cpu);
         sc = hpsc_wdt_probe_target(&wdt, wdt_names[wdt_cpu],
                                    wdt_bases[wdt_cpu], wdt_vec);
-        assert(sc == RTEMS_SUCCESSFUL);
+        if (sc != RTEMS_SUCCESSFUL)
+            rtems_panic("%s", wdt_names[wdt_cpu]);
         dev_cpu_set_wdt(wdt);
     }
 #endif // CONFIG_WDT
