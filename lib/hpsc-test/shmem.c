@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 
@@ -25,7 +24,7 @@ static int do_test(struct shmem *shm)
     }
     // NEW flag should be set
     if (!shmem_is_new(shm)) {
-        printf("ERROR: TEST: shmem: intermediate status failed\n");
+        printf("ERROR: TEST: shmem: NEW status failed\n");
         return 1;
     }
     sz = shmem_read(shm, buf, sizeof(buf));
@@ -35,14 +34,14 @@ static int do_test(struct shmem *shm)
     }
     // NEW flag should be off, ACK flag should be set
     if (shmem_is_new(shm) || !shmem_is_ack(shm)) {
-        printf("ERROR: TEST: shmem: final status failed\n");
+        printf("ERROR: TEST: shmem: ACK status failed\n");
         return 1;
     }
     shmem_clear_ack(shm);
     // no flags should be set anymore
     status = shmem_get_status(shm);
     if (status) {
-        printf("ERROR: TEST: shmem: initial status failed\n");
+        printf("ERROR: TEST: shmem: final status failed\n");
         return 1;
     }
     return 0;
