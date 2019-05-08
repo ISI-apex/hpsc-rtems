@@ -29,7 +29,8 @@ static int do_test(struct link *slink, struct link *clink,
     cmd_handled_register_cb(handled_cb, &status);
     rc = hpsc_test_link_ping(clink, wtimeout_ticks, rtimeout_ticks);
     // wait for command handler to finish, o/w we prematurely destroy the link
-    while (status == CMD_STATUS_UNKNOWN);
+    while (status == CMD_STATUS_UNKNOWN)
+        rtems_task_wake_after(RTEMS_YIELD_PROCESSOR);
     cmd_handled_unregister_cb();
     return status == CMD_STATUS_SUCCESS ? rc : 1;
 }

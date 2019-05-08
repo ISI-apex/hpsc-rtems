@@ -2,6 +2,8 @@
 #include <stdbool.h>
 #include <string.h>
 
+#include <rtems.h>
+
 // libhpsc
 #include <command.h>
 #include <hpsc-msg.h>
@@ -69,7 +71,8 @@ static int do_test(struct link *link)
         return rc;
 
     // wait for reply
-    while (!tlink->is_write);
+    while (!tlink->is_write)
+        rtems_task_wake_after(RTEMS_YIELD_PROCESSOR);
     // ack the reply
     link_ack(link);
     // reply should be a PONG
@@ -77,7 +80,8 @@ static int do_test(struct link *link)
         rc = 1;
 
     // wait for command handler to finish, o/w we prematurely destroy the link
-    while(cmdt.status == CMD_STATUS_UNKNOWN);
+    while(cmdt.status == CMD_STATUS_UNKNOWN)
+        rtems_task_wake_after(RTEMS_YIELD_PROCESSOR);
 
     return cmdt.status == CMD_STATUS_SUCCESS ? rc : 1;
 }
