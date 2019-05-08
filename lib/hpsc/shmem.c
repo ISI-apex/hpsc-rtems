@@ -39,14 +39,18 @@ struct shmem *shmem_open(uintptr_t addr)
 
 void shmem_close(struct shmem *s)
 {
+    assert(s);
     free(s);
 }
 
 size_t shmem_write(struct shmem *s, const void *msg, size_t sz)
 {
-    volatile struct hpsc_shmem_region *shm = SHMEM_TO_REGION(s);
+    volatile struct hpsc_shmem_region *shm;
     size_t sz_rem = HPSC_MSG_SIZE - sz;
+    assert(s);
+    assert(msg);
     assert(sz <= HPSC_MSG_SIZE);
+    shm = SHMEM_TO_REGION(s);
     // don't care about volatile qualifier when writing
     memcpy(RTEMS_DEVOLATILE(void *, shm->data), msg, sz);
     if (sz_rem)
@@ -57,32 +61,43 @@ size_t shmem_write(struct shmem *s, const void *msg, size_t sz)
 
 uint32_t shmem_get_status(struct shmem *s)
 {
-    volatile struct hpsc_shmem_region *shm = SHMEM_TO_REGION(s);
+    volatile struct hpsc_shmem_region *shm;
+    assert(s);
+    shm = SHMEM_TO_REGION(s);
     return shm->status;
 }
 
 bool shmem_is_new(struct shmem *s)
 {
-    volatile struct hpsc_shmem_region *shm = SHMEM_TO_REGION(s);
+    volatile struct hpsc_shmem_region *shm;
+    assert(s);
+    shm = SHMEM_TO_REGION(s);
     return shm->status & HPSC_SHMEM_STATUS_BIT_NEW;
 }
 
 bool shmem_is_ack(struct shmem *s)
 {
-    volatile struct hpsc_shmem_region *shm = SHMEM_TO_REGION(s);
+    volatile struct hpsc_shmem_region *shm;
+    assert(s);
+    shm = SHMEM_TO_REGION(s);
     return shm->status & HPSC_SHMEM_STATUS_BIT_ACK;
 }
 
 void shmem_clear_ack(struct shmem *s)
 {
-    volatile struct hpsc_shmem_region *shm = SHMEM_TO_REGION(s);
+    volatile struct hpsc_shmem_region *shm;
+    assert(s);
+    shm = SHMEM_TO_REGION(s);
     shm->status &= ~HPSC_SHMEM_STATUS_BIT_ACK;
 }
 
 size_t shmem_read(struct shmem *s, void *msg, size_t sz)
 {
-    volatile struct hpsc_shmem_region *shm = SHMEM_TO_REGION(s);
+    volatile struct hpsc_shmem_region *shm;
+    assert(s);
+    assert(msg);
     assert(sz >= HPSC_MSG_SIZE);
+    shm = SHMEM_TO_REGION(s);
     mem_vcpy(msg, shm->data, HPSC_MSG_SIZE);
     shm->status = shm->status & ~HPSC_SHMEM_STATUS_BIT_NEW; // clear new
     shm->status = shm->status | HPSC_SHMEM_STATUS_BIT_ACK; // set ACK
