@@ -11,7 +11,7 @@
 #include "hpsc-mbox-test.h"
 
 #define TEST_MSG "HPSC MBOX TEST MSG"
-#define TEST_TIMEOUT_TICKS 100
+#define TEST_TIMEOUT_TICKS 1000
 
 #define MBOX_EVENT_RECV RTEMS_EVENT_0
 #define MBOX_EVENT_ACK  RTEMS_EVENT_1

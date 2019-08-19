@@ -7,8 +7,8 @@
 #include "link-names.h"
 #include "test.h"
 
-#define WTIMEOUT_TICKS 100
-#define RTIMEOUT_TICKS 100
+#define WTIMEOUT_TICKS 1000
+#define RTIMEOUT_TICKS 1000
 
 int test_link_mbox_trch(void)
 {

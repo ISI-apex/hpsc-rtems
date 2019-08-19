@@ -61,11 +61,7 @@ static int do_test_events(struct rtit_test_ctx *ctx)
 {
     rtems_event_set evset = 0;
     rtems_interval ticks = 
-#if 1  // TODO: remove this once timing is fixed in RTEMS
-        RTEMS_MICROSECONDS_TO_TICKS(TEST_EVENTS_NUM * TEST_EVENTS_INTERVAL_US / 8);
-#else
         RTEMS_MICROSECONDS_TO_TICKS(TEST_EVENTS_NUM * TEST_EVENTS_INTERVAL_US);
-#endif
     assert(ctx);
 
     ctx->events = 0;

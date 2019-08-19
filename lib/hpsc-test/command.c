@@ -9,7 +9,7 @@
 
 #include "hpsc-test.h"
 
-#define CMD_TEST_TIMEOUT_TICKS 10
+#define CMD_TEST_TIMEOUT_TICKS 100
 
 struct cmd_test_ctx {
     struct cmd cmd;

@@ -30,8 +30,8 @@ int test_command_server(void)
     return rc;
 }
 
-#define SHMEM_WTIMEOUT_TICKS 10
-#define SHMEM_RTIMEOUT_TICKS 10
+#define SHMEM_WTIMEOUT_TICKS 100
+#define SHMEM_RTIMEOUT_TICKS 100
 int test_link_shmem(void)
 {
     int rc;
