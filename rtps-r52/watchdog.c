@@ -17,11 +17,7 @@
 
 // TODO: get this interval dynamically (e.g., from device tree)
 // The WDT has a 1 second first stage timeout by default
-#if 1 // TODO: remove this after frequency is fixed in RTEMS
-#define WDT_KICK_INTERAL_TICKS RTEMS_MICROSECONDS_TO_TICKS(500000 / 8)
-#else
 #define WDT_KICK_INTERAL_TICKS RTEMS_MICROSECONDS_TO_TICKS(500000)
-#endif
 
 
 static void watchdog_timeout_isr(void *arg)
