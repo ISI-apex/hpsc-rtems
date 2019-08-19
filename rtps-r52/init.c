@@ -33,8 +33,8 @@
 #include "test.h"
 #include "watchdog.h"
 
-#define CMD_TIMEOUT_TICKS 1000
-#define SHMEM_POLL_TICKS 10
+#define CMD_TIMEOUT_TICKS 10000
+#define SHMEM_POLL_TICKS 100
 
 // lower values are higher priority, in range 1-255
 #define TASK_PRI_WDT 1
