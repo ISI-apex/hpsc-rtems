@@ -6,7 +6,7 @@
 
 #include <rtems.h>
 #include <rtems/shell.h>
-#include <libcpu/arm-cp15.h>
+#include <bsp/mpu.h>
 
 // drivers
 #include <hpsc-mbox.h>
@@ -46,14 +46,6 @@
 #define NAME_MBOX_TRCH "TRCH-RTPS Mailbox"
 #define NAME_MBOX_HPPS "HPPS-RTPS Mailbox"
 
-static void disable_mpu(void)
-{
-    // from RTEMS: bsps/arm/gen-r52/include/bsp/mpu.h
-    uint32_t ctrl = arm_cp15_get_control();
-    ctrl &= ~ARM_CP15_CTRL_M;
-    arm_cp15_set_control(ctrl);
-}
-
 static rtems_status_code init_extra_drivers(
     rtems_device_major_number major,
     rtems_device_minor_number minor,
@@ -63,9 +55,12 @@ static rtems_status_code init_extra_drivers(
     cpu_set_t cpuset;
     rtems_status_code sc;
 
+#if CONFIG_LINK_SHMEM_TRCH_CLIENT || CONFIG_LINK_SHMEM_TRCH_SERVER
     // MPU configuration in BSP is blocking shared memory regions
-    // TODO: remove once we're allowed to add MPU regions
-    disable_mpu();
+    printf("MPU: RTPS shmem region: enabling R/W access\n");
+    MPU_REGION_11(RTPS_R52_SHM_ADDR, RTPS_R52_SHM_ADDR + RTPS_R52_SHM_SIZE - 64,
+                  ATTR_RW_Access);
+#endif
 
 #if CONFIG_MBOX_LSIO
     struct hpsc_mbox *mbox_lsio = NULL;
