@@ -133,7 +133,7 @@ static rtems_status_code init_extra_drivers(
     rtems_vector_number wdt_vec =
         gic_irq_to_rvn(PPI_IRQ__WDT, GIC_IRQ_TYPE_PPI);
     dev_cpu_for_each(wdt_cpu) {
-        assert(rtit_cpu < RTEMS_ARRAY_SIZE(wdt_names));
+        assert(wdt_cpu < RTEMS_ARRAY_SIZE(wdt_names));
         affinity_pin_self_to_cpu(wdt_cpu);
         sc = hpsc_wdt_probe_target(&wdt, wdt_names[wdt_cpu],
                                    wdt_bases[wdt_cpu], wdt_vec);
