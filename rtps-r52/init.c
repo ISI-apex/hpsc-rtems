@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <sched.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -173,6 +174,18 @@ static void standalone_tests(void)
         rtems_panic("RTI Timer test");
 #endif // CONFIG_RTI_TIMER
 #endif // TEST_RTI_TIMER
+
+#if TEST_RTPS_DMA
+#if TEST_RTPS_MMU
+    if (test_rtps_mmu(true))
+        rtems_panic("RTPS MMU+DMA test");
+#else
+    #warning Ignoring TEST_RTPS_DMA - requires TEST_RTPS_MMU
+#endif // TEST_RTPS_MMU
+#elif TEST_RTPS_MMU
+    if (test_rtps_mmu(false))
+        rtems_panic("RTPS MMU test");
+#endif // TEST_RTPS_DMA
 
 #if TEST_SHMEM
     if (test_shmem())
@@ -411,6 +424,9 @@ void *POSIX_Init(void *arg)
 #define CONFIGURE_SWAPOUT_TASK_PRIORITY            10
 
 #define CONFIGURE_MAXIMUM_TASKS                    rtems_resource_unlimited (10)
+
+/* for MMU */
+#define CONFIGURE_MAXIMUM_REGIONS                   1
 
 #define CONFIGURE_INIT
 #include <rtems/confdefs.h>
