@@ -1,6 +1,7 @@
 #ifndef TEST_H
 #define TEST_H
 
+#include <stdbool.h>
 #include <stdio.h>
 
 #include <rtems.h>
@@ -16,6 +17,8 @@
 int test_command(void);
 int test_cpu_rti_timers(void);
 int test_mbox_lsio_loopback(void);
+int test_rtps_dma(void); // wrapped by test_rtps_mmu
+int test_rtps_mmu(bool do_dma_test);
 int test_shmem(void);
 
 // Local runtime
