@@ -27,6 +27,8 @@ CONFIG_FLAGS += \
 	TEST_COMMAND \
 	TEST_MBOX_LSIO_LOOPBACK \
 	TEST_RTI_TIMER \
+	TEST_RTPS_DMA \
+	TEST_RTPS_MMU \
 	TEST_SHMEM \
 # Runtime tests
 CONFIG_FLAGS += \
@@ -52,7 +54,9 @@ CSRCS += \
 	tests/hpsc-test-wrappers.c \
 	tests/link-external.c \
 	tests/mailbox.c \
-	tests/rti-timer.c
+	tests/rti-timer.c \
+	tests/rtps-dma.c \
+	tests/rtps-mmu.c
 COBJS = $(CSRCS:%.c=${ARCH}/%.o)
 
 H_FILES = \
