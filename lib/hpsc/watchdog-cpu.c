@@ -3,16 +3,14 @@
 
 #include <rtems.h>
 #include <rtems/score/percpudata.h>
-
-// drivers
-#include <hpsc-wdt.h>
+#include <bsp/hpsc-wdt.h>
 
 #include "watchdog-cpu.h"
 
 #define WDT_TASK_EXIT RTEMS_EVENT_0
 
 struct watchdog_task_ctx {
-    struct hpsc_wdt *wdt;
+    struct HPSC_WDT_Config *wdt;
     rtems_id tid;
     rtems_interval ticks;
     rtems_interrupt_handler cb;
@@ -28,7 +26,7 @@ static rtems_task watchdog_task(rtems_task_argument arg)
     rtems_event_set events;
     assert(ctx);
     while (1) {
-        hpsc_wdt_kick(ctx->wdt);
+        wdt_kick(ctx->wdt);
         rtems_event_receive(WDT_TASK_EXIT, RTEMS_EVENT_ANY, ctx->ticks,
                             &events);
         if (events & WDT_TASK_EXIT)
@@ -43,7 +41,7 @@ static rtems_task watchdog_task(rtems_task_argument arg)
                      struct watchdog_task_ctx, tasks)
 
 rtems_status_code watchdog_cpu_task_start(
-    struct hpsc_wdt *wdt,
+    struct HPSC_WDT_Config *wdt,
     rtems_id task_id,
     rtems_interval ticks,
     rtems_interrupt_handler cb,
@@ -68,15 +66,15 @@ rtems_status_code watchdog_cpu_task_start(
     ctx->running = true;
 
     // first install the ISR, then enable
-    sc = hpsc_wdt_handler_install(wdt, cb, cb_arg);
+    sc = wdt_handler_install(wdt, cb, cb_arg);
     if (sc != RTEMS_SUCCESSFUL)
         goto fail;
 
     // once enabled, the WDT can't be stopped
-    hpsc_wdt_enable(wdt);
+    wdt_enable(wdt);
     sc = rtems_task_start(task_id, watchdog_task, (rtems_task_argument)ctx);
     if (sc != RTEMS_SUCCESSFUL) {
-        sc_tmp = hpsc_wdt_handler_remove(wdt, cb, cb_arg);
+        sc_tmp = wdt_handler_remove(wdt, cb, cb_arg);
         // we installed the handler, so we can safely assert its removal
         assert(sc_tmp == RTEMS_SUCCESSFUL);
         goto fail;
@@ -98,7 +96,7 @@ rtems_status_code watchdog_cpu_task_stop(void)
 
     if (ctx->running) {
         // we can't actually disable the WDT, only remove our ISR
-        sc = hpsc_wdt_handler_remove(ctx->wdt, ctx->cb, ctx->cb_arg);
+        sc = wdt_handler_remove(ctx->wdt, ctx->cb, ctx->cb_arg);
         // we installed the handler, so we can safely assert its removal
         assert(sc == RTEMS_SUCCESSFUL);
         sc = rtems_event_send(ctx->tid, WDT_TASK_EXIT);

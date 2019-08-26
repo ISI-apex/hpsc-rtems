@@ -6,11 +6,11 @@
 #include <rtems.h>
 #include <rtems/capture.h>
 #include <rtems/shell.h>
+#include <bsp/hpsc-wdt.h>
 
 // drivers
 #include <hpsc-mbox.h>
 #include <hpsc-rti-timer.h>
-#include <hpsc-wdt.h>
 
 // libhpsc
 #include <affinity.h>
@@ -63,7 +63,7 @@ RTEMS_NO_RETURN void shutdown(void)
     const char *name;
     struct hpsc_rti_timer *rtit;
     struct hpsc_mbox *mbox;
-    struct hpsc_wdt *wdt;
+    struct HPSC_WDT_Config *wdt;
     rtems_status_code sc;
     size_t i;
     uint32_t cpu;
@@ -135,9 +135,7 @@ RTEMS_NO_RETURN void shutdown(void)
         wdt = dev_cpu_get_wdt();
         if (wdt) {
             dev_cpu_set_wdt(NULL);
-            sc = hpsc_wdt_remove(wdt);
-            if (sc != RTEMS_SUCCESSFUL)
-                rtems_panic("shutdown: hpsc_wdt_remove");
+            wdt_uninit(wdt);
         }
     }
 

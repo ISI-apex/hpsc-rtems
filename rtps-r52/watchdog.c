@@ -4,9 +4,7 @@
 
 #include <rtems.h>
 #include <rtems/bspIo.h>
-
-// driver
-#include <hpsc-wdt.h>
+#include <bsp/hpsc-wdt.h>
 
 // libhpsc
 #include <affinity.h>
@@ -22,16 +20,16 @@
 
 static void watchdog_timeout_isr(void *arg)
 {
-    struct hpsc_wdt *wdt = (struct hpsc_wdt *)arg;
+    struct HPSC_WDT_Config *wdt = (struct HPSC_WDT_Config *)arg;
     assert(wdt);
-    hpsc_wdt_timeout_clear(wdt, 0);
+    wdt_timeout_clear(wdt, 0);
     printk("watchdog: expired\n");
     // TODO: the WDT task failed to kick - maybe initiate a graceful shutdown
 }
 
 static void watchdog_task_create(
     rtems_task_priority priority,
-    struct hpsc_wdt *wdt,
+    struct HPSC_WDT_Config *wdt,
     uint32_t cpu
 )
 {

@@ -42,20 +42,20 @@ struct hpsc_rti_timer *dev_cpu_get_rtit(void)
     return *tmp;
 }
 
-static PER_CPU_DATA_ITEM(struct hpsc_wdt *, wdts) = { 0 };
-void dev_cpu_set_wdt(struct hpsc_wdt *dev)
+static PER_CPU_DATA_ITEM(struct HPSC_WDT_Config *, wdts) = { 0 };
+void dev_cpu_set_wdt(struct HPSC_WDT_Config *dev)
 {
-    struct hpsc_wdt **tmp;
-    tmp = PER_CPU_DATA_GET(cpu_get_control(), struct hpsc_wdt *, wdts);
+    struct HPSC_WDT_Config **tmp;
+    tmp = PER_CPU_DATA_GET(cpu_get_control(), struct HPSC_WDT_Config *, wdts);
     assert(tmp);
     if (dev)
         assert(!*tmp); // not already set
     *tmp = dev;
 }
-struct hpsc_wdt *dev_cpu_get_wdt(void)
+struct HPSC_WDT_Config *dev_cpu_get_wdt(void)
 {
-    struct hpsc_wdt **tmp;
-    tmp = PER_CPU_DATA_GET(cpu_get_control(), struct hpsc_wdt *, wdts);
+    struct HPSC_WDT_Config **tmp;
+    tmp = PER_CPU_DATA_GET(cpu_get_control(), struct HPSC_WDT_Config *, wdts);
     assert(tmp);
     return *tmp;
 }

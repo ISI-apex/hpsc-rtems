@@ -2,11 +2,11 @@
 #define DEVICES_H
 
 #include <rtems.h>
+#include <bsp/hpsc-wdt.h>
 
 // drivers
 #include <hpsc-mbox.h>
 #include <hpsc-rti-timer.h>
-#include <hpsc-wdt.h>
 
 // A store for device driver handles.
 // Users are responsible for synchronizing access to devices and safely managing
@@ -52,10 +52,10 @@ struct hpsc_rti_timer *dev_cpu_get_rtit(void);
 /**
  * Set (or unset) the pointer to the current CPU's Watchdog device handle.
  */
-void dev_cpu_set_wdt(struct hpsc_wdt *dev);
+void dev_cpu_set_wdt(struct HPSC_WDT_Config *dev);
 /**
  * Get the pointer to the current CPU's Watchdog device handle, or NULL.
  */
-struct hpsc_wdt *dev_cpu_get_wdt(void);
+struct HPSC_WDT_Config *dev_cpu_get_wdt(void);
 
 #endif // DEVICES_H

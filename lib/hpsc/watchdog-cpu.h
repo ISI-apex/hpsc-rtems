@@ -3,16 +3,14 @@
 
 #include <rtems.h>
 #include <rtems/irq-extension.h>
-
-// drivers
-#include <hpsc-wdt.h>
+#include <bsp/hpsc-wdt.h>
 
 /**
  * Start the watchdog kicker task for the current CPU.
  * The caller is responsible for pinning the task to the appropriate CPU.
  */
 rtems_status_code watchdog_cpu_task_start(
-    struct hpsc_wdt *wdt,
+    struct HPSC_WDT_Config *wdt,
     rtems_id task_id,
     rtems_interval ticks,
     rtems_interrupt_handler cb,

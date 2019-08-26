@@ -8,11 +8,11 @@
 #include <rtems.h>
 #include <rtems/shell.h>
 #include <bsp/mpu.h>
+#include <bsp/hpsc-wdt.h>
 
 // drivers
 #include <hpsc-mbox.h>
 #include <hpsc-rti-timer.h>
-#include <hpsc-wdt.h>
 
 // libhpsc
 #include <affinity.h>
@@ -123,23 +123,21 @@ static rtems_status_code init_extra_drivers(
 #endif // CONFIG_RTI_TIMER
 
 #if CONFIG_WDT
-    uintptr_t wdt_bases[] = {
-        (uintptr_t) WDT_RTPS_R52_0_RTPS_BASE,
-        (uintptr_t) WDT_RTPS_R52_1_RTPS_BASE
+    volatile uint32_t *wdt_bases[] = {
+        WDT_RTPS_R52_0_RTPS_BASE,
+        WDT_RTPS_R52_1_RTPS_BASE
     };
     static const char *wdt_names[] = { "RTPS-R52-WDT-0", "RTPS-R52-WDT-1" };
-    struct hpsc_wdt *wdt;
+    static struct HPSC_WDT_Config wdts[] = { { 0 }, { 0 } };
     uint32_t wdt_cpu;
     rtems_vector_number wdt_vec =
         gic_irq_to_rvn(PPI_IRQ__WDT, GIC_IRQ_TYPE_PPI);
     dev_cpu_for_each(wdt_cpu) {
         assert(wdt_cpu < RTEMS_ARRAY_SIZE(wdt_names));
         affinity_pin_self_to_cpu(wdt_cpu);
-        sc = hpsc_wdt_probe_target(&wdt, wdt_names[wdt_cpu],
-                                   wdt_bases[wdt_cpu], wdt_vec);
-        if (sc != RTEMS_SUCCESSFUL)
-            rtems_panic("%s", wdt_names[wdt_cpu]);
-        dev_cpu_set_wdt(wdt);
+        wdt_init_target(&wdts[wdt_cpu], wdt_names[wdt_cpu], wdt_bases[wdt_cpu],
+                        wdt_vec);
+        dev_cpu_set_wdt(&wdts[wdt_cpu]);
     }
 #endif // CONFIG_WDT
 
