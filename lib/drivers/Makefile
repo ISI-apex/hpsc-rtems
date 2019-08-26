@@ -10,8 +10,7 @@ C_PIECES= \
 	bit \
 	gic-trigger \
 	hpsc-mbox \
-	hpsc-rti-timer \
-	hpsc-wdt
+	hpsc-rti-timer
 C_FILES=$(C_PIECES:%=%.c)
 C_O_FILES=$(C_FILES:%.c=${ARCH}/%.o)
 
@@ -25,7 +24,6 @@ H_FILES = \
 	gic-trigger.h \
 	hpsc-mbox.h \
 	hpsc-rti-timer.h \
-	hpsc-wdt.h \
 	regops.h \
 
 # Assembly source names, if any, go here -- minus the .S
