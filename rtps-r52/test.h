@@ -42,4 +42,23 @@ RTEMS_INLINE_ROUTINE void test_end(const char *name, int rc)
     printk("TEST: %s: %s\n", name, rc ? "failed": "success");
 }
 
+#define TEST_OR_SET_RC(val, r, msg) \
+    if (!(val)) { \
+        r = 1; \
+        printk(msg); \
+    }
+
+#define TEST_OR_SET_RC_GOTO(val, r, msg, lbl) \
+    if (!(val)) { \
+        r = 1; \
+        printk(msg); \
+        goto lbl; \
+    }
+
+#define TEST_SC_OR_SET_RC(s, r, msg) \
+    TEST_OR_SET_RC((s) == RTEMS_SUCCESSFUL, r, msg)
+
+#define TEST_SC_OR_SET_RC_GOTO(s, r, msg, lbl) \
+    TEST_OR_SET_RC_GOTO((s) == RTEMS_SUCCESSFUL, r, msg, lbl)
+
 #endif // TEST_H
