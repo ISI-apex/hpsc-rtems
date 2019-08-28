@@ -3,9 +3,6 @@ include $(RTEMS_CUSTOM)
 include $(RTEMS_ROOT)/make/leaf.cfg
 
 H_FILES = \
-	hpsc-busids.dtsh \
-	hpsc-irqs.dtsh \
-	hwinfo.h \
 	mailbox-map.h \
 	mem-map.h \
 
