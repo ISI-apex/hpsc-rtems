@@ -7,6 +7,7 @@
 
 #include <rtems.h>
 #include <rtems/shell.h>
+#include <bsp/hwinfo.h>
 #include <bsp/mpu.h>
 #include <bsp/hpsc-wdt.h>
 
@@ -24,7 +25,6 @@
 #include <link-store.h>
 
 // plat
-#include <hwinfo.h>
 #include <mailbox-map.h>
 #include <mem-map.h>
 

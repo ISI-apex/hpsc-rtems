@@ -5,6 +5,7 @@
 
 #include <rtems.h>
 #include <rtems/bspIo.h>
+#include <bsp/hwinfo.h>
 
 // drivers
 #include <hpsc-rti-timer.h>
@@ -15,9 +16,6 @@
 // libhpsc
 #include <affinity.h>
 #include <devices.h>
-
-// plat
-#include <hwinfo.h>
 
 #include "test.h"
 
