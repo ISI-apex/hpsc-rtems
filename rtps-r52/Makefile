@@ -25,6 +25,8 @@ CONFIG_FLAGS += \
 # Standalone tests
 CONFIG_FLAGS += \
 	TEST_COMMAND \
+	TEST_LSIO_SRAM_SYSCFG \
+	TEST_LSIO_SRAM_DMA_SYSCFG \
 	TEST_MBOX_LSIO_LOOPBACK \
 	TEST_RTI_TIMER \
 	TEST_RTPS_DMA \
@@ -53,6 +55,7 @@ CSRCS = \
 CSRCS += \
 	tests/hpsc-test-wrappers.c \
 	tests/link-external.c \
+	tests/lsio-sram.c \
 	tests/mailbox.c \
 	tests/rti-timer.c \
 	tests/rtps-dma.c \
