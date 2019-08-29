@@ -155,6 +155,16 @@ static void standalone_tests(void)
         rtems_panic("Command test");
 #endif // TEST_COMMAND
 
+#if TEST_LSIO_SRAM_SYSCFG
+    if (test_lsio_sram_syscfg())
+        rtems_panic("LSIO SRAM syscfg test");
+#endif // TEST_LSIO_SRAM_SYSCFG
+
+#if TEST_LSIO_SRAM_DMA_SYSCFG
+    if (test_lsio_sram_dma_syscfg())
+        rtems_panic("LSIO SRAM w/ DMA syscfg test");
+#endif // TEST_LSIO_SRAM_DMA_SYSCFG
+
 #if TEST_MBOX_LSIO_LOOPBACK
 #if !CONFIG_MBOX_LSIO
     #warning Ignoring TEST_MBOX_LSIO_LOOPBACK - requires CONFIG_MBOX_LSIO
@@ -162,7 +172,7 @@ static void standalone_tests(void)
     if (test_mbox_lsio_loopback())
         rtems_panic("RTPS LSIO mbox loopback test");
 #endif // CONFIG_MBOX_LSIO
-#endif //TEST_MBOX_LSIO_LOOPBACK
+#endif // TEST_MBOX_LSIO_LOOPBACK
 
 #if TEST_RTI_TIMER
 #if !CONFIG_RTI_TIMER
