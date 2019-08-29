@@ -17,6 +17,8 @@
 // Standalone
 int test_command(void);
 int test_cpu_rti_timers(void);
+int test_lsio_sram_syscfg(void);
+int test_lsio_sram_dma_syscfg(void);
 int test_mbox_lsio_loopback(void);
 int test_rtps_dma(void); // wrapped by test_rtps_mmu
 int test_rtps_mmu(bool do_dma_test);
@@ -56,9 +58,15 @@ RTEMS_INLINE_ROUTINE void test_end(const char *name, int rc)
     }
 
 #define TEST_SC_OR_SET_RC(s, r, msg) \
-    TEST_OR_SET_RC((s) == RTEMS_SUCCESSFUL, r, msg)
+    if ((s) != RTEMS_SUCCESSFUL) { \
+        printk("TEST_SC: %s\n", rtems_status_text(sc)); \
+        TEST_OR_SET_RC(0, r, msg) \
+    }
 
 #define TEST_SC_OR_SET_RC_GOTO(s, r, msg, lbl) \
-    TEST_OR_SET_RC_GOTO((s) == RTEMS_SUCCESSFUL, r, msg, lbl)
+    if ((s) != RTEMS_SUCCESSFUL) { \
+        printk("TEST_SC: %s\n", rtems_status_text(sc)); \
+        TEST_OR_SET_RC_GOTO(0, r, msg, lbl) \
+    }
 
 #endif // TEST_H
