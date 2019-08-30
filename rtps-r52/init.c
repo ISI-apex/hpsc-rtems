@@ -123,7 +123,7 @@ static rtems_status_code init_extra_drivers(
 #endif // CONFIG_RTI_TIMER
 
 #if CONFIG_WDT
-    volatile uint32_t *wdt_bases[] = {
+    static const uintptr_t wdt_bases[] = {
         WDT_RTPS_R52_0_RTPS_BASE,
         WDT_RTPS_R52_1_RTPS_BASE
     };

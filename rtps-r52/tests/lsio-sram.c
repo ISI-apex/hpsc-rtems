@@ -14,11 +14,6 @@
 
 // TODO: test both write and read
 
-// TODO: rm when RTEMS BSP updates hwinfo.h to at least hpsc-baremetal efff68b
-#ifndef SMC_SRAM_BL_FS_START
-#define SMC_SRAM_BL_FS_START    ((volatile uint32_t *)0x28300000)
-#endif // SMC_SRAM_BL_FS_START
-
 int test_lsio_sram_syscfg(void)
 {
     SRAMFS_Config_t sramfs_config;
@@ -28,8 +23,7 @@ int test_lsio_sram_syscfg(void)
 
     test_begin("test_lsio_sram");
 
-    sc = sramfs_init(&sramfs_config, (volatile void *)SMC_SRAM_BL_FS_START,
-                     NULL);
+    sc = sramfs_init(&sramfs_config, SMC_LSIO_SRAM_BL_FS_START, NULL);
     TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM: init\n", out);
 
     /* Load syscfg */
@@ -64,8 +58,7 @@ int test_lsio_sram_dma_syscfg(void)
     sc = dma_init(&dma_config, BSP_DMA_BASE);
     TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM_DMA: dma_init\n", out);
 
-    sc = sramfs_init(&sramfs_config, (volatile void *)SMC_SRAM_BL_FS_START,
-                     &dma_config);
+    sc = sramfs_init(&sramfs_config, SMC_LSIO_SRAM_BL_FS_START, &dma_config);
     TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM_DMA: sramfs_init\n", uninit_dma);
 
     /* Load syscfg */
