@@ -36,7 +36,7 @@ int test_rtps_mmu(bool do_dma_test)
 
     sc = mmu_context_create(&mmu_context, &mmu_config, region_id,
                             MMU_PAGESIZE_4KB);
-    TEST_SC_OR_SET_RC_GOTO(sc, rc, "MMU: context create\n", out_uninit);
+    TEST_SC_OR_SET_RC_GOTO(sc, rc, "MMU: context create\n", out_region_delete);
 
     sc = mmu_stream_create(&mmu_stream, MASTER_ID_RTPS_DMA, mmu_context);
     TEST_SC_OR_SET_RC_GOTO(sc, rc, "MMU: stream create\n", out_context_destroy);
@@ -91,6 +91,10 @@ out_stream_destroy:
 out_context_destroy:
     sc = mmu_context_destroy(mmu_context);
     TEST_SC_OR_SET_RC(sc, rc, "MMU: context destroy\n");
+
+out_region_delete:
+    sc = rtems_region_delete(region_id);
+    TEST_SC_OR_SET_RC(sc, rc, "MMU: region delete\n");
 
 out_uninit:
     sc = mmu_uninit(&mmu_config);
