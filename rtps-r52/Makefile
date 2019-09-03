@@ -50,6 +50,7 @@ include Makefile.config
 CSRCS = \
 	init.c \
 	server.c \
+	shell-tests.c \
 	shutdown.c \
 	watchdog.c
 CSRCS += \
@@ -66,6 +67,7 @@ H_FILES = \
 	gic.h \
 	link-names.h \
 	server.h \
+	shell-tests.h \
 	shutdown.h \
 	test.h \
 	watchdog.h \

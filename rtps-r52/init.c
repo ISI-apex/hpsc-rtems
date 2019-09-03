@@ -31,6 +31,7 @@
 #include "gic.h"
 #include "link-names.h"
 #include "server.h"
+#include "shell-tests.h"
 #include "shutdown.h"
 #include "test.h"
 #include "watchdog.h"
@@ -410,7 +411,28 @@ void *POSIX_Init(void *arg)
 #define CONFIGURE_SHELL_COMMANDS_INIT
 #define CONFIGURE_SHELL_COMMANDS_ALL
 #define CONFIGURE_SHELL_NO_COMMAND_SHUTDOWN // we override
-#define CONFIGURE_SHELL_USER_COMMANDS &shutdown_rtps_r52_command
+// TODO: test_command requires changing state in lib/hpsc/command.c, which by
+//       runtime is already reserved by the application. State would have be
+//       moved out of static structs in command.c and managed by application
+//       before we could enable this test at runtime.
+#define CONFIGURE_SHELL_USER_COMMANDS \
+    /* functionality commands */ \
+    &shutdown_rtps_r52_command, \
+    /* standalone tests */ \
+    /* &shell_cmd_test_command, */ \
+    &shell_cmd_test_cpu_rti_timers, \
+    &shell_cmd_test_lsio_sram_syscfg, \
+    &shell_cmd_test_lsio_sram_dma_syscfg, \
+    &shell_cmd_test_mbox_lsio_loopback, \
+    &shell_cmd_test_rtps_mmu, \
+    &shell_cmd_test_rtps_mmu_dma, \
+    &shell_cmd_test_shmem, \
+    /* runtime tests */ \
+    &shell_cmd_test_command_server, \
+    &shell_cmd_test_link_shmem, \
+    /* externally-dependent tests */ \
+    &shell_cmd_test_link_mbox_trch, \
+    &shell_cmd_test_link_shmem_trch
 #include <rtems/shellconfig.h>
 
 /* drivers */
