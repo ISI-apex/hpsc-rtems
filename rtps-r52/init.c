@@ -35,6 +35,10 @@
 #include "test.h"
 #include "watchdog.h"
 
+// Design note:
+// Incompatible CONFIG_* options -> compilation failure.
+// Incompatible TEST_* options (e.g., missing CONFIG_* dependencies) -> warning.
+
 #define CMD_TIMEOUT_TICKS 10000
 #define SHMEM_POLL_TICKS 100
 
@@ -217,8 +221,8 @@ static void runtime_tests(void)
 static void external_tests(void)
 {
 #if TEST_MBOX_LINK_TRCH
-#if !CONFIG_MBOX_LSIO
-    #warning Ignoring TEST_MBOX_LINK_TRCH - requires CONFIG_MBOX_LSIO
+#if !CONFIG_LINK_MBOX_TRCH_CLIENT
+    #warning Ignoring TEST_MBOX_LINK_TRCH - requires CONFIG_LINK_MBOX_TRCH_CLIENT
 #else
     if (test_link_mbox_trch())
         rtems_panic("RTPS->TRCH mailbox test");
@@ -241,8 +245,8 @@ static void init_client_links(void)
 
 #if CONFIG_LINK_MBOX_TRCH_CLIENT
 #if !CONFIG_MBOX_LSIO
-    #warning Ignoring CONFIG_LINK_MBOX_TRCH_CLIENT - requires CONFIG_MBOX_LSIO
-#else
+    #error CONFIG_LINK_MBOX_TRCH_CLIENT requires CONFIG_MBOX_LSIO
+#endif // CONFIG_MBOX_LSIO
     struct hpsc_mbox *mbox_lsio = dev_get_mbox(DEV_ID_MBOX_LSIO);
     assert(mbox_lsio);
     struct link *tmc_link = link_mbox_connect(LINK_NAME__MBOX__TRCH_CLIENT,
@@ -251,7 +255,6 @@ static void init_client_links(void)
     if (!tmc_link)
         rtems_panic(LINK_NAME__MBOX__TRCH_CLIENT);
     link_store_append(tmc_link);
-#endif // CONFIG_MBOX_LSIO
 #endif // CONFIG_LINK_MBOX_TRCH_CLIENT
 
 #if CONFIG_LINK_SHMEM_TRCH_CLIENT
@@ -307,8 +310,8 @@ static void init_server_links(void)
 
 #if CONFIG_LINK_MBOX_HPPS_SERVER
 #if !CONFIG_MBOX_HPPS_RTPS
-    #warning Ignoring CONFIG_LINK_MBOX_HPPS_SERVER - requires CONFIG_MBOX_HPPS_RTPS
-#else
+    #error CONFIG_LINK_MBOX_HPPS_SERVER requires CONFIG_MBOX_HPPS_RTPS
+#endif // CONFIG_MBOX_HPPS_RTPS
     struct hpsc_mbox *mbox_hpps = dev_get_mbox(DEV_ID_MBOX_HPPS_RTPS);
     assert(mbox_hpps);
     struct link *hms_link = link_mbox_connect(LINK_NAME__MBOX__HPPS_SERVER,
@@ -317,7 +320,6 @@ static void init_server_links(void)
     if (!hms_link)
         rtems_panic(LINK_NAME__MBOX__HPPS_SERVER);
     link_store_append(hms_link);
-#endif // CONFIG_MBOX_HPPS_RTPS
 #endif // CONFIG_LINK_MBOX_HPPS_SERVER
 }
 
