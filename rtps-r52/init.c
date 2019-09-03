@@ -351,13 +351,11 @@ static void init_tasks(void)
 
 static void late_tasks(void)
 {
-    rtems_status_code sc;
-
 #if CONFIG_SHELL
     printf(" =========================\n");
     printf(" Starting shell\n");
     printf(" =========================\n");
-    sc = rtems_shell_init(
+    rtems_status_code sc = rtems_shell_init(
         "SHLL",                       /* task name */
         RTEMS_MINIMUM_STACK_SIZE * 4, /* task stack size */
         TASK_PRI_SHELL,               /* task priority */
