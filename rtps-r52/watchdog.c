@@ -15,7 +15,7 @@
 
 // TODO: get this interval dynamically (e.g., from device tree)
 // The WDT has a 1 second first stage timeout by default
-#define WDT_KICK_INTERAL_TICKS RTEMS_MICROSECONDS_TO_TICKS(500000)
+#define WDT_KICK_INTERVAL_TICKS RTEMS_MICROSECONDS_TO_TICKS(500000)
 
 
 static void watchdog_timeout_isr(void *arg)
@@ -47,7 +47,7 @@ static void watchdog_task_create(
     // pin watchdog task to its CPU
     sc = affinity_pin_to_cpu(task_id, cpu);
     assert(sc == RTEMS_SUCCESSFUL);
-    sc = watchdog_cpu_task_start(wdt, task_id, WDT_KICK_INTERAL_TICKS,
+    sc = watchdog_cpu_task_start(wdt, task_id, WDT_KICK_INTERVAL_TICKS,
                                  watchdog_timeout_isr, wdt);
     if (sc != RTEMS_SUCCESSFUL)
         rtems_panic("watchdog_task_create: watchdog_cpu_task_start");
