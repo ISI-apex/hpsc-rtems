@@ -72,7 +72,7 @@ Current drivers are:
 
 * `hpsc-mbox`: HPSC Mailbox
 * `hpsc-rti-timer`: HPSC Real-Time Interrupt Timers
-* `hpsc-wdt`: HPSC Watchdog Timers
+* ~~`hpsc-wdt`: HPSC Watchdog Timers~~ (now in RTEMS BSP)
 
 
 Library Code
