@@ -57,9 +57,9 @@ struct hpsc_mbox_chan {
     // dynamic fields
     struct hpsc_mbox_chan_irq_info int_a;
     struct hpsc_mbox_chan_irq_info int_b;
-    uint32_t owner;
-    uint32_t src;
-    uint32_t dest;
+    uint8_t owner;
+    uint8_t src;
+    uint8_t dest;
     bool active;
 };
 
@@ -78,7 +78,7 @@ struct hpsc_mbox {
 };
 
 static void hpsc_mbox_chan_init(struct hpsc_mbox_chan *chan,
-                                uint32_t owner, uint32_t src, uint32_t dest,
+                                uint8_t owner, uint8_t src, uint8_t dest,
                                 rtems_interrupt_handler cb_a,
                                 rtems_interrupt_handler cb_b,
                                 void *cb_arg)
@@ -109,9 +109,9 @@ static void hpsc_mbox_chan_destroy(struct hpsc_mbox_chan *chan)
 static void hpsc_mbox_chan_config_read(
     struct hpsc_mbox *mbox,
     unsigned instance,
-    uint32_t *owner,
-    uint32_t *src,
-    uint32_t *dest
+    uint8_t *owner,
+    uint8_t *src,
+    uint8_t *dest
 )
 {
     uint32_t val;
@@ -131,9 +131,9 @@ static void hpsc_mbox_chan_config_read(
 static rtems_status_code hpsc_mbox_chan_config_write(
     struct hpsc_mbox *mbox,
     unsigned instance,
-    uint32_t owner,
-    uint32_t src,
-    uint32_t dest
+    uint8_t owner,
+    uint8_t src,
+    uint8_t dest
 )
 {
     uint32_t config;
@@ -169,17 +169,17 @@ static void hpsc_mbox_chan_reset(struct hpsc_mbox *mbox, unsigned instance)
 rtems_status_code hpsc_mbox_chan_claim(
     struct hpsc_mbox *mbox,
     unsigned instance,
-    uint32_t owner,
-    uint32_t src,
-    uint32_t dest,
+    uint8_t owner,
+    uint8_t src,
+    uint8_t dest,
     rtems_interrupt_handler cb_a,
     rtems_interrupt_handler cb_b,
     void *cb_arg
 )
 {
     uint32_t val = 0;
-    uint32_t src_hw;
-    uint32_t dest_hw;
+    uint8_t src_hw;
+    uint8_t dest_hw;
     struct hpsc_mbox_chan *chan;
     rtems_interrupt_lock_context lock_context;
     rtems_status_code sc;

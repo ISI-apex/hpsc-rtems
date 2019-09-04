@@ -51,7 +51,7 @@ static int link_mbox_close(struct link *link) {
 
 struct link *link_mbox_connect(const char *name, struct hpsc_mbox *mbox,
                                unsigned idx_from, unsigned idx_to,
-                               uint32_t server, uint32_t client)
+                               uint8_t server, uint8_t client)
 {
     struct link_mbox *mlink;
     struct link *link;

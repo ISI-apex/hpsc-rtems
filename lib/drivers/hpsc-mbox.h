@@ -47,9 +47,9 @@ rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox);
 rtems_status_code hpsc_mbox_chan_claim(
     struct hpsc_mbox *mbox,
     unsigned instance,
-    uint32_t owner,
-    uint32_t src,
-    uint32_t dest,
+    uint8_t owner,
+    uint8_t src,
+    uint8_t dest,
     rtems_interrupt_handler cb_a,
     rtems_interrupt_handler cb_b,
     void *cb_arg

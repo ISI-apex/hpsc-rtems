@@ -25,9 +25,9 @@ enum hpsc_mbox_test_rc {
 int hpsc_mbox_chan_test(
     struct hpsc_mbox *mbox,
     unsigned instance,
-    uint32_t owner,
-    uint32_t src,
-    uint32_t dest
+    uint8_t owner,
+    uint8_t src,
+    uint8_t dest
 );
 
 int hpsc_mbox_test(
@@ -37,9 +37,9 @@ int hpsc_mbox_test(
     rtems_vector_number int_b,
     unsigned int_idx_b,
     unsigned instance,
-    uint32_t owner,
-    uint32_t src,
-    uint32_t dest
+    uint8_t owner,
+    uint8_t src,
+    uint8_t dest
 );
 
 #endif // HPSC_MBOX_TEST_H

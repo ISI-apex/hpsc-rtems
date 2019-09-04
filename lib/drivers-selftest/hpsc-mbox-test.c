@@ -75,9 +75,9 @@ static int test_loopback(struct hpsc_mbox_test *ctx)
 int hpsc_mbox_chan_test(
     struct hpsc_mbox *mbox,
     unsigned instance,
-    uint32_t owner,
-    uint32_t src,
-    uint32_t dest
+    uint8_t owner,
+    uint8_t src,
+    uint8_t dest
 )
 {
     int rc;
@@ -109,9 +109,9 @@ int hpsc_mbox_test(
     rtems_vector_number int_b,
     unsigned int_idx_b,
     unsigned instance,
-    uint32_t owner,
-    uint32_t src,
-    uint32_t dest
+    uint8_t owner,
+    uint8_t src,
+    uint8_t dest
 )
 {
     struct hpsc_mbox *mbox;
