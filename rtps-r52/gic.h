@@ -2,6 +2,7 @@
 #define GIC_H
 
 #include <rtems.h>
+#include <bsp/arm-gic.h>
 
 #define GIC_INTERNAL   32
 #define GIC_NR_SGIS    16
@@ -33,5 +34,9 @@ RTEMS_INLINE_ROUTINE rtems_vector_number gic_irq_to_rvn(
             rtems_panic("unknown irq type");
     }
 }
+
+gic_trigger_mode gic_trigger_get(rtems_vector_number vector);
+
+void gic_trigger_set(rtems_vector_number vector, gic_trigger_mode condition);
 
 #endif // GIC_H

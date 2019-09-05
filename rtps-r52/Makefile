@@ -48,6 +48,7 @@ include Makefile.config
 
 # C source names
 CSRCS = \
+	gic.c \
 	init.c \
 	server.c \
 	shell-tests.c \

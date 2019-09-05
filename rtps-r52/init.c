@@ -12,7 +12,6 @@
 #include <bsp/hpsc-wdt.h>
 
 // drivers
-#include <gic-trigger.h>
 #include <hpsc-mbox.h>
 #include <hpsc-rti-timer.h>
 
