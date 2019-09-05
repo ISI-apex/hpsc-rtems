@@ -12,6 +12,7 @@
 #include <bsp/hpsc-wdt.h>
 
 // drivers
+#include <gic-trigger.h>
 #include <hpsc-mbox.h>
 #include <hpsc-rti-timer.h>
 
@@ -116,6 +117,8 @@ static rtems_status_code init_extra_drivers(
     uint32_t rtit_cpu;
     rtems_vector_number rtit_vec =
         gic_irq_to_rvn(PPI_IRQ__RTI_TIMER, GIC_IRQ_TYPE_PPI);
+    // must set vector to edge-triggered
+    gic_trigger_set(rtit_vec, GIC_EDGE_TRIGGERED);
     dev_cpu_for_each(rtit_cpu) {
         assert(rtit_cpu < RTEMS_ARRAY_SIZE(rtit_names));
         affinity_pin_self_to_cpu(rtit_cpu);

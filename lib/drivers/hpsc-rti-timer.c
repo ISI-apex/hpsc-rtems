@@ -6,7 +6,6 @@
 #include <rtems/bspIo.h>
 #include <rtems/irq-extension.h>
 
-#include "gic-trigger.h"
 #include "hpsc-rti-timer.h"
 
 #ifdef HPSC_RTIT_DEBUG
@@ -78,8 +77,6 @@ rtems_status_code hpsc_rti_timer_probe(
     if (!*tmr)
         return RTEMS_NO_MEMORY;
     hpsc_rti_timer_init(*tmr, name, base, vec);
-    // must set vector to edge-triggered
-    gic_trigger_set(vec, GIC_EDGE_TRIGGERED);
     return RTEMS_SUCCESSFUL;
 }
 
@@ -89,8 +86,6 @@ rtems_status_code hpsc_rti_timer_remove(struct hpsc_rti_timer *tmr)
     HPSC_RTIT_DBG("RTIT: %s: remove\n", tmr->name);
     if (tmr->is_started)
         return RTEMS_RESOURCE_IN_USE;
-    // reset vector to level-sensitive
-    gic_trigger_set(tmr->vec, GIC_LEVEL_SENSITIVE);
     free(tmr);
     return RTEMS_SUCCESSFUL;
 }
