@@ -22,7 +22,6 @@ H_FILES = \
 	gic-trigger.h \
 	hpsc-mbox.h \
 	hpsc-rti-timer.h \
-	regops.h \
 
 # Assembly source names, if any, go here -- minus the .S
 S_PIECES=
