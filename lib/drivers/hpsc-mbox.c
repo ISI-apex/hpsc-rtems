@@ -286,7 +286,7 @@ size_t hpsc_mbox_chan_write(
     if (sz % sizeof(uint32_t))
         len++;
 
-    for (i = 0; i < len; ++i)
+    for (i = 0; i < len; i++)
         chan->base->DATA[i] = msg[i];
     // zero out any remaining registers
     for (; i < HPSC_MBOX_DATA_REGS; i++)
@@ -382,19 +382,18 @@ static void hpsc_mbox_isr(struct hpsc_mbox *mbox, unsigned event,
     bool handled = false;
     assert(mbox);
     assert(cb);
-    for (i = 0; i < HPSC_MBOX_CHANNELS; ++i) {
+    for (i = 0; i < RTEMS_ARRAY_SIZE(mbox->chans); i++) {
         chan = &mbox->chans[i];
         rtems_interrupt_lock_acquire_isr(&chan->lock, &lock_context);
-        if (!hpsc_mbox_chan_is_subscribed(chan, event, interrupt))
-            goto cont;
-        handled = true;
-        cb(chan);
-cont:
+        if (hpsc_mbox_chan_is_subscribed(chan, event, interrupt)) {
+            handled = true;
+            cb(chan);
+        }
         rtems_interrupt_lock_release_isr(&chan->lock, &lock_context);
     }
     if (!handled)
         printk("MBOX: %s: WARN: no matching event for interrupt", mbox->info);
-    assert(handled); // probably not worth forcing a runtime panic over
+    // assert(handled); // probably not worth forcing a runtime panic over
 }
 
 static void hpsc_mbox_isr_a(void *arg)
