@@ -25,7 +25,6 @@
 
 #define HPSC_MBOX_EVENT_A 0x1
 #define HPSC_MBOX_EVENT_B 0x2
-#define HPSC_MBOX_EVENT_C 0x4
 
 #define HPSC_MBOX_INT_A(idx) (1 << (2 * (idx)))      // rcv (map event A to int 'idx')
 #define HPSC_MBOX_INT_B(idx) (1 << (2 * (idx) + 1))  // ack (map event B to int 'idx')
@@ -293,7 +292,7 @@ size_t hpsc_mbox_chan_write(
     for (; i < HPSC_MBOX_DATA_REGS; i++)
         chan->base->DATA[i] = 0;
 
-    printk("MBOX: %s: %u: raise int A\n", mbox->info, instance);
+    HPSC_MBOX_DBG("MBOX: %s: %u: raise int A\n", mbox->info, instance);
     chan->base->EVENT_STATUS_SET = HPSC_MBOX_EVENT_A;
 
     return sz;
@@ -326,7 +325,7 @@ size_t hpsc_mbox_chan_read(
         msg[i] = chan->base->DATA[i];
 
     // ACK
-    printk("MBOX: %s: %u: raise int B\n", mbox->info, instance);
+    HPSC_MBOX_DBG("MBOX: %s: %u: raise int B\n", mbox->info, instance);
     chan->base->EVENT_STATUS_SET = HPSC_MBOX_EVENT_B;
 
     return i * sizeof(uint32_t);
@@ -336,7 +335,8 @@ static void hpsc_mbox_chan_isr_a(struct hpsc_mbox_chan *chan)
 {
     assert(chan);
     // Clear the event first
-    printk("MBOX: %s: %u: clear int A\n", chan->mbox->info, chan->instance);
+    HPSC_MBOX_DBG("MBOX: %s: %u: clear int A\n",
+                  chan->mbox->info, chan->instance);
     chan->base->EVENT_STATUS_CLEAR = HPSC_MBOX_EVENT_A;
     // issue callback
     if (chan->int_a.cb)
@@ -347,7 +347,8 @@ static void hpsc_mbox_chan_isr_b(struct hpsc_mbox_chan *chan)
 {
     assert(chan);
     // Clear the event first
-    printk("MBOX: %s: %u: clear int B\n", chan->mbox->info, chan->instance);
+    HPSC_MBOX_DBG("MBOX: %s: %u: clear int B\n",
+                  chan->mbox->info, chan->instance);
     chan->base->EVENT_STATUS_CLEAR = HPSC_MBOX_EVENT_B;
     // issue callback
     if (chan->int_b.cb)
@@ -456,12 +457,12 @@ rtems_status_code hpsc_mbox_probe(
     assert(info);
     assert(base);
 
-    printk("MBOX: %s: probe\n", info);
-    printk("\tbase: 0x%"PRIxPTR"\n", base);
-    printk("\tirq_a: %u\n", int_a);
-    printk("\tidx_a: %u\n", int_idx_a);
-    printk("\tirq_b: %u\n", int_b);
-    printk("\tidx_b: %u\n", int_idx_b);
+    HPSC_MBOX_DBG("MBOX: %s: probe\n", info);
+    HPSC_MBOX_DBG("\tbase: 0x%"PRIxPTR"\n", base);
+    HPSC_MBOX_DBG("\tirq_a: %u\n", int_a);
+    HPSC_MBOX_DBG("\tidx_a: %u\n", int_idx_a);
+    HPSC_MBOX_DBG("\tirq_b: %u\n", int_b);
+    HPSC_MBOX_DBG("\tidx_b: %u\n", int_idx_b);
 
     *mbox = malloc(sizeof(struct hpsc_mbox));
     if (!*mbox)
@@ -499,7 +500,7 @@ rtems_status_code hpsc_mbox_remove(struct hpsc_mbox *mbox)
     size_t i;
     assert(mbox);
 
-    printk("MBOX: %s: remove\n", mbox->info);
+    HPSC_MBOX_DBG("MBOX: %s: remove\n", mbox->info);
 
     for (i = 0; i < RTEMS_ARRAY_SIZE(mbox->chans); i++)
         hpsc_mbox_chan_release(mbox, i);
