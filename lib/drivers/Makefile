@@ -18,7 +18,6 @@ CC_FILES=$(CC_PIECES:%=%.cc)
 CC_O_FILES=$(CC_PIECES:%=${ARCH}/%.o)
 
 H_FILES = \
-	debug.h \
 	gic-trigger.h \
 	hpsc-mbox.h \
 	hpsc-rti-timer.h \
