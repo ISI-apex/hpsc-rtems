@@ -23,7 +23,7 @@ int test_lsio_sram_syscfg(void)
 
     test_begin("test_lsio_sram");
 
-    sc = sramfs_init(&sramfs_config, SMC_LSIO_SRAM_BL_FS_START, NULL);
+    sc = sramfs_init(&sramfs_config, SMC_LSIO_SRAM_BL_FS_START0, NULL);
     TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM: init\n", out);
 
     /* Load syscfg */
@@ -58,7 +58,7 @@ int test_lsio_sram_dma_syscfg(void)
     sc = dma_init(&dma_config, BSP_DMA_BASE);
     TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM_DMA: dma_init\n", out);
 
-    sc = sramfs_init(&sramfs_config, SMC_LSIO_SRAM_BL_FS_START, &dma_config);
+    sc = sramfs_init(&sramfs_config, SMC_LSIO_SRAM_BL_FS_START0, &dma_config);
     TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM_DMA: sramfs_init\n", uninit_dma);
 
     /* Load syscfg */
