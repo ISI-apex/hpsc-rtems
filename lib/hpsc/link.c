@@ -46,10 +46,10 @@ static size_t _link_request_send(struct link *link, void *buf, size_t sz,
 }
 
 // caller responsible for setting rctx reply-related / tid_requester fields
-static size_t _link_request_recv(struct link *link, rtems_interval ticks)
+static ssize_t _link_request_recv(struct link *link, rtems_interval ticks)
 {
     rtems_event_set events = 0;
-    size_t rc;
+    ssize_t rc;
 
     printk("%s: request: waiting for reply...\n", link->name);
     rtems_event_receive(LINK_EVENT_RECV, RTEMS_EVENT_ANY, ticks, &events);
