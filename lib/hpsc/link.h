@@ -19,7 +19,7 @@ struct link_request_ctx {
  * Link users use the functions described below, NOT the function pointers.
  */
 struct link {
-    struct link_request_ctx rctx;
+    volatile struct link_request_ctx rctx; // may be modified in interrupts
     const char *name;
     void *priv;
     size_t (*write)(struct link *link, void *buf, size_t sz);

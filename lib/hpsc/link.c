@@ -8,8 +8,9 @@
 #include "command.h"
 #include "link.h"
 
-#define LINK_EVENT_ACK  RTEMS_EVENT_0
-#define LINK_EVENT_RECV RTEMS_EVENT_1
+// these must be unique from those in "command" since it uses links
+#define LINK_EVENT_ACK  RTEMS_EVENT_2
+#define LINK_EVENT_RECV RTEMS_EVENT_3
 
 size_t link_send(struct link *link, void *buf, size_t sz)
 {
