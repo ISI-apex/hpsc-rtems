@@ -334,25 +334,25 @@ size_t hpsc_mbox_chan_read(
 static void hpsc_mbox_chan_isr_a(struct hpsc_mbox_chan *chan)
 {
     assert(chan);
-    // Clear the event first
-    HPSC_MBOX_DBG("MBOX: %s: %u: clear int A\n",
-                  chan->mbox->info, chan->instance);
-    chan->base->EVENT_STATUS_CLEAR = HPSC_MBOX_EVENT_A;
     // issue callback
     if (chan->int_a.cb)
         chan->int_a.cb(chan->int_a.arg);
+    // Clear the event
+    HPSC_MBOX_DBG("MBOX: %s: %u: clear int A\n",
+                  chan->mbox->info, chan->instance);
+    chan->base->EVENT_STATUS_CLEAR = HPSC_MBOX_EVENT_A;
 }
 
 static void hpsc_mbox_chan_isr_b(struct hpsc_mbox_chan *chan)
 {
     assert(chan);
-    // Clear the event first
-    HPSC_MBOX_DBG("MBOX: %s: %u: clear int B\n",
-                  chan->mbox->info, chan->instance);
-    chan->base->EVENT_STATUS_CLEAR = HPSC_MBOX_EVENT_B;
     // issue callback
     if (chan->int_b.cb)
         chan->int_b.cb(chan->int_b.arg);
+    // Clear the event
+    HPSC_MBOX_DBG("MBOX: %s: %u: clear int B\n",
+                  chan->mbox->info, chan->instance);
+    chan->base->EVENT_STATUS_CLEAR = HPSC_MBOX_EVENT_B;
 }
 
 static bool hpsc_mbox_chan_is_subscribed(struct hpsc_mbox_chan *chan,
