@@ -64,6 +64,33 @@ rtems_status_code hpsc_mbox_chan_release(
     unsigned instance
 );
 
+/* 
+ * Data read/write is kept separate from event set/clear b/c correct event
+ * management ordering cannot be guaranteed by mbox_send/mbox_read and the ISRs
+ * in the driver, without a lot of assumptions about callback routine behavior
+ * and how mailboxes are used in general---and it's not pretty.
+ * Higher-level abstractions can make event handling opaque, if desired.
+ *
+ * In the case of polled operation (not currently supported), event handling can
+ * be performed at any time.
+ * In the case where events drive IRQs (this design), events should be cleared
+ * before ISRs complete, o/w the IRQ remains active and the ISR runs again.
+ *
+ * The driver _could_ enforce correct event handling by performing the read in
+ * the driver's RCV ISR and passing the data pointer to the `cb_a` routine.
+ * This requires either that `cb_a` handles the message before returning, or
+ * that it copies the message somewhere more persistent, in which case there is
+ * a wasteful data copy. Instead, we allow the next level up to read directly
+ * into whatever buffer is desired, but require that it manage the events.
+ */
+
+/*
+ * A note on correct usage:
+ * The RCV event _must_ be cleared _before_ ACK is set, otherwise the sender may
+ * receive the ACK and send a new message before the RCV event is actually
+ * cleared, in which case the second message is missed.
+ */
+
 /**
  * Write to a mailbox channel (send a message)
  */
@@ -83,5 +110,25 @@ size_t hpsc_mbox_chan_read(
     void *buf,
     size_t sz
 );
+
+/**
+ * Set the RCV event (after write)
+ */
+void hpsc_mbox_chan_event_set_rcv(struct hpsc_mbox *mbox, unsigned instance);
+
+/**
+ * Set the ACK event (after read, after clearing RCV)
+ */
+void hpsc_mbox_chan_event_set_ack(struct hpsc_mbox *mbox, unsigned instance);
+
+/**
+ * Clear the RCV event (after read, before setting ACK)
+ */
+void hpsc_mbox_chan_event_clear_rcv(struct hpsc_mbox *mbox, unsigned instance);
+
+/**
+ * Clear the ACK event
+ */
+void hpsc_mbox_chan_event_clear_ack(struct hpsc_mbox *mbox, unsigned instance);
 
 #endif // HPSC_MBOX_H

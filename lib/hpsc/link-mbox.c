@@ -20,16 +20,29 @@ struct link_mbox {
 };
 
 
+static void link_mbox_ack(void *arg)
+{
+    struct link *link = arg;
+    struct link_mbox *mlink = link->priv;
+    hpsc_mbox_chan_event_clear_ack(mlink->mbox, mlink->chan_to);
+    link_ack(arg);
+}
+
 static size_t link_mbox_write(struct link *link, void *buf, size_t sz)
 {
     struct link_mbox *mlink = link->priv;
-    return hpsc_mbox_chan_write(mlink->mbox, mlink->chan_to, buf, sz);
+    size_t rc = hpsc_mbox_chan_write(mlink->mbox, mlink->chan_to, buf, sz);
+    hpsc_mbox_chan_event_set_rcv(mlink->mbox, mlink->chan_to);
+    return rc;
 }
 
 static size_t link_mbox_read(struct link *link, void *buf, size_t sz)
 {
     struct link_mbox *mlink = link->priv;
-    return hpsc_mbox_chan_read(mlink->mbox, mlink->chan_from, buf, sz);
+    size_t rc = hpsc_mbox_chan_read(mlink->mbox, mlink->chan_from, buf, sz);
+    hpsc_mbox_chan_event_clear_rcv(mlink->mbox, mlink->chan_from);
+    hpsc_mbox_chan_event_set_ack(mlink->mbox, mlink->chan_from);
+    return rc;
 }
 
 static int link_mbox_close(struct link *link) {
@@ -87,7 +100,7 @@ struct link *link_mbox_connect(const char *name, struct hpsc_mbox *mbox,
         goto free_links;
     }
     sc = hpsc_mbox_chan_claim(mbox, idx_to, server, server, client,
-                              NULL, link_ack, link);
+                              NULL, link_mbox_ack, link);
     if (sc != RTEMS_SUCCESSFUL) {
         printk("ERROR: link_mbox_connect: failed to claim chan_to\n");
         goto free_from;

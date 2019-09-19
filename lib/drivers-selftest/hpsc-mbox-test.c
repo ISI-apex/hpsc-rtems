@@ -33,6 +33,8 @@ static void cb_recv(void *arg)
     assert(ctx->mbox);
     if (ctx->rx_rc == HPSC_MBOX_TEST_CHAN_NO_RECV) {
         sz = hpsc_mbox_chan_read(ctx->mbox, ctx->instance, buf, sizeof(buf));
+        hpsc_mbox_chan_event_clear_rcv(ctx->mbox, ctx->instance);
+        hpsc_mbox_chan_event_set_ack(ctx->mbox, ctx->instance);
         if (sz == HPSC_MBOX_DATA_SIZE)
             ctx->rx_rc = strncmp((const char *)buf, TEST_MSG, sizeof(buf)) ?
                 HPSC_MBOX_TEST_CHAN_BAD_RECV : HPSC_MBOX_TEST_SUCCESS;
@@ -48,6 +50,7 @@ static void cb_ack(void *arg)
 {
     struct hpsc_mbox_test *ctx = (struct hpsc_mbox_test *)arg;
     assert(ctx);
+    hpsc_mbox_chan_event_clear_ack(ctx->mbox, ctx->instance);
     if (ctx->ack_rc == HPSC_MBOX_TEST_CHAN_NO_ACK)
         ctx->ack_rc = HPSC_MBOX_TEST_SUCCESS;
     else
@@ -60,6 +63,7 @@ static int test_loopback(struct hpsc_mbox_test *ctx)
     rtems_event_set events = 0;
     size_t sz = hpsc_mbox_chan_write(ctx->mbox, ctx->instance, TEST_MSG,
                                      sizeof(TEST_MSG));
+    hpsc_mbox_chan_event_set_rcv(ctx->mbox, ctx->instance);
     if (sz < sizeof(TEST_MSG))
         return HPSC_MBOX_TEST_CHAN_WRITE;
     // wait for test to complete or timeout

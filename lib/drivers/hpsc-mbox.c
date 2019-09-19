@@ -292,9 +292,6 @@ size_t hpsc_mbox_chan_write(
     for (; i < HPSC_MBOX_DATA_REGS; i++)
         chan->base->DATA[i] = 0;
 
-    HPSC_MBOX_DBG("MBOX: %s: %u: raise int A\n", mbox->info, instance);
-    chan->base->EVENT_STATUS_SET = HPSC_MBOX_EVENT_A;
-
     return sz;
 }
 
@@ -324,35 +321,59 @@ size_t hpsc_mbox_chan_read(
     for (i = 0; i < len && i < HPSC_MBOX_DATA_REGS; i++)
         msg[i] = chan->base->DATA[i];
 
-    // ACK
-    HPSC_MBOX_DBG("MBOX: %s: %u: raise int B\n", mbox->info, instance);
-    chan->base->EVENT_STATUS_SET = HPSC_MBOX_EVENT_B;
-
     return i * sizeof(uint32_t);
+}
+
+void hpsc_mbox_chan_event_set_rcv(struct hpsc_mbox *mbox, unsigned instance)
+{
+    assert(mbox);
+    assert(instance < HPSC_MBOX_CHANNELS);
+    HPSC_MBOX_DBG("MBOX: %s: %u: raise int A\n", mbox->info, instance);
+    mbox->chans[instance].base->EVENT_STATUS_SET = HPSC_MBOX_EVENT_A;
+}
+
+void hpsc_mbox_chan_event_set_ack(struct hpsc_mbox *mbox, unsigned instance)
+{
+    assert(mbox);
+    assert(instance < HPSC_MBOX_CHANNELS);
+    HPSC_MBOX_DBG("MBOX: %s: %u: raise int B\n", mbox->info, instance);
+    mbox->chans[instance].base->EVENT_STATUS_SET = HPSC_MBOX_EVENT_B;
+}
+
+void hpsc_mbox_chan_event_clear_rcv(struct hpsc_mbox *mbox, unsigned instance)
+{
+    assert(mbox);
+    assert(instance < HPSC_MBOX_CHANNELS);
+    HPSC_MBOX_DBG("MBOX: %s: %u: clear int A\n", mbox->info, instance);
+    mbox->chans[instance].base->EVENT_STATUS_CLEAR = HPSC_MBOX_EVENT_A;
+}
+
+void hpsc_mbox_chan_event_clear_ack(struct hpsc_mbox *mbox, unsigned instance)
+{
+    assert(mbox);
+    assert(instance < HPSC_MBOX_CHANNELS);
+    HPSC_MBOX_DBG("MBOX: %s: %u: clear int B\n", mbox->info, instance);
+    mbox->chans[instance].base->EVENT_STATUS_CLEAR = HPSC_MBOX_EVENT_B;
 }
 
 static void hpsc_mbox_chan_isr_a(struct hpsc_mbox_chan *chan)
 {
     assert(chan);
-    // issue callback
     if (chan->int_a.cb)
         chan->int_a.cb(chan->int_a.arg);
-    // Clear the event
-    HPSC_MBOX_DBG("MBOX: %s: %u: clear int A\n",
-                  chan->mbox->info, chan->instance);
-    chan->base->EVENT_STATUS_CLEAR = HPSC_MBOX_EVENT_A;
+    else
+        // just clear event, but don't ACK
+        hpsc_mbox_chan_event_clear_rcv(chan->mbox, chan->instance);
 }
 
 static void hpsc_mbox_chan_isr_b(struct hpsc_mbox_chan *chan)
 {
     assert(chan);
-    // issue callback
     if (chan->int_b.cb)
         chan->int_b.cb(chan->int_b.arg);
-    // Clear the event
-    HPSC_MBOX_DBG("MBOX: %s: %u: clear int B\n",
-                  chan->mbox->info, chan->instance);
-    chan->base->EVENT_STATUS_CLEAR = HPSC_MBOX_EVENT_B;
+    else
+        // just clear event
+        hpsc_mbox_chan_event_clear_ack(chan->mbox, chan->instance);
 }
 
 static bool hpsc_mbox_chan_is_subscribed(struct hpsc_mbox_chan *chan,
