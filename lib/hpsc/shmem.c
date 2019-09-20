@@ -8,10 +8,8 @@
 
 #include "shmem.h"
 
-#define SHMEM_TO_REGION(s) ((volatile struct hpsc_shmem_region *) (s)->addr)
-
 struct shmem {
-    uintptr_t addr;
+    volatile struct hpsc_shmem_region *shm;
 };
 
 static void *mem_vcpy(void *restrict dest, volatile void *restrict src,
@@ -33,7 +31,7 @@ struct shmem *shmem_open(uintptr_t addr)
 {
     struct shmem *s = malloc(sizeof(struct shmem));
     if (s)
-        s->addr = addr;
+        s->shm = (volatile struct hpsc_shmem_region *)addr;
     return s;
 }
 
@@ -45,72 +43,58 @@ void shmem_close(struct shmem *s)
 
 size_t shmem_write(struct shmem *s, const void *msg, size_t sz)
 {
-    volatile struct hpsc_shmem_region *shm;
-    size_t sz_rem = HPSC_MSG_SIZE - sz;
+    const size_t sz_rem = HPSC_MSG_SIZE - sz;
     assert(s);
     assert(msg);
     assert(sz <= HPSC_MSG_SIZE);
-    shm = SHMEM_TO_REGION(s);
     // don't care about volatile qualifier when writing
-    memcpy(RTEMS_DEVOLATILE(void *, shm->data), msg, sz);
+    memcpy(RTEMS_DEVOLATILE(void *, s->shm->data), msg, sz);
     if (sz_rem)
-        memset(RTEMS_DEVOLATILE(void *, shm->data + sz), 0, sz_rem);
+        memset(RTEMS_DEVOLATILE(void *, s->shm->data + sz), 0, sz_rem);
     return sz;
 }
 
 size_t shmem_read(struct shmem *s, void *msg, size_t sz)
 {
-    volatile struct hpsc_shmem_region *shm;
     assert(s);
     assert(msg);
     assert(sz >= HPSC_MSG_SIZE);
-    shm = SHMEM_TO_REGION(s);
-    mem_vcpy(msg, shm->data, HPSC_MSG_SIZE);
+    mem_vcpy(msg, s->shm->data, HPSC_MSG_SIZE);
     return HPSC_MSG_SIZE;
 }
 
 uint32_t shmem_get_status(struct shmem *s)
 {
-    volatile struct hpsc_shmem_region *shm;
     assert(s);
-    shm = SHMEM_TO_REGION(s);
-    return shm->status;
+    return s->shm->status;
 }
 
 bool shmem_is_new(struct shmem *s)
 {
-    volatile struct hpsc_shmem_region *shm;
     assert(s);
-    shm = SHMEM_TO_REGION(s);
-    return shm->status & HPSC_SHMEM_STATUS_BIT_NEW;
+    return s->shm->status & HPSC_SHMEM_STATUS_BIT_NEW;
 }
 
 bool shmem_is_ack(struct shmem *s)
 {
-    volatile struct hpsc_shmem_region *shm;
     assert(s);
-    shm = SHMEM_TO_REGION(s);
-    return shm->status & HPSC_SHMEM_STATUS_BIT_ACK;
+    return s->shm->status & HPSC_SHMEM_STATUS_BIT_ACK;
 }
 
 void shmem_set_new(struct shmem *s, bool val)
 {
-    volatile struct hpsc_shmem_region *shm;
     assert(s);
-    shm = SHMEM_TO_REGION(s);
     if (val)
-        shm->status |= HPSC_SHMEM_STATUS_BIT_NEW;
+        s->shm->status |= HPSC_SHMEM_STATUS_BIT_NEW;
     else
-        shm->status &= ~HPSC_SHMEM_STATUS_BIT_NEW;
+        s->shm->status &= ~HPSC_SHMEM_STATUS_BIT_NEW;
 }
 
 void shmem_set_ack(struct shmem *s, bool val)
 {
-    volatile struct hpsc_shmem_region *shm;
     assert(s);
-    shm = SHMEM_TO_REGION(s);
     if (val)
-        shm->status |= HPSC_SHMEM_STATUS_BIT_ACK;
+        s->shm->status |= HPSC_SHMEM_STATUS_BIT_ACK;
     else
-        shm->status &= ~HPSC_SHMEM_STATUS_BIT_ACK;
+        s->shm->status &= ~HPSC_SHMEM_STATUS_BIT_ACK;
 }
