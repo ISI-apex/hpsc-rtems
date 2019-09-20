@@ -25,9 +25,9 @@ static volatile void *vmem_cpy(volatile void *restrict dest,
 {
     // assume dest and src are word-aligned
     volatile uint32_t *wd;
-    uint32_t *ws;
+    const uint32_t *ws;
     volatile uint8_t *bd;
-    uint8_t *bs;
+    const uint8_t *bs;
     for (wd = dest, ws = src; n >= sizeof(*wd); n -= sizeof(*wd))
         *wd++ = *ws++;
     for (bd = (uint8_t *) wd, bs = (uint8_t *) ws; n > 0; n--)
