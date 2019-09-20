@@ -8,9 +8,6 @@
 #include "command.h"
 #include "link.h"
 
-// these must be unique from those in "command" since it uses links
-#define LINK_EVENT_ACK  RTEMS_EVENT_2
-#define LINK_EVENT_RECV RTEMS_EVENT_3
 
 size_t link_send(struct link *link, void *buf, size_t sz)
 {
@@ -33,8 +30,9 @@ static size_t _link_request_send(struct link *link, void *buf, size_t sz,
     rc = link_send(link, buf, sz);
     if (rc) {
         printk("%s: request: waiting for ACK...\n", link->name);
-        rtems_event_receive(LINK_EVENT_ACK, RTEMS_EVENT_ANY, ticks, &events);
-        if (events & LINK_EVENT_ACK) {
+        rtems_event_receive(link->rctx.event_wait, RTEMS_EVENT_ANY, ticks,
+                            &events);
+        if (events & link->rctx.event_wait) {
             printk("%s: request: ACK received\n", link->name);
             assert(link->rctx.tx_acked);
         } else {
@@ -52,8 +50,8 @@ static ssize_t _link_request_recv(struct link *link, rtems_interval ticks)
     ssize_t rc;
 
     printk("%s: request: waiting for reply...\n", link->name);
-    rtems_event_receive(LINK_EVENT_RECV, RTEMS_EVENT_ANY, ticks, &events);
-    if (events & LINK_EVENT_RECV) {
+    rtems_event_receive(link->rctx.event_wait, RTEMS_EVENT_ANY, ticks, &events);
+    if (events & link->rctx.event_wait) {
         printk("%s: request: reply received\n", link->name);
         rc = link->rctx.reply_sz_read;
     } else {
@@ -65,10 +63,11 @@ static ssize_t _link_request_recv(struct link *link, rtems_interval ticks)
 }
 
 size_t link_request_send(struct link *link, void *buf, size_t sz,
-                         rtems_interval ticks)
+                         rtems_interval ticks, rtems_event_set event_wait)
 {
     size_t rc;
     link->rctx.tid_requester = rtems_task_self();
+    link->rctx.event_wait = event_wait;
     rc = _link_request_send(link, buf, sz, ticks);
     link->rctx.tid_requester = RTEMS_ID_NONE;
     return rc;
@@ -76,7 +75,8 @@ size_t link_request_send(struct link *link, void *buf, size_t sz,
 
 ssize_t link_request(struct link *link,
                      rtems_interval wtimeout_ticks, void *wbuf, size_t wsz,
-                     rtems_interval rtimeout_ticks, void *rbuf, size_t rsz)
+                     rtems_interval rtimeout_ticks, void *rbuf, size_t rsz,
+                     rtems_event_set event_wait)
 {
     size_t rc;
     printk("%s: request\n", link->name);
@@ -84,6 +84,7 @@ ssize_t link_request(struct link *link,
     link->rctx.reply = rbuf;
     link->rctx.reply_sz = rsz;
     link->rctx.tid_requester = rtems_task_self();
+    link->rctx.event_wait = event_wait;
     rc = _link_request_send(link, wbuf, wsz, wtimeout_ticks);
     if (!rc)
         return -1;
@@ -125,7 +126,7 @@ void link_recv_reply(void *arg)
     link->rctx.reply_sz_read = link->read(link, link->rctx.reply,
                                           link->rctx.reply_sz);
     if (link->rctx.tid_requester != RTEMS_ID_NONE) {
-        sc = rtems_event_send(link->rctx.tid_requester, LINK_EVENT_RECV);
+        sc = rtems_event_send(link->rctx.tid_requester, link->rctx.event_wait);
         if (sc != RTEMS_SUCCESSFUL)
             // there was a race with reply timeout and clearing tid_requester
             rtems_panic("%s: recv_reply: failed to send reply to listening task",
@@ -140,7 +141,7 @@ void link_ack(void *arg)
     printk("%s: ACK\n", link->name);
     link->rctx.tx_acked = true;
     if (link->rctx.tid_requester != RTEMS_ID_NONE) {
-        sc = rtems_event_send(link->rctx.tid_requester, LINK_EVENT_ACK);
+        sc = rtems_event_send(link->rctx.tid_requester, link->rctx.event_wait);
         if (sc != RTEMS_SUCCESSFUL)
             // there was a race with send timeout and clearing tid_requester
             rtems_panic("%s: ACK: failed to send ACK to listening task",

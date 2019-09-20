@@ -32,11 +32,14 @@ int test_command_server(void)
 
 #define SHMEM_WTIMEOUT_TICKS 100
 #define SHMEM_RTIMEOUT_TICKS 100
+// assumes calling task isn't using this event
+#define SHMEM_EVENT_WAIT     RTEMS_EVENT_0
 int test_link_shmem(void)
 {
     int rc;
     test_begin("test_link_shmem");
-    rc = hpsc_test_link_shmem(SHMEM_WTIMEOUT_TICKS, SHMEM_RTIMEOUT_TICKS);
+    rc = hpsc_test_link_shmem(SHMEM_WTIMEOUT_TICKS, SHMEM_RTIMEOUT_TICKS,
+                              SHMEM_EVENT_WAIT);
     test_end("test_link_shmem", rc);
     return rc;
 }

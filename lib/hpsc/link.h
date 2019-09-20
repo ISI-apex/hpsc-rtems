@@ -8,6 +8,7 @@
 
 struct link_request_ctx {
     rtems_id tid_requester;
+    rtems_event_set event_wait;
     bool tx_acked;
     uint32_t *reply;
     size_t reply_sz;
@@ -39,19 +40,22 @@ bool link_is_send_acked(struct link *link);
 /**
  * Send a message and wait for an ACK, but not a reply message.
  * Use RTEMS_NO_TIMEOUT for tick parameters to wait forever.
+ * The event_wait value should be a single event not in use by the calling task.
  * Returns 0 on send failure or timeout, or number of bytes read.
  */
 size_t link_request_send(struct link *link, void *buf, size_t sz,
-                         rtems_interval ticks);
+                         rtems_interval ticks, rtems_event_set event_wait);
 /**
  * Send a message and wait for a reply.
  * Use RTEMS_NO_TIMEOUT for tick parameters to wait forever.
+ * The event_wait value should be a single event not in use by the calling task.
  * Returns -1 on send failure or timeout, -2 on read timeout, or number of bytes
  * read.
  */
 ssize_t link_request(struct link *link,
                      rtems_interval wtimeout_ticks, void *wbuf, size_t wsz,
-                     rtems_interval rtimeout_ticks, void *rbuf, size_t rsz);
+                     rtems_interval rtimeout_ticks, void *rbuf, size_t rsz,
+                     rtems_event_set event_wait);
 int link_disconnect(struct link *link);
 
 /*

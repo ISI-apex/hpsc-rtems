@@ -15,6 +15,7 @@
 
 #define CMD_EVENT_NEW  RTEMS_EVENT_0
 #define CMD_EVENT_EXIT RTEMS_EVENT_1
+#define CMD_EVENT_LINK RTEMS_EVENT_2
 
 struct cmd_handled_ctx {
     cmd_handled_t *cb;
@@ -128,7 +129,7 @@ static void cmd_handle(struct cmd *cmd, cmd_handled_t *cb, void *cb_arg)
     printk("command: handle: %s: reply %u arg %u...\n", cmd->link->name,
            reply[0], reply[HPSC_MSG_PAYLOAD_OFFSET]);
     rc = link_request_send(cmd->link, reply, sizeof(reply),
-                           cmd_handler.timeout_ticks);
+                           cmd_handler.timeout_ticks, CMD_EVENT_LINK);
     if (!rc) {
         printk("command: handle: %s: failed to send reply\n", cmd->link->name);
         status = CMD_STATUS_REPLY_FAILED;

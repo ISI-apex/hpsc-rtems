@@ -20,14 +20,15 @@ static void handled_cb(void *arg, cmd_status status)
 }
 
 static int do_test(struct link *slink, struct link *clink,
-                   rtems_interval wtimeout_ticks, rtems_interval rtimeout_ticks)
+                   rtems_interval wtimeout_ticks, rtems_interval rtimeout_ticks,
+                   rtems_event_set event_wait)
 {
     // command is sent by client and received by server
     int rc;
     cmd_status status = CMD_STATUS_UNKNOWN;
 
     cmd_handled_register_cb(handled_cb, &status);
-    rc = hpsc_test_link_ping(clink, wtimeout_ticks, rtimeout_ticks);
+    rc = hpsc_test_link_ping(clink, wtimeout_ticks, rtimeout_ticks, event_wait);
     // wait for command handler to finish, o/w we prematurely destroy the link
     while (status == CMD_STATUS_UNKNOWN)
         rtems_task_wake_after(RTEMS_YIELD_PROCESSOR);
@@ -48,7 +49,8 @@ static void create_poll_task(rtems_name name, rtems_id *id)
 
 // test link-shmem (requires command handler to be configured)
 int hpsc_test_link_shmem(rtems_interval wtimeout_ticks,
-                         rtems_interval rtimeout_ticks)
+                         rtems_interval rtimeout_ticks,
+                         rtems_event_set event_wait)
 {
     struct hpsc_shmem_region reg_a = { 0 };
     struct hpsc_shmem_region reg_b = { 0 };
@@ -84,7 +86,7 @@ int hpsc_test_link_shmem(rtems_interval wtimeout_ticks,
         goto free_slink;
     }
 
-    rc = do_test(slink, clink, wtimeout_ticks, rtimeout_ticks);
+    rc = do_test(slink, clink, wtimeout_ticks, rtimeout_ticks, event_wait);
 
     if (link_disconnect(clink))
         rc = 1;

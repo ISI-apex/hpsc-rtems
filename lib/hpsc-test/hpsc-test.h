@@ -15,8 +15,10 @@ int hpsc_test_shmem(void);
 int hpsc_test_command_server(void);
 // the link may be local (loopback) or remote
 int hpsc_test_link_ping(struct link *link, rtems_interval wtimeout_ticks,
-                        rtems_interval rtimeout_ticks);
+                        rtems_interval rtimeout_ticks,
+                        rtems_event_set event_wait);
 int hpsc_test_link_shmem(rtems_interval wtimeout_ticks,
-                         rtems_interval rtimeout_ticks);
+                         rtems_interval rtimeout_ticks,
+                         rtems_event_set event_wait);
 
 #endif // HPSC_TEST_H
