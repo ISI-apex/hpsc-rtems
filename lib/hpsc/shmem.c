@@ -55,7 +55,6 @@ size_t shmem_write(struct shmem *s, const void *msg, size_t sz)
     memcpy(RTEMS_DEVOLATILE(void *, shm->data), msg, sz);
     if (sz_rem)
         memset(RTEMS_DEVOLATILE(void *, shm->data + sz), 0, sz_rem);
-    shm->status = shm->status | HPSC_SHMEM_STATUS_BIT_NEW;
     return sz;
 }
 
@@ -83,12 +82,26 @@ bool shmem_is_ack(struct shmem *s)
     return shm->status & HPSC_SHMEM_STATUS_BIT_ACK;
 }
 
-void shmem_clear_ack(struct shmem *s)
+void shmem_set_new(struct shmem *s, bool val)
 {
     volatile struct hpsc_shmem_region *shm;
     assert(s);
     shm = SHMEM_TO_REGION(s);
-    shm->status &= ~HPSC_SHMEM_STATUS_BIT_ACK;
+    if (val)
+        shm->status |= HPSC_SHMEM_STATUS_BIT_NEW;
+    else
+        shm->status &= ~HPSC_SHMEM_STATUS_BIT_NEW;
+}
+
+void shmem_set_ack(struct shmem *s, bool val)
+{
+    volatile struct hpsc_shmem_region *shm;
+    assert(s);
+    shm = SHMEM_TO_REGION(s);
+    if (val)
+        shm->status |= HPSC_SHMEM_STATUS_BIT_ACK;
+    else
+        shm->status &= ~HPSC_SHMEM_STATUS_BIT_ACK;
 }
 
 size_t shmem_read(struct shmem *s, void *msg, size_t sz)
@@ -99,7 +112,5 @@ size_t shmem_read(struct shmem *s, void *msg, size_t sz)
     assert(sz >= HPSC_MSG_SIZE);
     shm = SHMEM_TO_REGION(s);
     mem_vcpy(msg, shm->data, HPSC_MSG_SIZE);
-    shm->status = shm->status & ~HPSC_SHMEM_STATUS_BIT_NEW; // clear new
-    shm->status = shm->status | HPSC_SHMEM_STATUS_BIT_ACK; // set ACK
     return HPSC_MSG_SIZE;
 }

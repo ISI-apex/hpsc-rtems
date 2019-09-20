@@ -22,9 +22,10 @@ static int do_test(struct shmem *shm)
         printf("ERROR: TEST: shmem: write failed\n");
         return 1;
     }
+    shmem_set_new(shm, true);
     // NEW flag should be set
     if (!shmem_is_new(shm)) {
-        printf("ERROR: TEST: shmem: NEW status failed\n");
+        printf("ERROR: TEST: shmem: set NEW status failed\n");
         return 1;
     }
     sz = shmem_read(shm, buf, sizeof(buf));
@@ -32,12 +33,19 @@ static int do_test(struct shmem *shm)
         printf("ERROR: TEST: shmem: read failed\n");
         return 1;
     }
-    // NEW flag should be off, ACK flag should be set
-    if (shmem_is_new(shm) || !shmem_is_ack(shm)) {
-        printf("ERROR: TEST: shmem: ACK status failed\n");
+    shmem_set_new(shm, false);
+    // NEW flag should be off
+    if (shmem_is_new(shm)) {
+        printf("ERROR: TEST: shmem: clear NEW status failed\n");
         return 1;
     }
-    shmem_clear_ack(shm);
+    shmem_set_ack(shm, true);
+    // ACK flag should be set
+    if (!shmem_is_ack(shm)) {
+        printf("ERROR: TEST: shmem: set ACK status failed\n");
+        return 1;
+    }
+    shmem_set_ack(shm, false);
     // no flags should be set anymore
     status = shmem_get_status(shm);
     if (status) {

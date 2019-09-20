@@ -31,14 +31,12 @@ void shmem_close(struct shmem *s);
 
 /**
  * Write data to the shared memory region.
- * Automatically sets the NEW status bit.
  * Returns the number of bytes written
  */
 size_t shmem_write(struct shmem *s, const void *msg, size_t sz);
 
 /**
  * Read data from the shared memory region.
- * Automatically clears the NEW status bit and sets the ACK status bit.
  * Returns the number of bytes read
  */
 size_t shmem_read(struct shmem *s, void *msg, size_t sz);
@@ -59,8 +57,13 @@ bool shmem_is_new(struct shmem *s);
 bool shmem_is_ack(struct shmem *s);
 
 /**
- * Clears the ACK status bit.
+ * Set or clear the NEW status bit.
  */
-void shmem_clear_ack(struct shmem *s);
+void shmem_set_new(struct shmem *s, bool val);
+
+/**
+ * Set or clear the ACK status bit.
+ */
+void shmem_set_ack(struct shmem *s, bool val);
 
 #endif // SHMEM_H

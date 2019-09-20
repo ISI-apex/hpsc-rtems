@@ -25,19 +25,24 @@ static void link_shmem_ack(void *arg)
     struct link *link = arg;
     struct link_shmem *slink = link->priv;
     link_ack(arg);
-    shmem_clear_ack(slink->shmem_out);
+    shmem_set_ack(slink->shmem_out, false);
 }
 
 static size_t link_shmem_write(struct link *link, void *buf, size_t sz)
 {
     struct link_shmem *slink = link->priv;
-    return shmem_write(slink->shmem_out, buf, sz);
+    size_t rc = shmem_write(slink->shmem_out, buf, sz);
+    shmem_set_new(slink->shmem_out, true);
+    return rc;
 }
 
 static size_t link_shmem_read(struct link *link, void *buf, size_t sz)
 {
     struct link_shmem *slink = link->priv;
-    return shmem_read(slink->shmem_in, buf, sz);
+    size_t rc = shmem_read(slink->shmem_in, buf, sz);
+    shmem_set_new(slink->shmem_in, false);
+    shmem_set_ack(slink->shmem_in, true);
+    return rc;
 }
 
 static int link_shmem_close(struct link *link)
