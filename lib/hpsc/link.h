@@ -32,12 +32,6 @@ struct link {
  * These functions are for link users
  */
 /**
- * Send a message, but don't wait for an ACK.
- * Returns 0 on send failure, or number of bytes read.
- */
-size_t link_send(struct link *link, void *buf, size_t sz);
-bool link_is_send_acked(struct link *link);
-/**
  * Send a message and wait for an ACK, but not a reply message.
  * Use RTEMS_NO_TIMEOUT for tick parameters to wait forever.
  * The event_wait value should be a single event not in use by the calling task.

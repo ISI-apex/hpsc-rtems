@@ -9,17 +9,6 @@
 #include "link.h"
 
 
-size_t link_send(struct link *link, void *buf, size_t sz)
-{
-    link->rctx.tx_acked = false;
-    return link->write(link, buf, sz);
-}
-
-bool link_is_send_acked(struct link *link)
-{
-    return link->rctx.tx_acked;
-}
-
 // caller responsible for setting rctx tid_requester
 static size_t _link_request_send(struct link *link, void *buf, size_t sz,
                                  rtems_interval ticks)
@@ -27,7 +16,8 @@ static size_t _link_request_send(struct link *link, void *buf, size_t sz,
     rtems_event_set events = 0;
     size_t rc;
 
-    rc = link_send(link, buf, sz);
+    link->rctx.tx_acked = false;
+    rc = link->write(link, buf, sz);
     if (rc) {
         printk("%s: request: waiting for ACK...\n", link->name);
         rtems_event_receive(link->rctx.event_wait, RTEMS_EVENT_ANY, ticks,
