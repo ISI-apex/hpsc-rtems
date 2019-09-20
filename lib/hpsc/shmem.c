@@ -50,9 +50,12 @@ static void *mem_vcpy(void *restrict dest, volatile void *restrict src,
     return dest;
 }
 
+#define IS_ALIGNED(p) (((uintptr_t)(const void *)(p) % sizeof(uint32_t)) == 0)
+
 struct shmem *shmem_open(uintptr_t addr)
 {
     struct shmem *s = malloc(sizeof(struct shmem));
+    assert(IS_ALIGNED(addr));
     if (s)
         s->shm = (volatile struct hpsc_shmem_region *)addr;
     return s;
@@ -69,6 +72,7 @@ size_t shmem_write(struct shmem *s, const void *msg, size_t sz)
     const size_t sz_rem = HPSC_MSG_SIZE - sz;
     assert(s);
     assert(msg);
+    assert(IS_ALIGNED(msg));
     assert(sz <= HPSC_MSG_SIZE);
     vmem_cpy(s->shm->data, msg, sz);
     if (sz_rem)
@@ -80,6 +84,7 @@ size_t shmem_read(struct shmem *s, void *msg, size_t sz)
 {
     assert(s);
     assert(msg);
+    assert(IS_ALIGNED(msg));
     assert(sz >= HPSC_MSG_SIZE);
     mem_vcpy(msg, s->shm->data, HPSC_MSG_SIZE);
     return HPSC_MSG_SIZE;
