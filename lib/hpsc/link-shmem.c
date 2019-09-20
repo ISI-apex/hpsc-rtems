@@ -24,8 +24,8 @@ static void link_shmem_ack(void *arg)
 {
     struct link *link = arg;
     struct link_shmem *slink = link->priv;
-    shmem_clear_ack(slink->shmem_out);
     link_ack(arg);
+    shmem_clear_ack(slink->shmem_out);
 }
 
 static size_t link_shmem_write(struct link *link, void *buf, size_t sz)

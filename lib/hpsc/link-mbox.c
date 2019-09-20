@@ -24,8 +24,8 @@ static void link_mbox_ack(void *arg)
 {
     struct link *link = arg;
     struct link_mbox *mlink = link->priv;
-    hpsc_mbox_chan_event_clear_ack(mlink->mbox, mlink->chan_to);
     link_ack(arg);
+    hpsc_mbox_chan_event_clear_ack(mlink->mbox, mlink->chan_to);
 }
 
 static size_t link_mbox_write(struct link *link, void *buf, size_t sz)
