@@ -58,6 +58,17 @@ size_t shmem_write(struct shmem *s, const void *msg, size_t sz)
     return sz;
 }
 
+size_t shmem_read(struct shmem *s, void *msg, size_t sz)
+{
+    volatile struct hpsc_shmem_region *shm;
+    assert(s);
+    assert(msg);
+    assert(sz >= HPSC_MSG_SIZE);
+    shm = SHMEM_TO_REGION(s);
+    mem_vcpy(msg, shm->data, HPSC_MSG_SIZE);
+    return HPSC_MSG_SIZE;
+}
+
 uint32_t shmem_get_status(struct shmem *s)
 {
     volatile struct hpsc_shmem_region *shm;
@@ -102,15 +113,4 @@ void shmem_set_ack(struct shmem *s, bool val)
         shm->status |= HPSC_SHMEM_STATUS_BIT_ACK;
     else
         shm->status &= ~HPSC_SHMEM_STATUS_BIT_ACK;
-}
-
-size_t shmem_read(struct shmem *s, void *msg, size_t sz)
-{
-    volatile struct hpsc_shmem_region *shm;
-    assert(s);
-    assert(msg);
-    assert(sz >= HPSC_MSG_SIZE);
-    shm = SHMEM_TO_REGION(s);
-    mem_vcpy(msg, shm->data, HPSC_MSG_SIZE);
-    return HPSC_MSG_SIZE;
 }
