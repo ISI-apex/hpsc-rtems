@@ -12,6 +12,29 @@ struct shmem {
     volatile struct hpsc_shmem_region *shm;
 };
 
+static volatile void *vmem_set(volatile void *s, int c, unsigned n)
+{
+    volatile uint8_t *bs = s;
+    while (n--)
+        *bs++ = (unsigned char) c;
+    return s;
+}
+
+static volatile void *vmem_cpy(volatile void *restrict dest,
+                               const void *restrict src, unsigned n)
+{
+    // assume dest and src are word-aligned
+    volatile uint32_t *wd;
+    uint32_t *ws;
+    volatile uint8_t *bd;
+    uint8_t *bs;
+    for (wd = dest, ws = src; n >= sizeof(*wd); n -= sizeof(*wd))
+        *wd++ = *ws++;
+    for (bd = (uint8_t *) wd, bs = (uint8_t *) ws; n > 0; n--)
+        *bd++ = *bs++;
+    return dest;
+}
+
 static void *mem_vcpy(void *restrict dest, volatile void *restrict src,
                       unsigned n)
 {
@@ -47,10 +70,9 @@ size_t shmem_write(struct shmem *s, const void *msg, size_t sz)
     assert(s);
     assert(msg);
     assert(sz <= HPSC_MSG_SIZE);
-    // don't care about volatile qualifier when writing
-    memcpy(RTEMS_DEVOLATILE(void *, s->shm->data), msg, sz);
+    vmem_cpy(s->shm->data, msg, sz);
     if (sz_rem)
-        memset(RTEMS_DEVOLATILE(void *, s->shm->data + sz), 0, sz_rem);
+        vmem_set(s->shm->data + sz, 0, sz_rem);
     return sz;
 }
 
