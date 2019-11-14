@@ -48,7 +48,7 @@ int test_lsio_sram_dma_syscfg(void)
 {
     DMA_Config_t dma_config;
     SRAMFS_Config_t sramfs_config;
-    uint32_t *load_addr = (uint32_t *)RTPS_R52_DDR_LOW_ADDR;
+    uint32_t *load_addr = (uint32_t *)RTPS_DDR_ADDR__RTPS_R52_LOCKSTEP;
     rtems_status_code sc;
     int rc = 0;
 

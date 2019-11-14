@@ -64,7 +64,8 @@ static rtems_status_code init_extra_drivers(
 #if CONFIG_LINK_SHMEM_TRCH_CLIENT || CONFIG_LINK_SHMEM_TRCH_SERVER
     // MPU configuration in BSP is blocking shared memory regions
     printf("MPU: RTPS shmem region: enabling R/W access\n");
-    MPU_REGION_11(RTPS_R52_SHM_ADDR, RTPS_R52_SHM_ADDR + RTPS_R52_SHM_SIZE - 64,
+    MPU_REGION_11(RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP,
+                  RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP + RTPS_DDR_SIZE__SHM__RTPS_R52_LOCKSTEP - 64,
                   ATTR_RW_Access);
 #endif
 
@@ -282,7 +283,8 @@ static void init_client_links(void)
     );
     assert(sc == RTEMS_SUCCESSFUL);
     struct link *tsc_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_CLIENT,
-        RTPS_R52_SHM_ADDR__RTPS_TRCH_SEND, RTPS_R52_SHM_ADDR__TRCH_RTPS_REPLY,
+        RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW__RQST,
+        RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW__RPLY,
         /* is_server */ false, SHMEM_POLL_TICKS, tsc_tid_recv, tsc_tid_ack);
     if (!tsc_link)
         rtems_panic(LINK_NAME__SHMEM__TRCH_CLIENT);
@@ -310,7 +312,8 @@ static void init_server_links(void)
     );
     assert(sc == RTEMS_SUCCESSFUL);
     struct link *tss_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_SERVER,
-        RTPS_R52_SHM_ADDR__TRCH_RTPS_SEND, RTPS_R52_SHM_ADDR__RTPS_TRCH_REPLY,
+        RTPS_DDR_ADDR__SHM__TRCH_SSW__RTPS_R52_LOCKSTEP_SSW__RQST,
+        RTPS_DDR_ADDR__SHM__TRCH_SSW__RTPS_R52_LOCKSTEP_SSW__RPLY,
         /* is_server */ true, SHMEM_POLL_TICKS, tss_tid_recv, tss_tid_ack);
     if (!tss_link)
         rtems_panic(LINK_NAME__SHMEM__TRCH_SERVER);
