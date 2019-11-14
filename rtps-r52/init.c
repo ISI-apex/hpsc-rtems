@@ -71,15 +71,17 @@ static rtems_status_code init_extra_drivers(
 #if CONFIG_MBOX_LSIO
     struct hpsc_mbox *mbox_lsio = NULL;
     rtems_vector_number mbox_lsio_vec_a =
-        gic_irq_to_rvn(RTPS_IRQ__TR_MBOX_0 + MBOX_LSIO__RTPS_RCV_INT,
+        gic_irq_to_rvn(RTPS_IRQ__TR_MBOX_0 + LSIO_MBOX0_INT_EVT0__RTPS_R52_LOCKSTEP_SSW,
                        GIC_IRQ_TYPE_SPI);
     rtems_vector_number mbox_lsio_vec_b =
-        gic_irq_to_rvn(RTPS_IRQ__TR_MBOX_0 + MBOX_LSIO__RTPS_ACK_INT,
+        gic_irq_to_rvn(RTPS_IRQ__TR_MBOX_0 + LSIO_MBOX0_INT_EVT1__RTPS_R52_LOCKSTEP_SSW,
                        GIC_IRQ_TYPE_SPI);
     sc = hpsc_mbox_probe(&mbox_lsio, NAME_MBOX_TRCH,
                          (uintptr_t) MBOX_LSIO__BASE,
-                         mbox_lsio_vec_a, MBOX_LSIO__RTPS_RCV_INT,
-                         mbox_lsio_vec_b, MBOX_LSIO__RTPS_ACK_INT);
+                         mbox_lsio_vec_a,
+                         LSIO_MBOX0_INT_EVT0__RTPS_R52_LOCKSTEP_SSW,
+                         mbox_lsio_vec_b,
+                         LSIO_MBOX0_INT_EVT1__RTPS_R52_LOCKSTEP_SSW);
     if (sc != RTEMS_SUCCESSFUL)
         rtems_panic(NAME_MBOX_TRCH);
     dev_set_mbox(DEV_ID_MBOX_LSIO, mbox_lsio);
@@ -88,15 +90,17 @@ static rtems_status_code init_extra_drivers(
 #if CONFIG_MBOX_HPPS_RTPS
     struct hpsc_mbox *mbox_hpps = NULL;
     rtems_vector_number mbox_hpps_vec_a =
-        gic_irq_to_rvn(RTPS_IRQ__HR_MBOX_0 + MBOX_HPPS_RTPS__RTPS_RCV_INT,
+        gic_irq_to_rvn(RTPS_IRQ__HR_MBOX_0 + HPPS_MBOX1_INT_EVT0__RTPS_R52_LOCKSTEP_SSW,
                        GIC_IRQ_TYPE_SPI);
     rtems_vector_number mbox_hpps_vec_b =
-        gic_irq_to_rvn(RTPS_IRQ__HR_MBOX_0 + MBOX_HPPS_RTPS__RTPS_ACK_INT,
+        gic_irq_to_rvn(RTPS_IRQ__HR_MBOX_0 + HPPS_MBOX1_INT_EVT1__RTPS_R52_LOCKSTEP_SSW,
                        GIC_IRQ_TYPE_SPI);
     sc = hpsc_mbox_probe(&mbox_hpps, NAME_MBOX_HPPS,
                          (uintptr_t) MBOX_HPPS_RTPS__BASE,
-                         mbox_hpps_vec_a, MBOX_HPPS_RTPS__RTPS_RCV_INT,
-                         mbox_hpps_vec_b, MBOX_HPPS_RTPS__RTPS_ACK_INT);
+                         mbox_hpps_vec_a,
+                         HPPS_MBOX1_INT_EVT0__RTPS_R52_LOCKSTEP_SSW,
+                         mbox_hpps_vec_b,
+                         HPPS_MBOX1_INT_EVT1__RTPS_R52_LOCKSTEP_SSW);
     if (sc != RTEMS_SUCCESSFUL)
         rtems_panic(NAME_MBOX_HPPS);
     dev_set_mbox(DEV_ID_MBOX_HPPS_RTPS, mbox_hpps);
@@ -253,7 +257,9 @@ static void init_client_links(void)
     struct hpsc_mbox *mbox_lsio = dev_get_mbox(DEV_ID_MBOX_LSIO);
     assert(mbox_lsio);
     struct link *tmc_link = link_mbox_connect(LINK_NAME__MBOX__TRCH_CLIENT,
-        mbox_lsio, MBOX_LSIO__TRCH_RTPS, MBOX_LSIO__RTPS_TRCH, 
+        mbox_lsio,
+        LSIO_MBOX0_CHAN__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW__RPLY,
+        LSIO_MBOX0_CHAN__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW__RQST, 
         /* server */ 0, /* client */ MASTER_ID_RTPS_CPU0);
     if (!tmc_link)
         rtems_panic(LINK_NAME__MBOX__TRCH_CLIENT);
@@ -318,7 +324,9 @@ static void init_server_links(void)
     struct hpsc_mbox *mbox_hpps = dev_get_mbox(DEV_ID_MBOX_HPPS_RTPS);
     assert(mbox_hpps);
     struct link *hms_link = link_mbox_connect(LINK_NAME__MBOX__HPPS_SERVER,
-        mbox_hpps, MBOX_HPPS_RTPS__HPPS_RTPS, MBOX_HPPS_RTPS__RTPS_HPPS,
+        mbox_hpps,
+        HPPS_MBOX1_CHAN__HPPS_SMP_APP__RTPS_R52_LOCKSTEP_SSW__RQST,
+        HPPS_MBOX1_CHAN__HPPS_SMP_APP__RTPS_R52_LOCKSTEP_SSW__RPLY,
         /* server */ MASTER_ID_RTPS_CPU0, /* client */ MASTER_ID_HPPS_CPU0);
     if (!hms_link)
         rtems_panic(LINK_NAME__MBOX__HPPS_SERVER);

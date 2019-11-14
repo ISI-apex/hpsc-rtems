@@ -20,7 +20,8 @@ int test_mbox_lsio_loopback(void)
     struct hpsc_mbox *mbox_lsio = dev_get_mbox(DEV_ID_MBOX_LSIO);
     assert(mbox_lsio);
     test_begin("test_mbox_lsio_loopback");
-    rc = hpsc_mbox_chan_test(mbox_lsio, MBOX_LSIO__RTPS_LOOPBACK,
+    rc = hpsc_mbox_chan_test(mbox_lsio,
+                             LSIO_MBOX0_CHAN__RTPS_R52_LOCKSTEP_LOOPBACK_SSW,
                              /* owner */ 0, /* src */ 0, /* dest */ 0);
     test_end("test_mbox_lsio_loopback", rc);
     return rc;
