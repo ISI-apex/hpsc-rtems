@@ -21,7 +21,7 @@ int test_mbox_lsio_loopback(void)
     assert(mbox_lsio);
     test_begin("test_mbox_lsio_loopback");
     rc = hpsc_mbox_chan_test(mbox_lsio,
-                             LSIO_MBOX0_CHAN__RTPS_R52_LOCKSTEP_LOOPBACK_SSW,
+                             LSIO_MBOX0_CHAN__RTPS_R52_LOCKSTEP_SSW__LOOPBACK,
                              /* owner */ 0, /* src */ 0, /* dest */ 0);
     test_end("test_mbox_lsio_loopback", rc);
     return rc;

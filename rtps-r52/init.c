@@ -259,8 +259,8 @@ static void init_client_links(void)
     assert(mbox_lsio);
     struct link *tmc_link = link_mbox_connect(LINK_NAME__MBOX__TRCH_CLIENT,
         mbox_lsio,
-        LSIO_MBOX0_CHAN__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW__RPLY,
-        LSIO_MBOX0_CHAN__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW__RQST, 
+        LSIO_MBOX0_CHAN__TRCH_SSW__RTPS_R52_LOCKSTEP_SSW,
+        LSIO_MBOX0_CHAN__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW, 
         /* server */ 0, /* client */ MASTER_ID_RTPS_CPU0);
     if (!tmc_link)
         rtems_panic(LINK_NAME__MBOX__TRCH_CLIENT);
@@ -283,8 +283,8 @@ static void init_client_links(void)
     );
     assert(sc == RTEMS_SUCCESSFUL);
     struct link *tsc_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_CLIENT,
-        RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW__RQST,
-        RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW__RPLY,
+        RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW,
+        RTPS_DDR_ADDR__SHM__TRCH_SSW__RTPS_R52_LOCKSTEP_SSW,
         /* is_server */ false, SHMEM_POLL_TICKS, tsc_tid_recv, tsc_tid_ack);
     if (!tsc_link)
         rtems_panic(LINK_NAME__SHMEM__TRCH_CLIENT);
@@ -296,29 +296,30 @@ static void init_server_links(void)
 {
     rtems_status_code sc RTEMS_UNUSED;
 
-#if CONFIG_LINK_SHMEM_TRCH_SERVER
-    rtems_id tss_tid_recv;
-    rtems_id tss_tid_ack;
-    rtems_name tss_tn_recv = rtems_build_name('T', 'S', 'S', 'R');
-    rtems_name tss_tn_ack = rtems_build_name('T', 'S', 'S', 'A');
-    sc = rtems_task_create(
-        tss_tn_recv, TASK_PRI_SHMEM_POLL_TRCH, RTEMS_MINIMUM_STACK_SIZE,
-        RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_recv
-    );
-    assert(sc == RTEMS_SUCCESSFUL);
-    sc = rtems_task_create(
-        tss_tn_ack, TASK_PRI_SHMEM_POLL_TRCH, RTEMS_MINIMUM_STACK_SIZE,
-        RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_ack
-    );
-    assert(sc == RTEMS_SUCCESSFUL);
-    struct link *tss_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_SERVER,
-        RTPS_DDR_ADDR__SHM__TRCH_SSW__RTPS_R52_LOCKSTEP_SSW__RQST,
-        RTPS_DDR_ADDR__SHM__TRCH_SSW__RTPS_R52_LOCKSTEP_SSW__RPLY,
-        /* is_server */ true, SHMEM_POLL_TICKS, tss_tid_recv, tss_tid_ack);
-    if (!tss_link)
-        rtems_panic(LINK_NAME__SHMEM__TRCH_SERVER);
-    link_store_append(tss_link);
-#endif // CONFIG_LINK_SHMEM_TRCH_SERVER
+// TODO: Disabled - ultimately rm once we support bidirectional links
+// #if CONFIG_LINK_SHMEM_TRCH_SERVER
+//     rtems_id tss_tid_recv;
+//     rtems_id tss_tid_ack;
+//     rtems_name tss_tn_recv = rtems_build_name('T', 'S', 'S', 'R');
+//     rtems_name tss_tn_ack = rtems_build_name('T', 'S', 'S', 'A');
+//     sc = rtems_task_create(
+//         tss_tn_recv, TASK_PRI_SHMEM_POLL_TRCH, RTEMS_MINIMUM_STACK_SIZE,
+//         RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_recv
+//     );
+//     assert(sc == RTEMS_SUCCESSFUL);
+//     sc = rtems_task_create(
+//         tss_tn_ack, TASK_PRI_SHMEM_POLL_TRCH, RTEMS_MINIMUM_STACK_SIZE,
+//         RTEMS_DEFAULT_MODES, RTEMS_DEFAULT_ATTRIBUTES, &tss_tid_ack
+//     );
+//     assert(sc == RTEMS_SUCCESSFUL);
+//     struct link *tss_link = link_shmem_connect(LINK_NAME__SHMEM__TRCH_SERVER,
+//         RTPS_DDR_ADDR__SHM__TRCH_SSW__RTPS_R52_LOCKSTEP_SSW,
+//         RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW,
+//         /* is_server */ true, SHMEM_POLL_TICKS, tss_tid_recv, tss_tid_ack);
+//     if (!tss_link)
+//         rtems_panic(LINK_NAME__SHMEM__TRCH_SERVER);
+//     link_store_append(tss_link);
+// #endif // CONFIG_LINK_SHMEM_TRCH_SERVER
 
 #if CONFIG_LINK_MBOX_HPPS_SERVER
 #if !CONFIG_MBOX_HPPS_RTPS
@@ -328,8 +329,8 @@ static void init_server_links(void)
     assert(mbox_hpps);
     struct link *hms_link = link_mbox_connect(LINK_NAME__MBOX__HPPS_SERVER,
         mbox_hpps,
-        HPPS_MBOX1_CHAN__HPPS_SMP_APP__RTPS_R52_LOCKSTEP_SSW__RQST,
-        HPPS_MBOX1_CHAN__HPPS_SMP_APP__RTPS_R52_LOCKSTEP_SSW__RPLY,
+        HPPS_MBOX1_CHAN__HPPS_SMP_APP__RTPS_R52_LOCKSTEP_SSW,
+        HPPS_MBOX1_CHAN__RTPS_R52_LOCKSTEP_SSW__HPPS_SMP_APP,
         /* server */ MASTER_ID_RTPS_CPU0, /* client */ MASTER_ID_HPPS_CPU0);
     if (!hms_link)
         rtems_panic(LINK_NAME__MBOX__HPPS_SERVER);

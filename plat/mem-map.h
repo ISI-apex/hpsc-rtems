@@ -10,12 +10,11 @@
 // PROP: [ADDR, SIZE] - address or size
 // ID - some useful identifier for what's in memory
 //
-// Shared memory messaging: ID = 'SHM'__SRC_SW__DEST_SW__DIR
+// Shared memory messaging: ID = 'SHM'__SRC_SW__DEST_SW
 // SRC, DST: [TRCH, RTPS_R52_LOCKSTEP, RTPS_R52_SMP,
 //            RTPS_R52_SPLIT_0, RTPS_R52_SPLIT_1, RTPS_A53,
 //            HPPS_SMP, HPPS_SMP_CL0, HPPS_SMP_CL1] - subsystem
 // SW: [SSW, ATF, APP] - the SRC/DST software component
-// DIR: [RQST, RPLY] - request or reply
 
 // TODO: Update remaining macros to use the naming convention
 
@@ -44,19 +43,14 @@
 // Shared memory regions accessible to RTPS - kept at end of RTPS DRAM region
 #define RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP                   0xbe000000
 #define RTPS_DDR_SIZE__SHM__RTPS_R52_LOCKSTEP                   0x02000000
-// TRCH client -> RTPS server
-#define RTPS_DDR_ADDR__SHM__TRCH_SSW__RTPS_R52_LOCKSTEP_SSW__RQST   0xbe000000
-#define RTPS_DDR_SIZE__SHM__TRCH_SSW__RTPS_R52_LOCKSTEP_SSW__RQST   0x00008000
-#define RTPS_DDR_ADDR__SHM__TRCH_SSW__RTPS_R52_LOCKSTEP_SSW__RPLY   0xbe008000
-#define RTPS_DDR_SIZE__SHM__TRCH_SSW__RTPS_R52_LOCKSTEP_SSW__RPLY   0x00008000
-// RTPS client -> TRCH server
-#define RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW__RQST   0xbe010000
-#define RTPS_DDR_SIZE__SHM__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW__RQST   0x00008000
-#define RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW__RPLY   0xbe018000
-#define RTPS_DDR_SIZE__SHM__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW__RPLY   0x00008000
-// Sharded memory - reserved but not allocated
-#define RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP__FREE             0xbe020000
-#define RTPS_DDR_SIZE__SHM__RTPS_R52_LOCKSTEP__FREE             0x01fe0000
+// TRCH <-> RTPS R52
+#define RTPS_DDR_ADDR__SHM__TRCH_SSW__RTPS_R52_LOCKSTEP_SSW     0xbe000000
+#define RTPS_DDR_SIZE__SHM__TRCH_SSW__RTPS_R52_LOCKSTEP_SSW     0x00008000
+#define RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW     0xbe008000
+#define RTPS_DDR_SIZE__SHM__RTPS_R52_LOCKSTEP_SSW__TRCH_SSW     0x00008000
+// Shared memory - reserved but not allocated
+#define RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP__FREE             0xbe010000
+#define RTPS_DDR_SIZE__SHM__RTPS_R52_LOCKSTEP__FREE             0x01ff0000
 
 //////////
 // HPPS //
@@ -80,18 +74,18 @@
 #define HPPS_DDR_ADDR__HPPS_SMP__BOOT_MODE 0xc001fffc
 
 // Shared memory regions accessible to HPPS
-#define HPPS_SHM_ADDR__HPPS_SMP 0xc3400000
-#define HPPS_SHM_SIZE__HPPS_SMP   0x400000
-// HPPS userspace client -> TRCH server
-#define HPPS_SHM_ADDR__HPPS_SMP_APP__TRCH_SSW__RQST 0xc3600000
-#define HPPS_SHM_SIZE__HPPS_SMP_APP__TRCH_SSW__RQST 0x10000
-#define HPPS_SHM_ADDR__HPPS_SMP_APP__TRCH_SSW__RPLY 0xc3610000
-#define HPPS_SHM_SIZE__HPPS_SMP_APP__TRCH_SSW__RPLY 0x10000
-// HPPS SSW client -> TRCH server
-#define HPPS_SHM_ADDR__HPPS_SMP_SSW__TRCH_SSW__RQST 0xc39f0000
-#define HPPS_SHM_SIZE__HPPS_SMP_SSW__TRCH_SSW__RQST 0x08000
-#define HPPS_SHM_ADDR__HPPS_SMP_SSW__TRCH_SSW__RPLY 0xc39f8000
-#define HPPS_SHM_SIZE__HPPS_SMP_SSW__TRCH_SSW__RPLY 0x08000
+#define HPPS_DDR_ADDR__SHM__HPPS_SMP 0xc3400000
+#define HPPS_DDR_SIZE__SHM__HPPS_SMP   0x400000
+// HPPS userspace <-> TRCH SSW
+#define HPPS_DDR_ADDR__SHM__HPPS_SMP_APP__TRCH_SSW 0xc3600000
+#define HPPS_DDR_SIZE__SHM__HPPS_SMP_APP__TRCH_SSW    0x10000
+#define HPPS_DDR_ADDR__SHM__TRCH_SSW__HPPS_SMP_APP 0xc3610000
+#define HPPS_DDR_SIZE__SHM__TRCH_SSW__HPPS_SMP_APP    0x10000
+// HPPS SSW <-> TRCH SSW
+#define HPPS_DDR_ADDR__SHM__HPPS_SMP_SSW__TRCH_SSW 0xc39f0000
+#define HPPS_DDR_SIZE__SHM__HPPS_SMP_SSW__TRCH_SSW    0x08000
+#define HPPS_DDR_ADDR__SHM__TRCH_SSW__HPPS_SMP_SSW 0xc39f8000
+#define HPPS_DDR_SIZE__SHM__TRCH_SSW__HPPS_SMP_SSW    0x08000
 
 // Page table should be in memory that is on a bus accessible from the MMUs
 // master port ('dma' prop in MMU node in Qemu DT).  We put it in HPPS DRAM,
