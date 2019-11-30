@@ -24,4 +24,6 @@ extern rtems_shell_cmd_t shell_cmd_test_link_shmem;
 extern rtems_shell_cmd_t shell_cmd_test_link_mbox_trch;
 extern rtems_shell_cmd_t shell_cmd_test_link_shmem_trch;
 
+extern rtems_shell_cmd_t shell_cmd_test_mbox_rtps_hpps;
+
 #endif // SHELL_TESTS_H
