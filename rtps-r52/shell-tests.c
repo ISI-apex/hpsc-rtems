@@ -204,3 +204,27 @@ rtems_shell_cmd_t shell_cmd_test_link_shmem_trch = {
     NULL, NULL,                                /* alias, next */
     0, 0, 0                                    /* mode, uid, gid */
 };
+
+static int shell_test_mbox_rtps_hpps(int argc RTEMS_UNUSED,
+                                         char *argv[] RTEMS_UNUSED)
+{
+    if (argc <= 1) {
+        fprintf(stderr, "ERROR: TEST REQUIRES 2 MBOXES\n");
+        return -1;
+    }
+
+    unsigned mbox_in = atoi(argv[1]);
+    unsigned mbox_out = atoi(argv[2]);
+
+    return test_mbox_rtps_hpps(mbox_in, mbox_out);
+}
+rtems_shell_cmd_t shell_cmd_test_mbox_rtps_hpps = {
+    "test_mbox_rtps_hpps",                          /* name */
+    "test_mbox_rtps_hpps",                          /* usage */
+    SHELL_TESTS_TOPIC,                              /* topic */
+    shell_test_mbox_rtps_hpps,                      /* command */
+    NULL, NULL,                                     /* alias, next */
+    0, 0, 0                                         /* mode, uid, gid */
+};
+
+

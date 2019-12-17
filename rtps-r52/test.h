@@ -32,6 +32,8 @@ int test_link_shmem(void);
 int test_link_mbox_trch(void);
 int test_link_shmem_trch(void);
 
+int test_mbox_rtps_hpps(unsigned mbox_in, unsigned mbox_out);
+
 // test utilities
 
 RTEMS_INLINE_ROUTINE void test_begin(const char *name)

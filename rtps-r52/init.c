@@ -444,7 +444,8 @@ void *POSIX_Init(void *arg)
     &shell_cmd_test_link_shmem, \
     /* externally-dependent tests */ \
     &shell_cmd_test_link_mbox_trch, \
-    &shell_cmd_test_link_shmem_trch
+    &shell_cmd_test_link_shmem_trch, \
+    &shell_cmd_test_mbox_rtps_hpps
 #include <rtems/shellconfig.h>
 
 /* drivers */
