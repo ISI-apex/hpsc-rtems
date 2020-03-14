@@ -159,15 +159,15 @@ static void standalone_tests(void)
         rtems_panic("Command test");
 #endif // TEST_COMMAND
 
-#if TEST_LSIO_SRAM_SYSCFG
-    if (test_lsio_sram_syscfg())
-        rtems_panic("LSIO SRAM syscfg test");
-#endif // TEST_LSIO_SRAM_SYSCFG
+#if TEST_LSIO_SRAM
+    if (test_lsio_sram())
+        rtems_panic("LSIO SRAM test");
+#endif // TEST_LSIO_SRAM
 
-#if TEST_LSIO_SRAM_DMA_SYSCFG
-    if (test_lsio_sram_dma_syscfg())
-        rtems_panic("LSIO SRAM w/ DMA syscfg test");
-#endif // TEST_LSIO_SRAM_DMA_SYSCFG
+#if TEST_LSIO_SRAM_DMA
+    if (test_lsio_sram_dma())
+        rtems_panic("LSIO SRAM w/ DMA test");
+#endif // TEST_LSIO_SRAM_DMA
 
 #if TEST_MBOX_LSIO_LOOPBACK
 #if !CONFIG_MBOX_LSIO
@@ -425,8 +425,8 @@ void *POSIX_Init(void *arg)
     /* standalone tests */ \
     /* &shell_cmd_test_command, */ \
     &shell_cmd_test_cpu_rti_timers, \
-    &shell_cmd_test_lsio_sram_syscfg, \
-    &shell_cmd_test_lsio_sram_dma_syscfg, \
+    &shell_cmd_test_lsio_sram, \
+    &shell_cmd_test_lsio_sram_dma, \
     &shell_cmd_test_mbox_lsio_loopback, \
     &shell_cmd_test_rtps_mmu, \
     &shell_cmd_test_rtps_mmu_dma, \

@@ -9,8 +9,8 @@
 // Standalone
 extern rtems_shell_cmd_t shell_cmd_test_command;
 extern rtems_shell_cmd_t shell_cmd_test_cpu_rti_timers;
-extern rtems_shell_cmd_t shell_cmd_test_lsio_sram_syscfg;
-extern rtems_shell_cmd_t shell_cmd_test_lsio_sram_dma_syscfg;
+extern rtems_shell_cmd_t shell_cmd_test_lsio_sram;
+extern rtems_shell_cmd_t shell_cmd_test_lsio_sram_dma;
 extern rtems_shell_cmd_t shell_cmd_test_mbox_lsio_loopback;
 extern rtems_shell_cmd_t shell_cmd_test_rtps_mmu;
 extern rtems_shell_cmd_t shell_cmd_test_rtps_mmu_dma;

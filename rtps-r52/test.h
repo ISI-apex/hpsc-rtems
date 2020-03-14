@@ -17,8 +17,8 @@
 // Standalone
 int test_command(void);
 int test_cpu_rti_timers(void);
-int test_lsio_sram_syscfg(void);
-int test_lsio_sram_dma_syscfg(void);
+int test_lsio_sram(void);
+int test_lsio_sram_dma(void);
 int test_mbox_lsio_loopback(void);
 int test_rtps_dma(void); // wrapped by test_rtps_mmu
 int test_rtps_mmu(bool do_dma_test);

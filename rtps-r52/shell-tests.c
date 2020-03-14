@@ -44,30 +44,30 @@ rtems_shell_cmd_t shell_cmd_test_cpu_rti_timers = {
     0, 0, 0                                    /* mode, uid, gid */
 };
 
-static int shell_test_lsio_sram_syscfg(int argc RTEMS_UNUSED,
-                                       char *argv[] RTEMS_UNUSED)
+static int shell_test_lsio_sram(int argc RTEMS_UNUSED,
+                                char *argv[] RTEMS_UNUSED)
 {
-    return test_lsio_sram_syscfg();
+    return test_lsio_sram();
 }
-rtems_shell_cmd_t shell_cmd_test_lsio_sram_syscfg = {
-    "test_lsio_sram_syscfg",                   /* name */
-    "test_lsio_sram_syscfg",                   /* usage */
+rtems_shell_cmd_t shell_cmd_test_lsio_sram = {
+    "test_lsio_sram",                           /* name */
+    "test_lsio_sram",                           /* usage */
     SHELL_TESTS_TOPIC,                         /* topic */
-    shell_test_lsio_sram_syscfg,               /* command */
+    shell_test_lsio_sram,                       /* command */
     NULL, NULL,                                /* alias, next */
     0, 0, 0                                    /* mode, uid, gid */
 };
 
-static int shell_test_lsio_sram_dma_syscfg(int argc RTEMS_UNUSED,
+static int shell_test_lsio_sram_dma(int argc RTEMS_UNUSED,
                                            char *argv[] RTEMS_UNUSED)
 {
-    return test_lsio_sram_dma_syscfg();
+    return test_lsio_sram_dma();
 }
-rtems_shell_cmd_t shell_cmd_test_lsio_sram_dma_syscfg = {
-    "test_lsio_sram_dma_syscfg",               /* name */
-    "test_lsio_sram_dma_syscfg",               /* usage */
+rtems_shell_cmd_t shell_cmd_test_lsio_sram_dma = {
+    "test_lsio_sram_dma",                       /* name */
+    "test_lsio_sram_dma",                       /* usage */
     SHELL_TESTS_TOPIC,                         /* topic */
-    shell_test_lsio_sram_dma_syscfg,           /* command */
+    shell_test_lsio_sram_dma,                   /* command */
     NULL, NULL,                                /* alias, next */
     0, 0, 0                                    /* mode, uid, gid */
 };

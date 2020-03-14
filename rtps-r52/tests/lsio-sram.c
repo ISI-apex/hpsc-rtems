@@ -14,7 +14,7 @@
 
 // TODO: test both write and read
 
-int test_lsio_sram_syscfg(void)
+int test_lsio_sram(void)
 {
     SRAMFS_Config_t sramfs_config;
     uint32_t *load_addr = NULL;
@@ -26,14 +26,15 @@ int test_lsio_sram_syscfg(void)
     sc = sramfs_init(&sramfs_config, SMC_LSIO_SRAM_BL_FS_START0, NULL);
     TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM: init\n", out);
 
-    /* Load syscfg */
-    sc = sramfs_load(&sramfs_config, "syscfg", &load_addr);
-    TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM: load syscfg\n", uninit);
+    /* Load a file from "Simple Filesystem" on off-chip memory */
+    sc = sramfs_load(&sramfs_config, "test-data", &load_addr);
+    TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM: load 'test-data' file\n", uninit);
     TEST_OR_SET_RC_GOTO(load_addr, rc, "LSIO_SRAM: load_addr: set\n", uninit);
 
-    /* Check first two bytes of syscfg */
-    TEST_OR_SET_RC_GOTO((*load_addr & 0xffff) == 0x94c, rc,
-                        "LSIO_SRAM: load_addr: value\n", uninit);
+    /* Check content */
+    TEST_OR_SET_RC_GOTO(
+            (*load_addr & 0xffffffff) == 0x54545454 /* "TEST" in little-endian */,
+            rc, "LSIO_SRAM: load_addr: value\n", uninit);
 
 uninit:
     sc = sramfs_uninit(&sramfs_config);
@@ -44,7 +45,7 @@ out:
     return rc;
 }
 
-int test_lsio_sram_dma_syscfg(void)
+int test_lsio_sram_dma(void)
 {
     DMA_Config_t dma_config;
     SRAMFS_Config_t sramfs_config;
@@ -52,7 +53,7 @@ int test_lsio_sram_dma_syscfg(void)
     rtems_status_code sc;
     int rc = 0;
 
-    test_begin("test_lsio_sram_dma_syscfg");
+    test_begin("test_lsio_sram_dma");
 
     /* Initialize DMA controller */
     sc = dma_init(&dma_config, BSP_DMA_BASE);
@@ -61,13 +62,14 @@ int test_lsio_sram_dma_syscfg(void)
     sc = sramfs_init(&sramfs_config, SMC_LSIO_SRAM_BL_FS_START0, &dma_config);
     TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM_DMA: sramfs_init\n", uninit_dma);
 
-    /* Load syscfg */
-    sc = sramfs_load_addr(&sramfs_config, "syscfg", load_addr);
-    TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM_DMA: load syscfg\n", uninit);
+    /* Load a file from "Simple Filesystem" on off-chip memory */
+    sc = sramfs_load_addr(&sramfs_config, "test-data", load_addr);
+    TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM_DMA: load 'test-data' file\n", uninit);
 
-    /* Check first two bytes of syscfg */
-    TEST_OR_SET_RC_GOTO((*load_addr & 0xffff) == 0x94c, rc,
-                        "LSIO_SRAM_DMA: load_addr: value\n", uninit);
+    /* Check content */
+    TEST_OR_SET_RC_GOTO(
+            (*load_addr & 0xffffffff) == 0x54545454 /* "TEST" in little-endian */,
+            rc, "LSIO_SRAM_DMA: load_addr: value\n", uninit);
 
 uninit:
     sc = sramfs_uninit(&sramfs_config);
@@ -78,6 +80,6 @@ uninit_dma:
     TEST_SC_OR_SET_RC(sc, rc, "LSIO_SRAM_DMA: dma_uninit\n");
 
 out:
-    test_end("test_lsio_sram_dma_syscfg", rc);
+    test_end("test_lsio_sram_dma", rc);
     return rc;
 }
