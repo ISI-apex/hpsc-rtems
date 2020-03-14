@@ -61,14 +61,6 @@ static rtems_status_code init_extra_drivers(
     cpu_set_t cpuset;
     rtems_status_code sc;
 
-#if CONFIG_LINK_SHMEM_TRCH_CLIENT || CONFIG_LINK_SHMEM_TRCH_SERVER
-    // MPU configuration in BSP is blocking shared memory regions
-    printf("MPU: RTPS shmem region: enabling R/W access\n");
-    MPU_REGION_11(RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP,
-                  RTPS_DDR_ADDR__SHM__RTPS_R52_LOCKSTEP + RTPS_DDR_SIZE__SHM__RTPS_R52_LOCKSTEP - 64,
-                  ATTR_RW_Access);
-#endif
-
 #if CONFIG_MBOX_LSIO
     struct hpsc_mbox *mbox_lsio = NULL;
     rtems_vector_number mbox_lsio_vec_a =
