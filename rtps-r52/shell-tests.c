@@ -31,7 +31,7 @@ static int shell_test_cpu_rti_timers(int argc RTEMS_UNUSED,
 #if CONFIG_RTI_TIMER
     return test_cpu_rti_timers();
 #else 
-    fprintf(stderr, "ERROR: CONFIG_RTI_TIMER is not set!\n")
+    fprintf(stderr, "ERROR: CONFIG_RTI_TIMER is not set!\n");
     return -1;
 #endif // CONFIG_RTI_TIMER
 }
