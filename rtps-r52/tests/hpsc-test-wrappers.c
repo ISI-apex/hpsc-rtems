@@ -30,8 +30,8 @@ int test_command_server(void)
     return rc;
 }
 
-#define SHMEM_WTIMEOUT_TICKS 100
-#define SHMEM_RTIMEOUT_TICKS 100
+#define SHMEM_WTIMEOUT_TICKS 5000
+#define SHMEM_RTIMEOUT_TICKS 5000
 // assumes calling task isn't using this event
 #define SHMEM_EVENT_WAIT     RTEMS_EVENT_0
 int test_link_shmem(void)

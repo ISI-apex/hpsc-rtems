@@ -7,8 +7,8 @@
 #include "link-names.h"
 #include "test.h"
 
-#define WTIMEOUT_TICKS 1000
-#define RTIMEOUT_TICKS 1000
+#define WTIMEOUT_TICKS 5000
+#define RTIMEOUT_TICKS 5000
 // assumes calling task isn't using this event
 #define LINK_EVENT_WAIT RTEMS_EVENT_0
 
