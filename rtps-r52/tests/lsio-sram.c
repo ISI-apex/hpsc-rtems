@@ -12,6 +12,12 @@
 
 #include "test.h"
 
+/* Test looks for the Simple File System image at this offset in SRAM memory,
+ * whoever invokes this test must put the data there. */
+#define HPSC_TEST_SFS_OFFSET 0x20100
+
+#define HPSC_TEST_SFS_BASE (SMC_LSIO_SRAM_BASE0 + HPSC_TEST_SFS_OFFSET)
+
 // TODO: test both write and read
 
 int test_lsio_sram(void)
@@ -23,7 +29,7 @@ int test_lsio_sram(void)
 
     test_begin("test_lsio_sram");
 
-    sc = sramfs_init(&sramfs_config, SMC_LSIO_SRAM_BASE0, NULL);
+    sc = sramfs_init(&sramfs_config, HPSC_TEST_SFS_BASE, NULL);
     TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM: init\n", out);
 
     /* Load a file from "Simple Filesystem" on off-chip memory */
@@ -59,7 +65,7 @@ int test_lsio_sram_dma(void)
     sc = dma_init(&dma_config, BSP_DMA_BASE);
     TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM_DMA: dma_init\n", out);
 
-    sc = sramfs_init(&sramfs_config, SMC_LSIO_SRAM_BASE0, &dma_config);
+    sc = sramfs_init(&sramfs_config, HPSC_TEST_SFS_BASE, &dma_config);
     TEST_SC_OR_SET_RC_GOTO(sc, rc, "LSIO_SRAM_DMA: sramfs_init\n", uninit_dma);
 
     /* Load a file from "Simple Filesystem" on off-chip memory */
