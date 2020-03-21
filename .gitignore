@@ -8,5 +8,6 @@
 *.img
 *.num
 *.a
+*.ralf
 
 Makefile.config
